@@ -17,7 +17,7 @@ const routes = {
 
 const initialRosters = readJson("lostark.rosters", []);
 const savedSheetName = localStorage.getItem("lostark.sheetName") || "";
-const initialSheetName = /공지/.test(savedSheetName) ? "" : savedSheetName;
+const initialSheetName = !savedSheetName || /공지|레이드종합/.test(savedSheetName) ? "Calendar" : savedSheetName;
 const savedSheetUrl = localStorage.getItem("lostark.sheetUrl") || "";
 const initialSheetUrl = !savedSheetUrl || savedSheetUrl === LEGACY_DEFAULT_SHEET_URL ? DEFAULT_SHEET_URL : savedSheetUrl;
 

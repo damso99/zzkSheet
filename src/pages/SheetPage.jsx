@@ -1,7 +1,7 @@
 import styles from "../App.module.css";
 
 const RAID_WORDS =
-  /카제로스|세르카|지평|막걸리|아르모체|모르둠|아브렐|에기르|베히모스|쿠르잔|카멘|상아탑|일리아칸|아르고스|발탄|비아키스|쿠크|아브|하드|노말|헬/i;
+  /카제로스|세르카|지평|지평성당|막걸리|아르모체|모르둠|아브렐|에기르|베히모스|쿠르잔|카멘|상아탑|일리아칸|아르고스|발탄|비아키스|쿠크|아브|하브|노브|하기르|하르둠|익스트림|하드|노말|헬/i;
 const DATE_WORDS = /날짜|일자|요일|일정|date|day/i;
 const TIME_WORDS = /시간|시각|타임|time/i;
 const PARTICIPANT_WORDS = /참여|인원|멤버|공대원|파티원|참가|member|user|name/i;
@@ -152,10 +152,61 @@ function ChartPanel({ title, items }) {
 function extractRaidEvents(rows, selectedSheet = "") {
   if (rows.length === 0) return [];
 
+  const calendarEvents = extractCalendarEvents(rows, selectedSheet);
+  if (calendarEvents.length > 0) return calendarEvents.slice(0, 100);
+
   const tableEvents = extractHeaderTableEvents(rows);
   if (tableEvents.length > 0) return tableEvents.slice(0, 100);
 
   return extractBlockEvents(rows, selectedSheet).slice(0, 100);
+}
+
+function extractCalendarEvents(rows, selectedSheet = "") {
+  if (!/calendar|캘린더/i.test(selectedSheet)) return [];
+
+  const dateRowIndex = rows.findIndex((row) => row.filter((cell) => parseDateCell(cell)).length >= 3);
+  if (dateRowIndex < 0) return [];
+
+  const dateAnchors = rows[dateRowIndex]
+    .map((cell, index) => ({ date: parseDateCell(cell), index }))
+    .filter((item) => item.date);
+
+  if (dateAnchors.length === 0) return [];
+
+  const events = [];
+
+  rows.slice(dateRowIndex + 1).forEach((row, offset) => {
+    const rowIndex = dateRowIndex + 1 + offset;
+    const baseTime = row.find((cell, index) => index <= 2 && isTimeLike(cell) && !/^[A-Z]$/.test(cell)) || "";
+
+    dateAnchors.forEach((anchor, anchorIndex) => {
+      const nextAnchor = dateAnchors[anchorIndex + 1]?.index ?? row.length;
+      const start = anchor.index;
+      const end = Math.max(start + 1, nextAnchor);
+      const cells = row.slice(start, end);
+
+      cells.forEach((cell, cellOffset) => {
+        const value = cleanCell(cell);
+        if (!value || isNoiseCell(value) || !RAID_WORDS.test(value)) return;
+
+        const columnIndex = start + cellOffset;
+        const localTime = isTimeLike(row[columnIndex - 1]) ? row[columnIndex - 1] : "";
+        const participantInfo = findCalendarParticipantInfo(rows, rowIndex, columnIndex);
+        const participantCount = countParticipants(participantInfo);
+
+        events.push({
+          date: anchor.date,
+          weekday: findWeekday(anchor.date),
+          time: normalizeTime(localTime || baseTime || "미정"),
+          raid: cleanRaidName(value),
+          participantsText: participantInfo || (participantCount ? `${participantCount}명` : "-"),
+          participantCount,
+        });
+      });
+    });
+  });
+
+  return dedupeEvents(events);
 }
 
 function extractHeaderTableEvents(rows) {
@@ -287,6 +338,50 @@ function normalizeRows(rows) {
   return rows
     .map((row) => row.map((cell) => cleanCell(cell)))
     .filter((row) => row.some(Boolean));
+}
+
+function parseDateCell(value) {
+  const text = cleanCell(value);
+  if (!text) return "";
+
+  const direct = text.match(/(20\d{2})[./-](\d{1,2})[./-](\d{1,2})/);
+  if (direct) {
+    return `${direct[1]}.${Number(direct[2])}.${Number(direct[3])}`;
+  }
+
+  if (/^\d{5}$/.test(text)) {
+    const serial = Number(text);
+    if (serial < 40000 || serial > 60000) return "";
+
+    const date = new Date(Date.UTC(1899, 11, 30 + serial));
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    const day = date.getUTCDate();
+    return `${year}.${month}.${day}`;
+  }
+
+  return "";
+}
+
+function findCalendarParticipantInfo(rows, rowIndex, columnIndex) {
+  const candidates = [];
+
+  for (let y = rowIndex + 1; y <= Math.min(rows.length - 1, rowIndex + 3); y += 1) {
+    for (let x = Math.max(0, columnIndex - 1); x <= Math.min(rows[y].length - 1, columnIndex + 1); x += 1) {
+      const cell = cleanCell(rows[y][x]);
+      if (!cell || isNoiseCell(cell) || RAID_WORDS.test(cell) || isTimeLike(cell)) continue;
+      candidates.push(cell);
+    }
+  }
+
+  const numeric = candidates.find((cell) => /^\d+\s*명?$/.test(cell));
+  if (numeric) return /^\d+$/.test(numeric) ? `${numeric}명` : numeric;
+
+  const names = candidates.filter((cell) => !/^[A-Z]$/.test(cell));
+  if (names.length >= 2) return `${names.length}명`;
+  if (names.length === 1 && /명/.test(names[0])) return names[0];
+
+  return "";
 }
 
 function cleanCell(value) {
