@@ -1,8 +1,14 @@
 import styles from "../App.module.css";
 
+const RAID_WORDS =
+  /카제로스|세르카|지평|막걸리|아르모체|모르둠|아브렐|에기르|베히모스|쿠르잔|카멘|상아탑|일리아칸|아르고스|발탄|비아키스|쿠크|아브|하드|노말|헬/i;
+const DATE_WORDS = /날짜|일자|요일|일정|date|day/i;
+const TIME_WORDS = /시간|시각|타임|time/i;
+const PARTICIPANT_WORDS = /참여|인원|멤버|공대원|파티원|참가|member|user|name/i;
+
 export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }) {
   const rows = normalizeRows(sheet.rows || []);
-  const events = extractRaidEvents(rows);
+  const events = extractRaidEvents(rows, sheet.selectedSheet);
   const stats = buildEventStats(events);
 
   if (!isLoading && rows.length === 0) {
@@ -10,7 +16,7 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
       <section className={styles.empty}>
         <div />
         <h3>시트 데이터가 없습니다</h3>
-        <p>구글 시트를 링크가 있는 사용자 보기 가능으로 공유한 뒤 다시 불러오세요.</p>
+        <p>구글 시트 링크가 공개 보기 상태인지 확인한 뒤 다시 불러와 주세요.</p>
       </section>
     );
   }
@@ -20,8 +26,8 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
       <article className={styles.sheetHero}>
         <div>
           <span>Google Sheet</span>
-          <h3>레이드 일정 대시보드</h3>
-          <p>{sheet.selectedSheet || "시트"} 탭에서 날짜, 참여인원, 시간, 참여레이드만 정리합니다.</p>
+          <h1>레이드 일정 대시보드</h1>
+          <p>{sheet.selectedSheet || "시트"} 탭에서 날짜, 참여인원, 시간, 참여레이드만 정리해서 보여줍니다.</p>
         </div>
         <div className={styles.sheetHeroActions}>
           <span>{sheet.updatedAt ? new Date(sheet.updatedAt).toLocaleString("ko-KR") : "-"}</span>
@@ -66,7 +72,7 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
           <div className={styles.scheduleCards}>
             {events.length === 0 && (
               <div className={styles.emptySchedule}>
-                선택한 탭에서 날짜, 시간, 참여인원, 참여레이드 정보를 찾지 못했습니다.
+                선택한 탭에서 레이드명과 참여자 정보를 찾지 못했습니다. 다른 시트 탭을 선택해 주세요.
               </div>
             )}
             {events.map((event, index) => (
@@ -76,13 +82,23 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
                   <strong>{event.date || "-"}</strong>
                 </div>
                 <div className={styles.scheduleContent}>
-                  <strong>{event.raid || "레이드 미정"}</strong>
-                  <div>
-                    <span>{event.time || "시간 미정"}</span>
-                    <span>{event.participantsText || `${event.participantCount || 0}명`}</span>
-                  </div>
+                  <h3>{event.raid || "레이드 미정"}</h3>
+                  <dl>
+                    <div>
+                      <dt>날짜</dt>
+                      <dd>{event.date || "-"}</dd>
+                    </div>
+                    <div>
+                      <dt>시간</dt>
+                      <dd>{event.time || "미정"}</dd>
+                    </div>
+                    <div>
+                      <dt>참여인원</dt>
+                      <dd>{event.participantsText || `${event.participantCount || 0}명`}</dd>
+                    </div>
+                  </dl>
                 </div>
-                <b>{event.participantCount || "-"}</b>
+                <strong>{event.participantCount || "-"}</strong>
               </article>
             ))}
           </div>
@@ -133,24 +149,79 @@ function ChartPanel({ title, items }) {
   );
 }
 
-function extractRaidEvents(rows) {
+function extractRaidEvents(rows, selectedSheet = "") {
   if (rows.length === 0) return [];
 
-  const headerIndex = rows.findIndex((row) =>
-    row.some((cell) => /날짜|일자|시간|참여|인원|레이드|던전|콘텐츠/i.test(cell)),
-  );
-  const header = headerIndex >= 0 ? rows[headerIndex] : [];
-  const bodyRows = rows.filter((row, index) => index !== headerIndex && row.some(Boolean));
-  const columns = mapColumns(header);
+  const tableEvents = extractHeaderTableEvents(rows);
+  if (tableEvents.length > 0) return tableEvents.slice(0, 100);
 
-  return bodyRows
-    .map((row) => buildEvent(row, columns))
-    .filter((event) => event.date || event.time || event.raid || event.participantsText)
-    .filter((event) => event.raid || event.participantCount > 0)
-    .slice(0, 100);
+  return extractBlockEvents(rows, selectedSheet).slice(0, 100);
 }
 
-function buildEvent(row, columns) {
+function extractHeaderTableEvents(rows) {
+  const headerIndex = rows.findIndex((row) =>
+    row.some((cell) => DATE_WORDS.test(cell) || TIME_WORDS.test(cell) || PARTICIPANT_WORDS.test(cell) || RAID_WORDS.test(cell)),
+  );
+  const header = headerIndex >= 0 ? rows[headerIndex] : [];
+  const columns = mapColumns(header);
+  const hasUsefulColumns = [columns.date, columns.time, columns.participants, columns.raid].filter(Number.isInteger).length >= 2;
+
+  if (!hasUsefulColumns) return [];
+
+  return rows
+    .filter((row, index) => index !== headerIndex && row.some(Boolean))
+    .map((row) => buildTableEvent(row, columns))
+    .filter((event) => event.raid || event.participantCount > 0);
+}
+
+function extractBlockEvents(rows, selectedSheet) {
+  const events = [];
+  const headerRows = rows
+    .map((row, index) => ({ row, index, raidCells: findRaidHeaderCells(row) }))
+    .filter((item) => item.raidCells.length > 0);
+
+  headerRows.forEach((headerRow, headerRowIndex) => {
+    const nextHeaderIndex = headerRows[headerRowIndex + 1]?.index ?? rows.length;
+    const bodyRows = rows.slice(headerRow.index + 1, nextHeaderIndex);
+
+    headerRow.raidCells.forEach(({ index: columnIndex, raid }) => {
+      const participants = [];
+      let date = "";
+      let time = "";
+
+      bodyRows.forEach((row) => {
+        const participant = cleanParticipant(row[columnIndex]);
+        if (participant) participants.push(participant);
+
+        const firstCell = cleanCell(row[0]);
+        if (!date && isDateLike(firstCell)) date = firstCell;
+        if (!time && isTimeLike(firstCell)) time = normalizePartyLabel(firstCell);
+      });
+
+      if (participants.length === 0) return;
+
+      events.push({
+        date: date || selectedSheet || "-",
+        weekday: findWeekday(date),
+        time: time || findNearbyPartyLabel(bodyRows) || "미정",
+        raid: cleanRaidName(raid),
+        participantsText: `${participants.length}명`,
+        participantCount: participants.length,
+      });
+    });
+  });
+
+  return dedupeEvents(events);
+}
+
+function findRaidHeaderCells(row) {
+  return row
+    .map((cell, index) => ({ cell: cleanCell(cell), index }))
+    .filter(({ cell }) => cell && RAID_WORDS.test(cell) && !isNoiseCell(cell))
+    .map(({ cell, index }) => ({ raid: cell, index }));
+}
+
+function buildTableEvent(row, columns) {
   const date = pickColumn(row, columns.date) || findDate(row);
   const time = pickColumn(row, columns.time) || findTime(row);
   const raid = cleanRaidName(pickColumn(row, columns.raid) || findRaid(row));
@@ -171,10 +242,10 @@ function mapColumns(header) {
   const columns = {};
 
   header.forEach((cell, index) => {
-    if (/날짜|일자|요일/i.test(cell)) columns.date ??= index;
-    if (/시간|시각/i.test(cell)) columns.time ??= index;
-    if (/참여|인원|멤버|공대원|파티원/i.test(cell)) columns.participants ??= index;
-    if (/레이드|던전|콘텐츠|관문/i.test(cell)) columns.raid ??= index;
+    if (DATE_WORDS.test(cell)) columns.date ??= index;
+    if (TIME_WORDS.test(cell)) columns.time ??= index;
+    if (PARTICIPANT_WORDS.test(cell)) columns.participants ??= index;
+    if (/레이드|던전|콘텐츠|관문|raid/i.test(cell) || RAID_WORDS.test(cell)) columns.raid ??= index;
   });
 
   return columns;
@@ -202,10 +273,26 @@ function countBy(values) {
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "ko"));
 }
 
+function dedupeEvents(events) {
+  const seen = new Set();
+  return events.filter((event) => {
+    const key = `${event.date}|${event.time}|${event.raid}|${event.participantCount}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function normalizeRows(rows) {
   return rows
-    .map((row) => row.map((cell) => String(cell || "").trim()))
+    .map((row) => row.map((cell) => cleanCell(cell)))
     .filter((row) => row.some(Boolean));
+}
+
+function cleanCell(value) {
+  return String(value || "")
+    .replace(/\r/g, "")
+    .trim();
 }
 
 function pickColumn(row, index) {
@@ -213,33 +300,34 @@ function pickColumn(row, index) {
 }
 
 function findDate(row) {
-  return row.find((cell) => /\d{1,2}[./월-]\s*\d{1,2}|20\d{2}[./-]\d{1,2}[./-]\d{1,2}|[월화수목금토일]요일?/.test(cell)) || "";
+  return row.find((cell) => isDateLike(cell)) || "";
 }
 
 function findWeekday(value) {
-  const match = String(value || "").match(/[월화수목금토일]요일?/);
-  return match ? match[0].replace("요일", "") : "";
+  const match = String(value || "").match(/[월화수목금토일]/);
+  return match ? match[0] : "";
 }
 
 function findTime(row) {
-  return row.find((cell) => /\b(?:[01]?\d|2[0-3]):[0-5]\d\b|오전|오후|저녁|밤|낮/.test(cell)) || "";
+  return row.find((cell) => isTimeLike(cell)) || "";
 }
 
 function findRaid(row) {
-  return (
-    row.find((cell) =>
-      /카제로스|세르카|아르모체|모르둠|아브렐|에기르|지평|종막|막|레이드|하드|노말|나이트메어/i.test(cell),
-    ) || ""
-  );
+  return row.find((cell) => RAID_WORDS.test(cell)) || "";
 }
 
 function findParticipants(row, known) {
   const ignored = new Set(Object.values(known).filter(Boolean));
-  const candidate = row
-    .filter((cell) => cell && !ignored.has(cell))
-    .find((cell) => /\d+\s*명|[,/·]|[가-힣A-Za-z0-9_]{2,}\s+[가-힣A-Za-z0-9_]{2,}/.test(cell));
+  return (
+    row
+      .filter((cell) => cell && !ignored.has(cell) && !isNoiseCell(cell))
+      .find((cell) => /명|[,/·]|\s{2,}/.test(cell)) || ""
+  );
+}
 
-  return candidate || "";
+function findNearbyPartyLabel(rows) {
+  const label = rows.map((row) => cleanCell(row[0])).find((cell) => /^[A-Z]$|^\d+\s*파티$|^\d+팟$/.test(cell));
+  return normalizePartyLabel(label);
 }
 
 function countParticipants(value) {
@@ -271,7 +359,13 @@ function normalizeDate(value) {
 }
 
 function normalizeTime(value) {
-  return String(value || "").replace(/\s+/g, " ").trim();
+  return normalizePartyLabel(String(value || "").replace(/\s+/g, " ").trim());
+}
+
+function normalizePartyLabel(value) {
+  const text = String(value || "").trim();
+  if (/^[A-Z]$/.test(text)) return `${text} 파티`;
+  return text;
 }
 
 function cleanRaidName(value) {
@@ -279,4 +373,32 @@ function cleanRaidName(value) {
     .replace(/\s+/g, " ")
     .replace(/참여|인원|시간|날짜/g, "")
     .trim();
+}
+
+function cleanParticipant(value) {
+  const text = cleanCell(value);
+  if (!text || isNoiseCell(text) || RAID_WORDS.test(text)) return "";
+  return text;
+}
+
+function isDateLike(value) {
+  const text = String(value || "").trim();
+  return /\d{1,2}[./-]\s*\d{1,2}|20\d{2}[./-]\d{1,2}[./-]\d{1,2}|^[월화수목금토일]$|[월화수목금토일]요일/.test(text);
+}
+
+function isTimeLike(value) {
+  const text = String(value || "").trim();
+  return /\b(?:[01]?\d|2[0-3]):[0-5]\d\b|오전|오후|저녁|밤|낮|^[A-Z]$|^\d+\s*파티$|^\d+팟$/.test(text);
+}
+
+function isNoiseCell(value) {
+  const text = String(value || "").trim();
+  return (
+    !text ||
+    text === "TRUE" ||
+    text === "FALSE" ||
+    text === "-" ||
+    /^#[0-9a-f]{3,8}$/i.test(text) ||
+    /^https?:\/\//i.test(text)
+  );
 }
