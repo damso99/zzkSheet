@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styles from "../App.module.css";
 
 const RAID_WORDS =
@@ -7,6 +8,7 @@ const TIME_WORDS = /시간|시각|타임|time/i;
 const PARTICIPANT_WORDS = /참여|인원|멤버|공대원|파티원|참가|member|user|name/i;
 
 export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }) {
+  const [openEventKey, setOpenEventKey] = useState("");
   const rows = normalizeRows(sheet.rows || []);
   const events = extractRaidEvents(rows, sheet.selectedSheet);
   const stats = buildEventStats(events);
@@ -75,32 +77,60 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
                 선택한 탭에서 레이드명과 참여자 정보를 찾지 못했습니다. 다른 시트 탭을 선택해 주세요.
               </div>
             )}
-            {events.map((event, index) => (
-              <article className={styles.scheduleCardModern} key={`${event.date}-${event.time}-${event.raid}-${index}`}>
-                <div className={styles.scheduleDateBadge}>
-                  <span>{event.weekday || "DATE"}</span>
-                  <strong>{event.date || "-"}</strong>
-                </div>
-                <div className={styles.scheduleContent}>
-                  <h3>{event.raid || "레이드 미정"}</h3>
-                  <dl>
-                    <div>
-                      <dt>날짜</dt>
-                      <dd>{event.date || "-"}</dd>
-                    </div>
-                    <div>
-                      <dt>시간</dt>
-                      <dd>{event.time || "미정"}</dd>
-                    </div>
-                    <div>
-                      <dt>참여인원</dt>
-                      <dd>{event.participantsText || `${event.participantCount || 0}명`}</dd>
-                    </div>
-                  </dl>
-                </div>
-                <strong>{event.participantCount || "-"}</strong>
-              </article>
-            ))}
+            {events.map((event, index) => {
+              const key = buildEventKey(event, index);
+              const isOpen = openEventKey === key;
+
+              return (
+                <article
+                  className={`${styles.scheduleCardModern} ${isOpen ? styles.activeScheduleCard : ""}`}
+                  key={key}
+                >
+                  <div className={styles.scheduleDateBadge}>
+                    <span>{event.weekday || "DATE"}</span>
+                    <strong>{event.date || "-"}</strong>
+                  </div>
+                  <div className={styles.scheduleContent}>
+                    <button
+                      className={styles.raidOpenButton}
+                      type="button"
+                      onClick={() => setOpenEventKey(isOpen ? "" : key)}
+                    >
+                      {event.raid || "레이드 미정"}
+                    </button>
+                    <dl>
+                      <div>
+                        <dt>날짜</dt>
+                        <dd>{event.date || "-"}</dd>
+                      </div>
+                      <div>
+                        <dt>시간</dt>
+                        <dd>{event.time || "미정"}</dd>
+                      </div>
+                      <div>
+                        <dt>참여인원</dt>
+                        <dd>{event.participantsText || `${event.participantCount || 0}명`}</dd>
+                      </div>
+                    </dl>
+                    {isOpen && (
+                      <div className={styles.participantPanel}>
+                        <span>참여인원</span>
+                        {event.participants?.length > 0 ? (
+                          <ul>
+                            {event.participants.map((name) => (
+                              <li key={name}>{name}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>참여자 이름을 찾지 못했습니다.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <strong>{event.participantCount || "-"}</strong>
+                </article>
+              );
+            })}
           </div>
         </article>
 
@@ -111,6 +141,10 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
       </div>
     </section>
   );
+}
+
+function buildEventKey(event, index) {
+  return `${event.date}-${event.time}-${event.raid}-${event.participantCount}-${index}`;
 }
 
 function SummaryCard({ label, value, suffix = "" }) {
@@ -174,6 +208,9 @@ function extractCalendarEvents(rows, selectedSheet = "") {
   if (dateAnchors.length === 0) return [];
 
   const events = [];
+  const participantsByDateColumn = new Map(
+    dateAnchors.map((anchor) => [anchor.index, collectCalendarParticipants(rows, anchor.index)]),
+  );
 
   rows.slice(dateRowIndex + 1).forEach((row, offset) => {
     const rowIndex = dateRowIndex + 1 + offset;
@@ -191,8 +228,11 @@ function extractCalendarEvents(rows, selectedSheet = "") {
 
         const columnIndex = start + cellOffset;
         const localTime = isTimeLike(row[columnIndex - 1]) ? row[columnIndex - 1] : "";
-        const participantInfo = findCalendarParticipantInfo(rows, rowIndex, columnIndex);
-        const participantCount = countParticipants(participantInfo);
+        const nearbyParticipants = findCalendarParticipantsNearRaid(rows, rowIndex, columnIndex);
+        const dateParticipants = participantsByDateColumn.get(anchor.index) || [];
+        const participants = nearbyParticipants.length > 0 ? nearbyParticipants : dateParticipants;
+        const participantInfo = participants.length > 0 ? `${participants.length}명` : findCalendarParticipantInfo(rows, rowIndex, columnIndex);
+        const participantCount = participants.length || countParticipants(participantInfo);
 
         events.push({
           date: anchor.date,
@@ -201,6 +241,7 @@ function extractCalendarEvents(rows, selectedSheet = "") {
           raid: cleanRaidName(value),
           participantsText: participantInfo || (participantCount ? `${participantCount}명` : "-"),
           participantCount,
+          participants,
         });
       });
     });
@@ -258,6 +299,7 @@ function extractBlockEvents(rows, selectedSheet) {
         raid: cleanRaidName(raid),
         participantsText: `${participants.length}명`,
         participantCount: participants.length,
+        participants,
       });
     });
   });
@@ -286,6 +328,7 @@ function buildTableEvent(row, columns) {
     raid,
     participantsText: normalizeParticipants(participantsRaw, participantCount),
     participantCount,
+    participants: splitParticipants(participantsRaw),
   };
 }
 
@@ -361,6 +404,40 @@ function parseDateCell(value) {
   }
 
   return "";
+}
+
+function collectCalendarParticipants(rows, dateColumnIndex) {
+  const startIndex = rows.findIndex((row) => cleanCell(row[1]) === "체크");
+  if (startIndex < 0) return [];
+
+  const names = [];
+
+  for (let index = startIndex + 1; index < rows.length; index += 1) {
+    const row = rows[index];
+    const first = cleanCell(row[1]);
+    if (/고정|유동|메모/.test(first)) break;
+
+    const name = cleanParticipant(row[dateColumnIndex]);
+    if (name && !names.includes(name)) names.push(name);
+  }
+
+  return names;
+}
+
+function findCalendarParticipantsNearRaid(rows, rowIndex, columnIndex) {
+  const names = [];
+
+  for (let y = rowIndex + 1; y <= Math.min(rows.length - 1, rowIndex + 6); y += 1) {
+    const currentRaidColumn = cleanCell(rows[y][columnIndex]);
+    if (y > rowIndex + 1 && RAID_WORDS.test(currentRaidColumn)) break;
+
+    for (let x = columnIndex + 2; x <= Math.min(rows[y].length - 1, columnIndex + 10); x += 1) {
+      const name = cleanParticipant(rows[y][x]);
+      if (name && !names.includes(name)) names.push(name);
+    }
+  }
+
+  return names;
 }
 
 function findCalendarParticipantInfo(rows, rowIndex, columnIndex) {
@@ -444,6 +521,13 @@ function normalizeParticipants(value, count) {
   if (!text && count) return `${count}명`;
   if (/^\d+$/.test(text)) return `${text}명`;
   return text;
+}
+
+function splitParticipants(value) {
+  return String(value || "")
+    .split(/[,/·\n\r]+|\s{2,}/)
+    .map((item) => cleanParticipant(item.replace(/\d+\s*명/g, "")))
+    .filter(Boolean);
 }
 
 function normalizeDate(value) {
