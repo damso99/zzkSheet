@@ -1432,6 +1432,20 @@
   padding: 14px;
 }
 
+.scheduleSplitView {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+}
+
+.scheduleSplitView .scheduleCards {
+  max-height: 720px;
+  padding: 0;
+  overflow: auto;
+}
+
 .emptySchedule {
   padding: 42px 20px;
   text-align: center;
@@ -1453,6 +1467,54 @@
     border-color 0.18s ease,
     box-shadow 0.18s ease,
     transform 0.18s ease;
+}
+
+.compactScheduleCard {
+  grid-template-columns: 82px minmax(0, 1fr) 42px;
+  min-height: 74px;
+  padding: 10px;
+  gap: 10px;
+}
+
+.compactScheduleCard .scheduleDateBadge {
+  min-height: 52px;
+  padding: 8px;
+}
+
+.compactScheduleCard .scheduleDateBadge span {
+  font-size: 11px;
+}
+
+.compactScheduleCard .scheduleDateBadge strong {
+  font-size: 12px;
+}
+
+.compactScheduleCard .raidTitle {
+  margin-bottom: 7px;
+  font-size: 16px;
+}
+
+.compactScheduleCard .scheduleContent dl {
+  gap: 6px;
+}
+
+.compactScheduleCard .scheduleContent div {
+  padding: 7px 8px;
+}
+
+.compactScheduleCard .scheduleContent dt {
+  font-size: 10px;
+}
+
+.compactScheduleCard .scheduleContent dd {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.compactScheduleCard > strong {
+  width: 42px;
+  height: 42px;
+  font-size: 15px;
 }
 
 .scheduleCardModern:focus-visible {
@@ -1587,6 +1649,27 @@
   background: #fbfbfb;
   cursor: default;
   user-select: text;
+}
+
+.participantSidePanel {
+  position: sticky;
+  top: 14px;
+}
+
+.participantSidePanel .participantPanel {
+  margin-top: 0;
+  min-height: 220px;
+}
+
+.participantSidePanel > p {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed #d8d8d8;
+  border-radius: 14px;
+  color: #777;
+  background: #fbfbfb;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .participantPanel > span {
@@ -2083,7 +2166,8 @@
   }
 
   .sheetHero,
-  .scheduleLayout {
+  .scheduleLayout,
+  .scheduleSplitView {
     grid-template-columns: 1fr;
   }
 
@@ -2157,6 +2241,10 @@
   .scheduleContent dl,
   .scheduleCardModern {
     grid-template-columns: 1fr;
+  }
+
+  .participantSidePanel {
+    position: static;
   }
 
   .scheduleCardModern > strong {

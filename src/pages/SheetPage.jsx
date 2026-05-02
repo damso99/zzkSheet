@@ -17,6 +17,7 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
     [rows, sheet.selectedSheet, memberLookup],
   );
   const stats = buildEventStats(events);
+  const selectedEvent = events.find((event, index) => buildEventKey(event, index) === openEventKey) || events[0] || null;
 
   useEffect(() => {
     if (!sheet.sourceUrl) return undefined;
@@ -100,7 +101,8 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
             <strong>{events.length} rows</strong>
           </header>
 
-          <div className={styles.scheduleCards}>
+          <div className={styles.scheduleSplitView}>
+            <div className={styles.scheduleCards}>
             {events.length === 0 && (
               <div className={styles.emptySchedule}>
                 선택한 탭에서 레이드명과 참여자 정보를 찾지 못했습니다. 다른 시트 탭을 선택해 주세요.
@@ -108,17 +110,17 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
             )}
             {events.map((event, index) => {
               const key = buildEventKey(event, index);
-              const isOpen = openEventKey === key;
+              const isOpen = selectedEvent === event;
 
               return (
                 <article
-                  className={`${styles.scheduleCardModern} ${isOpen ? styles.activeScheduleCard : ""}`}
+                  className={`${styles.scheduleCardModern} ${styles.compactScheduleCard} ${isOpen ? styles.activeScheduleCard : ""}`}
                   key={key}
-                  onClick={() => setOpenEventKey(isOpen ? "" : key)}
+                  onClick={() => setOpenEventKey(key)}
                   onKeyDown={(keyboardEvent) => {
                     if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
                       keyboardEvent.preventDefault();
-                      setOpenEventKey(isOpen ? "" : key);
+                      setOpenEventKey(key);
                     }
                   }}
                   role="button"
@@ -144,12 +146,16 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
                         <dd>{event.participantsText || `${event.participantCount || 0}명`}</dd>
                       </div>
                     </dl>
-                    {isOpen && <ParticipantPanel event={event} />}
                   </div>
                   <strong>{event.participantCount || "-"}</strong>
                 </article>
               );
             })}
+            </div>
+
+            <aside className={styles.participantSidePanel}>
+              {selectedEvent ? <ParticipantPanel event={selectedEvent} /> : <p>일정을 선택하면 참여자 상세가 표시됩니다.</p>}
+            </aside>
           </div>
         </article>
 
