@@ -1317,6 +1317,284 @@
   gap: 14px;
 }
 
+.sheetDashboard {
+  min-height: calc(100vh - 160px);
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, 0.11), transparent 30%),
+    linear-gradient(135deg, #050505 0%, #111 48%, #2a2a2a 100%);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+}
+
+.sheetHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04)),
+    rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(18px);
+}
+
+.sheetHero h1 {
+  margin: 8px 0 8px;
+  color: #fff;
+  font-size: clamp(28px, 4vw, 56px);
+  line-height: 1;
+}
+
+.sheetHero p {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sheetHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.scheduleSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.scheduleSummaryCard {
+  min-height: 118px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.scheduleSummaryCard strong {
+  display: block;
+  margin-top: 12px;
+  overflow: hidden;
+  color: #fff;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheduleSummaryCard span {
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.scheduleSummaryCard small {
+  display: block;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+}
+
+.scheduleLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.schedulePanelModern,
+.scheduleInsightPanel {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.schedulePanelModern {
+  min-width: 0;
+}
+
+.scheduleCards {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.emptySchedule {
+  padding: 42px 20px;
+  text-align: center;
+}
+
+.scheduleCardModern {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 96px;
+  padding: 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 18px;
+  background: #fff;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.scheduleCardModern:hover {
+  border-color: #111;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.scheduleDateBadge {
+  display: grid;
+  place-items: center;
+  min-height: 68px;
+  padding: 10px;
+  border-radius: 14px;
+  color: #fff;
+  background: #0b0b0b;
+  text-align: center;
+}
+
+.scheduleDateBadge span {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheduleDateBadge small {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.scheduleContent {
+  min-width: 0;
+}
+
+.scheduleContent h3 {
+  margin: 0 0 10px;
+  overflow: hidden;
+  color: #111;
+  font-size: 20px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheduleContent dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.scheduleContent div {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 12px;
+  background: #f6f6f6;
+}
+
+.scheduleContent dt {
+  color: #777;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.scheduleContent dd {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: #181818;
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheduleCardModern > strong {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid #111;
+  border-radius: 50%;
+  color: #111;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.scheduleInsightPanel {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.chartPanelMono {
+  padding: 18px;
+  border: 1px solid #e8e8e8;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.chartPanelMono h3 {
+  margin: 0 0 14px;
+  color: #111;
+  font-size: 18px;
+}
+
+.monoBars {
+  display: grid;
+  gap: 12px;
+}
+
+.monoBarRow {
+  display: grid;
+  grid-template-columns: minmax(84px, 1fr) minmax(120px, 2fr) 36px;
+  gap: 10px;
+  align-items: center;
+  color: #111;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.monoBarRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monoBarRow i {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #111, #9b9b9b);
+}
+
+.monoBarRow strong {
+  color: #555;
+  font-size: 12px;
+  text-align: right;
+}
+
 .sheetToolbar {
   min-height: 72px;
   padding: 14px 16px;
@@ -1695,6 +1973,19 @@
   .infoGrid {
     grid-column: 1 / -1;
   }
+
+  .sheetHero,
+  .scheduleLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .sheetHeroActions {
+    justify-content: flex-start;
+  }
+
+  .scheduleSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -1741,5 +2032,37 @@
   .tableRow {
     gap: 4px;
     padding: 12px;
+  }
+
+  .sheetDashboard {
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .sheetHero,
+  .schedulePanelModern,
+  .scheduleInsightPanel {
+    border-radius: 16px;
+  }
+
+  .scheduleSummaryGrid,
+  .scheduleContent dl,
+  .scheduleCardModern {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduleCardModern > strong {
+    width: 100%;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .scheduleContent h3,
+  .scheduleContent dd {
+    white-space: normal;
+  }
+
+  .monoBarRow {
+    grid-template-columns: 1fr;
   }
 }
