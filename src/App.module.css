@@ -1372,6 +1372,75 @@
   gap: 14px;
 }
 
+.datePickerStrip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.datePickerStrip button {
+  min-width: 0;
+  min-height: 78px;
+  padding: 12px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(16px);
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.datePickerStrip button:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.datePickerStrip span,
+.datePickerStrip strong,
+.datePickerStrip small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datePickerStrip span {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.datePickerStrip strong {
+  margin-top: 6px;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.datePickerStrip small {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.activeDateButton {
+  border-color: #fff !important;
+  color: #111 !important;
+  background: #fff !important;
+  box-shadow: 0 16px 40px rgba(255, 255, 255, 0.18);
+}
+
+.activeDateButton strong,
+.activeDateButton span,
+.activeDateButton small {
+  color: #111 !important;
+}
+
 .scheduleSummaryCard {
   min-height: 118px;
   padding: 18px;
@@ -2178,6 +2247,10 @@
   .scheduleSummaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .datePickerStrip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -2241,6 +2314,10 @@
   .scheduleContent dl,
   .scheduleCardModern {
     grid-template-columns: 1fr;
+  }
+
+  .datePickerStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .participantSidePanel {

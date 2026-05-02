@@ -10,11 +10,17 @@ const PARTICIPANT_WORDS = /참여|인원|멤버|공대원|파티원|참가|membe
 export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }) {
   const [openEventKey, setOpenEventKey] = useState("");
   const [settingRows, setSettingRows] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(() => formatDateKey(new Date()));
   const rows = normalizeRows(sheet.rows || []);
   const memberLookup = useMemo(() => buildMemberLookup(settingRows), [settingRows]);
-  const events = useMemo(
+  const allEvents = useMemo(
     () => extractRaidEvents(rows, sheet.selectedSheet).map((event) => enrichEventMembers(event, memberLookup)),
     [rows, sheet.selectedSheet, memberLookup],
+  );
+  const weekDays = useMemo(() => buildWeekDays(new Date()), []);
+  const events = useMemo(
+    () => allEvents.filter((event) => normalizeDateKey(event.date) === selectedDate),
+    [allEvents, selectedDate],
   );
   const stats = buildEventStats(events);
   const selectedEvent = events.find((event, index) => buildEventKey(event, index) === openEventKey) || events[0] || null;
@@ -42,6 +48,10 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
       ignore = true;
     };
   }, [sheet.sourceUrl]);
+
+  useEffect(() => {
+    setOpenEventKey("");
+  }, [selectedDate, sheet.selectedSheet]);
 
   if (!isLoading && rows.length === 0) {
     return (
@@ -83,6 +93,25 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
           ))}
         </div>
       )}
+
+      <div className={styles.datePickerStrip}>
+        {weekDays.map((day) => {
+          const count = allEvents.filter((event) => normalizeDateKey(event.date) === day.key).length;
+
+          return (
+            <button
+              className={selectedDate === day.key ? styles.activeDateButton : ""}
+              type="button"
+              onClick={() => setSelectedDate(day.key)}
+              key={day.key}
+            >
+              <span>{day.weekday}</span>
+              <strong>{day.label}</strong>
+              <small>{count}개</small>
+            </button>
+          );
+        })}
+      </div>
 
       <div className={styles.scheduleSummaryGrid}>
         <SummaryCard label="일정" value={events.length} suffix="개" />
@@ -193,6 +222,36 @@ function ParticipantPanel({ event }) {
 
 function buildEventKey(event, index) {
   return `${event.date}-${event.time}-${event.raid}-${event.participantCount}-${index}`;
+}
+
+function buildWeekDays(baseDate) {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(baseDate, index);
+    const key = formatDateKey(date);
+
+    return {
+      key,
+      label: `${date.getMonth() + 1}.${date.getDate()}`,
+      weekday: ["일", "월", "화", "수", "목", "금", "토"][date.getDay()],
+    };
+  });
+}
+
+function addDays(date, amount) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function formatDateKey(date) {
+  return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
+}
+
+function normalizeDateKey(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/(20\d{2})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})/);
+  if (!match) return "";
+  return `${match[1]}.${Number(match[2])}.${Number(match[3])}`;
 }
 
 function SummaryCard({ label, value, suffix = "" }) {
