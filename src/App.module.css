@@ -1505,7 +1505,8 @@
   white-space: nowrap;
 }
 
-.raidOpenButton {
+.raidOpenButton,
+.raidTitle {
   display: block;
   width: 100%;
   margin: 0 0 10px;
@@ -1523,7 +1524,8 @@
   cursor: pointer;
 }
 
-.raidOpenButton:hover {
+.raidOpenButton:hover,
+.scheduleCardModern:hover .raidTitle {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
@@ -1587,8 +1589,8 @@
 }
 
 .participantPanel ul {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 7px;
   margin: 0;
   padding: 0;
@@ -1596,16 +1598,41 @@
 }
 
 .participantPanel li {
-  max-width: 140px;
-  padding: 7px 10px;
-  overflow: hidden;
+  min-width: 0;
+  padding: 9px 10px;
   border: 1px solid #111;
-  border-radius: 999px;
+  border-radius: 12px;
   color: #111;
-  font-size: 12px;
-  font-weight: 900;
+  background: #fff;
+}
+
+.participantPanel li strong,
+.participantPanel li em,
+.participantPanel li small {
+  display: block;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.participantPanel li strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.participantPanel li em {
+  margin-top: 4px;
+  color: #333;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.participantPanel li small {
+  margin-top: 2px;
+  color: #777;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .participantPanel p {
@@ -2131,7 +2158,8 @@
 
   .scheduleContent h3,
   .scheduleContent dd,
-  .raidOpenButton {
+  .raidOpenButton,
+  .raidTitle {
     white-space: normal;
   }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "../App.module.css";
 
 const RAID_WORDS =
@@ -9,9 +9,38 @@ const PARTICIPANT_WORDS = /참여|인원|멤버|공대원|파티원|참가|membe
 
 export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }) {
   const [openEventKey, setOpenEventKey] = useState("");
+  const [settingRows, setSettingRows] = useState([]);
   const rows = normalizeRows(sheet.rows || []);
-  const events = extractRaidEvents(rows, sheet.selectedSheet);
+  const memberLookup = useMemo(() => buildMemberLookup(settingRows), [settingRows]);
+  const events = useMemo(
+    () => extractRaidEvents(rows, sheet.selectedSheet).map((event) => enrichEventMembers(event, memberLookup)),
+    [rows, sheet.selectedSheet, memberLookup],
+  );
   const stats = buildEventStats(events);
+
+  useEffect(() => {
+    if (!sheet.sourceUrl) return undefined;
+
+    let ignore = false;
+
+    async function loadSettingSheet() {
+      try {
+        const params = new URLSearchParams({ url: sheet.sourceUrl, sheet: "SETTING" });
+        const response = await fetch(`/api/sheet?${params.toString()}`);
+        if (!response.ok) throw new Error("SETTING sheet request failed.");
+        const body = await response.json();
+        if (!ignore) setSettingRows(normalizeRows(body.rows || []));
+      } catch {
+        if (!ignore) setSettingRows([]);
+      }
+    }
+
+    loadSettingSheet();
+
+    return () => {
+      ignore = true;
+    };
+  }, [sheet.sourceUrl]);
 
   if (!isLoading && rows.length === 0) {
     return (
@@ -29,7 +58,7 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
         <div>
           <span>Google Sheet</span>
           <h1>레이드 일정 대시보드</h1>
-          <p>{sheet.selectedSheet || "시트"} 탭에서 날짜, 참여인원, 시간, 참여레이드만 정리해서 보여줍니다.</p>
+          <p>{sheet.selectedSheet || "시트"} 탭에서 날짜, 참여인원, 시간, 참여레이드를 정리해서 보여줍니다.</p>
         </div>
         <div className={styles.sheetHeroActions}>
           <span>{sheet.updatedAt ? new Date(sheet.updatedAt).toLocaleString("ko-KR") : "-"}</span>
@@ -85,19 +114,22 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
                 <article
                   className={`${styles.scheduleCardModern} ${isOpen ? styles.activeScheduleCard : ""}`}
                   key={key}
+                  onClick={() => setOpenEventKey(isOpen ? "" : key)}
+                  onKeyDown={(keyboardEvent) => {
+                    if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+                      keyboardEvent.preventDefault();
+                      setOpenEventKey(isOpen ? "" : key);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className={styles.scheduleDateBadge}>
                     <span>{event.weekday || "DATE"}</span>
                     <strong>{event.date || "-"}</strong>
                   </div>
                   <div className={styles.scheduleContent}>
-                    <button
-                      className={styles.raidOpenButton}
-                      type="button"
-                      onClick={() => setOpenEventKey(isOpen ? "" : key)}
-                    >
-                      {event.raid || "레이드 미정"}
-                    </button>
+                    <h3 className={styles.raidTitle}>{event.raid || "레이드 미정"}</h3>
                     <dl>
                       <div>
                         <dt>날짜</dt>
@@ -112,20 +144,7 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
                         <dd>{event.participantsText || `${event.participantCount || 0}명`}</dd>
                       </div>
                     </dl>
-                    {isOpen && (
-                      <div className={styles.participantPanel}>
-                        <span>참여인원</span>
-                        {event.participants?.length > 0 ? (
-                          <ul>
-                            {event.participants.map((name) => (
-                              <li key={name}>{name}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p>참여자 이름을 찾지 못했습니다.</p>
-                        )}
-                      </div>
-                    )}
+                    {isOpen && <ParticipantPanel event={event} />}
                   </div>
                   <strong>{event.participantCount || "-"}</strong>
                 </article>
@@ -140,6 +159,29 @@ export default function SheetPage({ sheet, isLoading, onRefresh, onSelectSheet }
         </aside>
       </div>
     </section>
+  );
+}
+
+function ParticipantPanel({ event }) {
+  const members = event.memberDetails || [];
+
+  return (
+    <div className={styles.participantPanel} onClick={(clickEvent) => clickEvent.stopPropagation()}>
+      <span>참여인원</span>
+      {members.length > 0 ? (
+        <ul>
+          {members.map((member) => (
+            <li key={`${member.name}-${member.character}`}>
+              <strong>{member.name}</strong>
+              {member.character && <em>{member.character}</em>}
+              {member.characterClass && <small>{member.characterClass}</small>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>참여자 이름을 찾지 못했습니다.</p>
+      )}
+    </div>
   );
 }
 
@@ -231,15 +273,14 @@ function extractCalendarEvents(rows, selectedSheet = "") {
         const nearbyParticipants = findCalendarParticipantsNearRaid(rows, rowIndex, columnIndex);
         const dateParticipants = participantsByDateColumn.get(anchor.index) || [];
         const participants = nearbyParticipants.length > 0 ? nearbyParticipants : dateParticipants;
-        const participantInfo = participants.length > 0 ? `${participants.length}명` : findCalendarParticipantInfo(rows, rowIndex, columnIndex);
-        const participantCount = participants.length || countParticipants(participantInfo);
+        const participantCount = participants.length;
 
         events.push({
           date: anchor.date,
           weekday: findWeekday(anchor.date),
           time: normalizeTime(localTime || baseTime || "미정"),
           raid: cleanRaidName(value),
-          participantsText: participantInfo || (participantCount ? `${participantCount}명` : "-"),
+          participantsText: participantCount ? `${participantCount}명` : "-",
           participantCount,
           participants,
         });
@@ -345,6 +386,69 @@ function mapColumns(header) {
   return columns;
 }
 
+function buildMemberLookup(rows) {
+  const byCharacter = new Map();
+  const byOwner = new Map();
+
+  rows.forEach((row) => {
+    const character = cleanCell(row[1]);
+    const characterClass = cleanCell(row[2]);
+    const itemLevel = cleanCell(row[3]);
+    const owner = cleanCell(row[9]);
+    const color = cleanCell(row[10]);
+
+    if (!character || character === "CHARACTER" || !owner || isNoiseCell(owner)) return;
+
+    const record = { character, characterClass, itemLevel, name: owner, color };
+    byCharacter.set(normalizeLookupKey(character), record);
+
+    const ownerKey = normalizeLookupKey(owner);
+    if (!byOwner.has(ownerKey)) byOwner.set(ownerKey, []);
+    byOwner.get(ownerKey).push(record);
+  });
+
+  return { byCharacter, byOwner };
+}
+
+function enrichEventMembers(event, lookup) {
+  const memberDetails = (event.participants || []).flatMap((participant) => resolveParticipant(participant, lookup));
+  const uniqueMembers = [];
+  const seen = new Set();
+
+  memberDetails.forEach((member) => {
+    const key = `${member.name}-${member.character}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    uniqueMembers.push(member);
+  });
+
+  return {
+    ...event,
+    memberDetails: uniqueMembers,
+    participantCount: uniqueMembers.length || event.participantCount,
+    participantsText: uniqueMembers.length ? `${uniqueMembers.length}명` : event.participantsText,
+  };
+}
+
+function resolveParticipant(participant, lookup) {
+  const cleanName = cleanParticipant(participant);
+  if (!cleanName) return [];
+
+  const key = normalizeLookupKey(cleanName);
+  const characterRecord = lookup.byCharacter.get(key);
+  if (characterRecord) return [characterRecord];
+
+  const ownerRecords = lookup.byOwner.get(key);
+  if (ownerRecords?.length) {
+    return ownerRecords.map((record) => ({
+      ...record,
+      name: cleanName,
+    }));
+  }
+
+  return [{ name: cleanName, character: "", characterClass: "", itemLevel: "", color: "" }];
+}
+
 function buildEventStats(events) {
   const totalParticipants = events.reduce((sum, event) => sum + (event.participantCount || 0), 0);
   const byRaid = countBy(events.map((event) => event.raid).filter(Boolean));
@@ -387,20 +491,14 @@ function parseDateCell(value) {
   const text = cleanCell(value);
   if (!text) return "";
 
-  const direct = text.match(/(20\d{2})[./-](\d{1,2})[./-](\d{1,2})/);
-  if (direct) {
-    return `${direct[1]}.${Number(direct[2])}.${Number(direct[3])}`;
-  }
+  const direct = text.match(/(20\d{2})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})/);
+  if (direct) return `${direct[1]}.${Number(direct[2])}.${Number(direct[3])}`;
 
   if (/^\d{5}$/.test(text)) {
     const serial = Number(text);
     if (serial < 40000 || serial > 60000) return "";
-
     const date = new Date(Date.UTC(1899, 11, 30 + serial));
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth() + 1;
-    const day = date.getUTCDate();
-    return `${year}.${month}.${day}`;
+    return `${date.getUTCFullYear()}.${date.getUTCMonth() + 1}.${date.getUTCDate()}`;
   }
 
   return "";
@@ -438,27 +536,6 @@ function findCalendarParticipantsNearRaid(rows, rowIndex, columnIndex) {
   }
 
   return names;
-}
-
-function findCalendarParticipantInfo(rows, rowIndex, columnIndex) {
-  const candidates = [];
-
-  for (let y = rowIndex + 1; y <= Math.min(rows.length - 1, rowIndex + 3); y += 1) {
-    for (let x = Math.max(0, columnIndex - 1); x <= Math.min(rows[y].length - 1, columnIndex + 1); x += 1) {
-      const cell = cleanCell(rows[y][x]);
-      if (!cell || isNoiseCell(cell) || RAID_WORDS.test(cell) || isTimeLike(cell)) continue;
-      candidates.push(cell);
-    }
-  }
-
-  const numeric = candidates.find((cell) => /^\d+\s*명?$/.test(cell));
-  if (numeric) return /^\d+$/.test(numeric) ? `${numeric}명` : numeric;
-
-  const names = candidates.filter((cell) => !/^[A-Z]$/.test(cell));
-  if (names.length >= 2) return `${names.length}명`;
-  if (names.length === 1 && /명/.test(names[0])) return names[0];
-
-  return "";
 }
 
 function cleanCell(value) {
@@ -508,12 +585,7 @@ function countParticipants(value) {
   if (explicit) return Number(explicit[1]);
   if (!text) return 0;
 
-  const names = text
-    .split(/[,/·\n\r]+|\s{2,}/)
-    .map((item) => item.trim())
-    .filter((item) => item && !/참여|인원|시간|레이드|날짜/.test(item));
-
-  return names.length || 0;
+  return splitParticipants(text).length;
 }
 
 function normalizeParticipants(value, count) {
@@ -560,6 +632,10 @@ function cleanParticipant(value) {
   return text;
 }
 
+function normalizeLookupKey(value) {
+  return cleanCell(value).replace(/\s+/g, "").toLowerCase();
+}
+
 function isDateLike(value) {
   const text = String(value || "").trim();
   return /\d{1,2}[./-]\s*\d{1,2}|20\d{2}[./-]\d{1,2}[./-]\d{1,2}|^[월화수목금토일]$|[월화수목금토일]요일/.test(text);
@@ -577,6 +653,9 @@ function isNoiseCell(value) {
     text === "TRUE" ||
     text === "FALSE" ||
     text === "-" ||
+    text === "#REF!" ||
+    text === "+" ||
+    text === "●" ||
     /^#[0-9a-f]{3,8}$/i.test(text) ||
     /^https?:\/\//i.test(text)
   );
