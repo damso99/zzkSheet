@@ -114,7 +114,7 @@ function parseSettingRows(rows) {
     metadataByCharacter.set(characterName, {
       characterName,
       level: cleanText(row[LEVEL_COLUMN]) || "-",
-      ownerName: cleanText(row[OWNER_COLUMN]) || "미상",
+      ownerName: cleanText(row[OWNER_COLUMN]) || "정보없음",
       power: cleanText(row[MAX_POWER_COLUMN]) || "-",
     });
   });
@@ -248,7 +248,7 @@ function decorateParticipant(characterName, metadataByCharacter) {
   return {
     characterName,
     level: metadata?.level || "-",
-    ownerName: metadata?.ownerName || "미상",
+    ownerName: metadata?.ownerName || "정보없음",
     power: metadata?.power || "-",
   };
 }
