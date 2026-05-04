@@ -140,36 +140,20 @@ export default function RaidSchedulePage() {
     }));
   }, [searchResults]);
 
-  const searchDefaultOpenDate = useMemo(() => {
-    if (searchGroups.some((group) => group.date === todayIsoDate)) return todayIsoDate;
-    return searchGroups[0]?.date || "";
-  }, [searchGroups, todayIsoDate]);
-
   return (
     <div className={styles.page}>
       <div className={styles.backdrop} />
       <div className={styles.content}>
         <header className={styles.hero}>
           <div>
-            <p className={styles.eyebrow}>Lost Ark Weekly Planner</p>
+            <p className={styles.eyebrow}>Lostark Weekly Planner</p>
             <h1>레이드 일정표</h1>
             <p className={styles.description}>
               Google Spreadsheet의 공개 데이터를 읽어 금일 일정, 주간 일정, 이름 검색 화면으로 정리했습니다.
             </p>
-          </div>
-
-          <div className={styles.metaPanel}>
-            <div>
-              <span>기준 시트</span>
-              <strong>{DEFAULT_TARGET_GID}</strong>
-            </div>
-            <div>
-              <span>마지막 갱신</span>
-              <strong>{formatFetchedAt(sourceMeta.fetchedAt)}</strong>
-            </div>
-            <div>
-              <span>현재 상태</span>
-              <strong>{sourceMeta.isFallback ? "더미 데이터" : "실시간 시트"}</strong>
+            <div className={styles.metaLine} aria-label="데이터 갱신 상태">
+              <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
+              <span>{sourceMeta.isFallback ? "상태 더미 데이터" : "상태 실시간 시트"}</span>
             </div>
           </div>
         </header>
@@ -291,7 +275,7 @@ export default function RaidSchedulePage() {
             ) : (
               <div className={styles.weekStack}>
                 {searchGroups.map((group) => (
-                  <details key={group.date} className={styles.dayGroup} open={group.date === searchDefaultOpenDate}>
+                  <details key={group.date} className={styles.dayGroup}>
                     <summary className={styles.dayHeader}>
                       <span className={styles.dayTitle}>{group.label}</span>
                       <span>{group.items.length}개 결과</span>

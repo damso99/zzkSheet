@@ -92,7 +92,7 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
       >
         <header className={styles.modalHeader}>
           <div className={styles.modalTitleBlock}>
-            <span>Lost Ark OpenAPI</span>
+            <span>Lostark OpenAPI</span>
             <h2 id="character-detail-title">{modalTitle}</h2>
           </div>
           <button type="button" className={styles.modalCloseButton} onClick={onClose} aria-label="캐릭터 상세 닫기">
