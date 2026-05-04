@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./PersonalSchedulePage.module.css";
 
-// Apps Script Web App URL만 넣습니다. CORS/권한 오류가 나면 배포 권한을 Anyone access로 확인하세요.
-const PERSONAL_SCHEDULE_SCRIPT_URL = import.meta.env.VITE_PERSONAL_SCHEDULE_SCRIPT_URL || "";
-
 const SORT_OPTIONS = {
   latest: "최신순",
   date: "날짜순",
@@ -25,16 +22,12 @@ export default function PersonalSchedulePage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const sortedItems = useMemo(() => sortPersonalSchedules(items, sortMode), [items, sortMode]);
-  const isScriptConfigured = Boolean(PERSONAL_SCHEDULE_SCRIPT_URL);
 
   useEffect(() => {
-    if (!isScriptConfigured) return;
-
     const controller = new AbortController();
     loadPersonalSchedules({ signal: controller.signal });
-
     return () => controller.abort();
-  }, [isScriptConfigured]);
+  }, []);
 
   async function loadPersonalSchedules({ signal, silent = false } = {}) {
     if (!silent) {
@@ -43,28 +36,29 @@ export default function PersonalSchedulePage() {
     }
 
     try {
-      const response = await fetch(`${PERSONAL_SCHEDULE_SCRIPT_URL}?type=personal`, {
+      const response = await fetch(`/api/personal-schedule?type=personal`, {
         method: "GET",
         signal,
       });
+
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        throw new Error(payload?.message || payload?.error || "개인일정 목록을 불러오지 못했습니다.");
+        throw new Error(payload?.message || "개인일정 목록을 불러오지 못했습니다.");
       }
 
       setItems(normalizePersonalSchedules(payload));
     } catch (error) {
       if (error?.name === "AbortError") return;
-      console.error("[personal schedule] failed to load schedules", error);
-      if (!silent) setErrorMessage(error instanceof Error ? error.message : String(error));
+      console.error("[personal schedule] load error", error);
+      if (!silent) setErrorMessage(error.message);
     } finally {
       if (!signal?.aborted && !silent) setIsLoading(false);
     }
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
     setMessage("");
     setErrorMessage("");
 
@@ -80,237 +74,113 @@ export default function PersonalSchedulePage() {
       return;
     }
 
-    if (!isScriptConfigured) {
-      setErrorMessage("VITE_PERSONAL_SCHEDULE_SCRIPT_URL 설정이 필요합니다.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(PERSONAL_SCHEDULE_SCRIPT_URL, {
+      const response = await fetch("/api/personal-schedule", {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain;charset=utf-8",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-      const responsePayload = await readJsonSafely(response);
 
-      if (!response.ok || responsePayload?.success === false) {
-        throw new Error(responsePayload?.message || responsePayload?.error || "개인일정 등록에 실패했습니다.");
+      const result = await readJsonSafely(response);
+
+      if (!response.ok || result?.success === false) {
+        throw new Error(result?.message || "등록 실패");
       }
 
       setMessage("등록 완료");
       setForm(INITIAL_FORM);
-      setItems((currentItems) => [
-        normalizePersonalScheduleItem({ ...payload, createdAt: new Date().toISOString() }, currentItems.length),
-        ...currentItems,
-      ]);
+
       await loadPersonalSchedules({ silent: true });
+
     } catch (error) {
-      console.error("[personal schedule] failed to submit schedule", error);
-      setErrorMessage(error instanceof Error ? error.message : String(error));
+      console.error("[personal schedule] submit error", error);
+      setErrorMessage(error.message);
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  function updateField(fieldName, value) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [fieldName]: value,
-    }));
+  function updateField(name, value) {
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.backdrop} />
-      <div className={styles.content}>
-        <header className={styles.hero}>
-          <a className={styles.backLink} href="/">
-            레이드 일정으로 돌아가기
-          </a>
-          <p className={styles.eyebrow}>Personal Schedule</p>
+      <main className={styles.page}>
+        <div className={styles.content}>
           <h1>개인 일정</h1>
-          <p>레이드 참여가 어려운 날짜와 사유를 Google Sheet의 개인일정 탭에 기록합니다.</p>
-        </header>
-
-        {!isScriptConfigured ? (
-          <div className={styles.notice} role="alert">
-            Apps Script Web App URL이 설정되지 않았습니다. `.env.local`에
-            `VITE_PERSONAL_SCHEDULE_SCRIPT_URL`을 추가하면 등록과 조회가 활성화됩니다.
-            CORS 또는 권한 오류가 나면 Apps Script 배포를 Web App으로 만들고 접근 권한을 Anyone으로 설정해 주세요.
-          </div>
-        ) : null}
-
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>개인일정 등록</h2>
-              <p>날짜, 이름, 사유는 모두 필수입니다.</p>
-            </div>
-          </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>
-              <span>날짜</span>
-              <input
+            <input
                 type="date"
                 value={form.date}
-                required
-                onChange={(event) => updateField("date", event.target.value)}
-              />
-            </label>
-            <label>
-              <span>이름</span>
-              <input
+                onChange={(e) => updateField("date", e.target.value)}
+            />
+            <input
                 type="text"
+                placeholder="이름"
                 value={form.name}
-                required
-                placeholder="예: 성태"
-                onChange={(event) => updateField("name", event.target.value)}
-              />
-            </label>
-            <label className={styles.reasonField}>
-              <span>사유</span>
-              <input
+                onChange={(e) => updateField("name", e.target.value)}
+            />
+            <input
                 type="text"
+                placeholder="사유"
                 value={form.reason}
-                required
-                placeholder="예: 야근, 약속, 휴가"
-                onChange={(event) => updateField("reason", event.target.value)}
-              />
-            </label>
-            <button type="submit" disabled={isSubmitting || !isScriptConfigured}>
-              {isSubmitting ? "등록 중..." : "등록"}
+                onChange={(e) => updateField("reason", e.target.value)}
+            />
+
+            <button disabled={isSubmitting}>
+              {isSubmitting ? "등록중..." : "등록"}
             </button>
           </form>
 
-          {message ? <p className={styles.successMessage}>{message}</p> : null}
-          {errorMessage ? (
-            <p className={styles.errorMessage} role="alert">
-              {errorMessage}
-            </p>
-          ) : null}
-        </section>
-
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>개인일정 목록</h2>
-              <p>Google Sheet의 개인일정 탭에서 읽어온 목록입니다.</p>
-            </div>
-            <label className={styles.sortSelect}>
-              <span>정렬</span>
-              <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
-                {Object.entries(SORT_OPTIONS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          {message && <p>{message}</p>}
+          {errorMessage && <p>{errorMessage}</p>}
 
           {isLoading ? (
-            <div className={styles.emptyState}>개인일정을 불러오는 중입니다.</div>
-          ) : sortedItems.length ? (
-            <div className={styles.scheduleList}>
-              {sortedItems.map((item) => (
-                <article key={item.id} className={styles.scheduleCard}>
-                  <time dateTime={item.date}>{formatDateLabel(item.date)}</time>
-                  <strong>{item.name || "이름 없음"}</strong>
-                  <p>{item.reason || "사유 없음"}</p>
-                </article>
-              ))}
-            </div>
+              <p>불러오는 중...</p>
           ) : (
-            <div className={styles.emptyState}>개인일정이 없습니다.</div>
+              <div>
+                {sortedItems.map((item) => (
+                    <div key={item.id}>
+                      <strong>{item.date}</strong> - {item.name} - {item.reason}
+                    </div>
+                ))}
+              </div>
           )}
-        </section>
-      </div>
-    </main>
+        </div>
+      </main>
   );
 }
 
-function normalizePersonalSchedules(payload) {
-  const rawItems = Array.isArray(payload)
-    ? payload
-    : payload?.items || payload?.schedules || payload?.rows || payload?.data || [];
+/* ---------- util ---------- */
 
-  return rawItems
-    .map((item, index) => normalizePersonalScheduleItem(item, index))
-    .filter((item) => item.date || item.name || item.reason);
+function normalizePersonalSchedules(data) {
+  if (!Array.isArray(data)) return [];
+
+  return data.map((item, i) => ({
+    id: i,
+    date: item.date,
+    name: item.name,
+    reason: item.reason,
+  }));
 }
 
-function normalizePersonalScheduleItem(item, index) {
-  if (Array.isArray(item)) {
-    return {
-      id: `${item[0] || "date"}-${item[1] || "name"}-${index}`,
-      date: normalizeDate(item[0]),
-      name: String(item[1] || "").trim(),
-      reason: String(item[2] || "").trim(),
-      createdAt: normalizeDateTime(item[3]),
-    };
+function sortPersonalSchedules(items, mode) {
+  if (mode === "date") {
+    return [...items].sort((a, b) => a.date.localeCompare(b.date));
   }
-
-  return {
-    id: String(item?.id || `${item?.date || "date"}-${item?.name || "name"}-${index}`),
-    date: normalizeDate(item?.date || item?.날짜),
-    name: String(item?.name || item?.이름 || "").trim(),
-    reason: String(item?.reason || item?.사유 || "").trim(),
-    createdAt: normalizeDateTime(item?.createdAt || item?.registeredAt || item?.등록시간),
-  };
+  return [...items].reverse();
 }
 
-function sortPersonalSchedules(items, sortMode) {
-  return items.slice().sort((left, right) => {
-    if (sortMode === "date") {
-      return `${left.date} ${left.createdAt}`.localeCompare(`${right.date} ${right.createdAt}`);
-    }
-
-    return `${right.createdAt || right.date}`.localeCompare(`${left.createdAt || left.date}`);
-  });
-}
-
-function normalizeDate(value) {
-  if (!value) return "";
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-  return date.toISOString().slice(0, 10);
-}
-
-function normalizeDateTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toISOString();
-}
-
-function formatDateLabel(value) {
-  if (!value) return "날짜 없음";
-
-  try {
-    return new Date(`${value}T00:00:00`).toLocaleDateString("ko-KR", {
-      month: "long",
-      day: "numeric",
-      weekday: "short",
-    });
-  } catch {
-    return value;
-  }
-}
-
-async function readJsonSafely(response) {
-  const text = await response.text();
-  if (!text) return null;
-
+async function readJsonSafely(res) {
+  const text = await res.text();
   try {
     return JSON.parse(text);
   } catch {
-    return { message: text };
+    return null;
   }
 }
