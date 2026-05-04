@@ -41,6 +41,10 @@ function EquipmentSection({ title, items, styles, emptyMessage }) {
 }
 
 function EquipmentCard({ item, styles }) {
+  if (isAbilityStoneItem(item)) {
+    return <AbilityStoneCard item={item} styles={styles} />;
+  }
+
   const shouldShowQuality = !isAbilityStoneItem(item) && item.category !== "bracelet";
 
   return (
@@ -68,6 +72,55 @@ function EquipmentCard({ item, styles }) {
               ))}
             </ul>
           </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function AbilityStoneCard({ item, styles }) {
+  const basicEffects = item.abilityStone?.basicEffects || [];
+  const engravings = item.abilityStone?.engravings || [];
+
+  return (
+    <article className={`${styles.equipmentCard} ${styles.abilityStoneCard}`}>
+      <img
+        className={styles.itemIcon}
+        src={item.icon || CHARACTER_PLACEHOLDER_IMAGE}
+        alt=""
+        onError={replaceWithPlaceholder}
+      />
+      <div className={styles.itemBody}>
+        <h4>{displayValue(item.name)}</h4>
+        <div className={styles.itemBadges}>
+          <span>{displayValue(item.type)}</span>
+          <span>{displayValue(item.grade)}</span>
+        </div>
+
+        {basicEffects.length ? (
+          <div className={styles.abilityStoneEffects}>
+            {basicEffects.map((effect, index) => (
+              <span key={`${effect}-${index}`}>{effect}</span>
+            ))}
+          </div>
+        ) : null}
+
+        {engravings.length ? (
+          <ul className={styles.abilityStoneEngravings}>
+            {engravings.map((engraving, index) => {
+              const isDecrease = engraving.name.includes("감소") || engraving.direction === "감소";
+              const badgeClassName = isDecrease
+                ? `${styles.abilityStoneLevelBadge} ${styles.abilityStoneLevelDecrease}`
+                : `${styles.abilityStoneLevelBadge} ${styles.abilityStoneLevelIncrease}`;
+
+              return (
+                <li key={`${engraving.name}-${index}`} className={styles.abilityStoneEngraving}>
+                  <span>{engraving.name}</span>
+                  <strong className={badgeClassName}>[{displayValue(engraving.level)}]</strong>
+                </li>
+              );
+            })}
+          </ul>
         ) : null}
       </div>
     </article>

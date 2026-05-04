@@ -47,6 +47,7 @@ function normalizeEquipment(equipment) {
       const type = displayValue(item.Type);
       const name = displayValue(stripHtml(item.Name));
       const category = getEquipmentCategory(type, name);
+      const isStone = isAbilityStone(type, name);
 
       return {
         category,
@@ -59,6 +60,7 @@ function normalizeEquipment(equipment) {
         ),
         enhancement: extractEnhancement(item.Name),
         options: getEquipmentOptions({ category, name, type, tooltipLines }),
+        abilityStone: isStone ? parseAbilityStoneDetail(tooltipLines) : null,
       };
     });
 }
@@ -252,16 +254,30 @@ function getEquipmentOptions({ category, name, type, tooltipLines }) {
 }
 
 export function parseAbilityStoneOptions(tooltipLines) {
-  return tooltipLines
+  return parseAbilityStoneDetail(tooltipLines).engravings.map((engraving) => `${engraving.name} [${engraving.level}]`);
+}
+
+export function parseAbilityStoneDetail(tooltipLines) {
+  const lines = tooltipLines
     .map(cleanTooltipLine)
     .filter(Boolean)
-    .flatMap((line) => extractAbilityStoneCandidates(line))
-    .filter(isUsefulAbilityStoneCandidate)
-    .map(normalizeAbilityStoneLine)
-    .filter(Boolean)
-    .filter((line) => !/Lv\.0/.test(line))
-    .filter((line, index, lines) => lines.indexOf(line) === index)
-    .slice(0, 6);
+    .flatMap((line) => splitOptionCandidates(line))
+    .map(cleanTooltipLine)
+    .filter((line) => !isIgnoredAbilityStoneLine(line));
+
+  return {
+    basicEffects: lines
+      .filter(isAbilityStoneBasicEffect)
+      .filter((line, index, list) => list.indexOf(line) === index)
+      .slice(0, 3),
+    engravings: lines
+      .flatMap((line) => extractAbilityStoneCandidates(line))
+      .filter(isUsefulAbilityStoneCandidate)
+      .map(normalizeAbilityStoneEngraving)
+      .filter(Boolean)
+      .filter((engraving, index, list) => list.findIndex((item) => item.name === engraving.name) === index)
+      .slice(0, 6),
+  };
 }
 
 export function parseAccessoryOptions(tooltipLines, { name = "", type = "" } = {}) {
@@ -322,7 +338,7 @@ function splitOptionCandidates(line) {
 
 function extractAbilityStoneCandidates(line) {
   const candidates = [];
-  const pattern = /(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)(?=\s|$)/gi;
+  const pattern = /(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)?(?=\s|$)/gi;
   let match = pattern.exec(line);
 
   while (match) {
@@ -339,32 +355,43 @@ const ABILITY_STONE_IGNORED_KEYWORDS = [
   "장비 레벨",
   "품질",
   "무작위 각인 효과",
+  "획득처",
+  "드랍",
 ];
+
+function isIgnoredAbilityStoneLine(line) {
+  const cleanedLine = cleanTooltipLine(line);
+  return !cleanedLine || isIgnoredDropSourceLine(cleanedLine) || ABILITY_STONE_IGNORED_KEYWORDS.some((keyword) => cleanedLine.includes(keyword));
+}
 
 function isUsefulAbilityStoneCandidate(line) {
   const cleanedLine = cleanTooltipLine(line);
   if (!cleanedLine || !/Lv\.?\s*\d+/i.test(cleanedLine)) return false;
-  if (!/(증가|감소)/.test(cleanedLine)) return false;
-  if (ABILITY_STONE_IGNORED_KEYWORDS.some((keyword) => cleanedLine.includes(keyword))) return false;
+  if (isIgnoredAbilityStoneLine(cleanedLine)) return false;
 
-  const nameMatch = cleanedLine.match(/^(.+?)\s*Lv\.?\s*\d+\s*(증가|감소)/i);
+  const nameMatch = cleanedLine.match(/^(.+?)\s*Lv\.?\s*\d+\s*(증가|감소)?/i);
   const optionName = cleanOptionName(nameMatch?.[1] || "");
   return Boolean(optionName);
 }
 
-function normalizeAbilityStoneLine(line) {
-  if (!isUsefulAbilityStoneCandidate(line)) return "";
+function isAbilityStoneBasicEffect(line) {
+  if (isIgnoredAbilityStoneLine(line)) return false;
+  return /기본/.test(line) && hasOptionNumber(line);
+}
+
+function normalizeAbilityStoneEngraving(line) {
+  if (!isUsefulAbilityStoneCandidate(line)) return null;
 
   const compactLine = cleanTooltipLine(line);
-  const directMatch = compactLine.match(/(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)/i);
-  if (!directMatch) return "";
+  const directMatch = compactLine.match(/(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)?/i);
+  if (!directMatch) return null;
 
   const name = cleanOptionName(directMatch[1]);
   const level = directMatch[2] || "0";
-  if (!name || Number(level) === 0) return "";
+  const direction = directMatch[3] || (name.includes("감소") ? "감소" : "증가");
+  if (!name) return null;
 
-  const direction = directMatch[3];
-  return `${name} Lv.${level} ${direction}`;
+  return { name, level, direction };
 }
 
 function isUsefulAccessoryOption(line, { name, type }) {
@@ -400,7 +427,13 @@ function hasOptionNumber(line) {
 
 function isIgnoredEquipmentLine(line) {
   if (line.length < 2 || line.length > 100) return true;
+  if (isIgnoredDropSourceLine(line)) return true;
   return /nameTagBox|Element_|slotData|아이템\s*정보|판매|분해|거래|귀속|획득|내구도|장착|레벨|티어|^품질\s*:?\s*\d*$|설명|무작위\s*각인\s*효과|효과가\s*부여|옵션을\s*부여|부여\s*옵션$/i.test(line);
+}
+
+function isIgnoredDropSourceLine(line) {
+  const cleanedLine = String(line || "").trim();
+  return /^\d+막\s*:/.test(cleanedLine) || /하드|노말|획득처|드랍|군단장|카제로스/.test(cleanedLine);
 }
 
 function cleanOptionName(value) {

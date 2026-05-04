@@ -1050,6 +1050,73 @@
   font-weight: 900;
 }
 
+.abilityStoneCard {
+  border-color: rgba(168, 121, 255, 0.28);
+  background:
+    linear-gradient(135deg, rgba(168, 121, 255, 0.16), transparent 46%),
+    linear-gradient(180deg, rgba(24, 35, 70, 0.72), rgba(6, 11, 25, 0.82));
+}
+
+.abilityStoneEffects {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  color: #dbe7ff;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.abilityStoneEngravings {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 11px 0 0;
+  list-style: none;
+  border-top: 1px solid rgba(104, 150, 255, 0.14);
+}
+
+.abilityStoneEngraving {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.abilityStoneEngraving > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.abilityStoneLevelBadge {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 38px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-align: right;
+}
+
+.abilityStoneLevelIncrease {
+  color: #f3ebff;
+  border: 1px solid rgba(168, 121, 255, 0.5);
+  background: rgba(168, 121, 255, 0.2);
+  box-shadow: 0 0 16px rgba(168, 121, 255, 0.16);
+}
+
+.abilityStoneLevelDecrease {
+  color: #ffe1e1;
+  border: 1px solid rgba(255, 94, 117, 0.48);
+  background: rgba(255, 94, 117, 0.16);
+  box-shadow: 0 0 16px rgba(255, 94, 117, 0.14);
+}
+
 .equipmentOptions {
   margin-top: 11px;
   padding-top: 10px;
