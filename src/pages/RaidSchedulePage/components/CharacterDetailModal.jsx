@@ -7,6 +7,7 @@ import CharacterProfileHeader from "./CharacterProfileHeader.jsx";
 import CharacterSkillList from "./CharacterSkillList.jsx";
 import { normalizeCharacterDetail } from "../utils/characterParser.js";
 
+const CHARACTER_DETAIL_CACHE_VERSION = "ability-stone-engravings-v1";
 const characterDetailCache = new Map();
 
 const DETAIL_TABS = [
@@ -54,10 +55,14 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
     setActiveTab("profile");
     setErrorMessage("");
 
-    if (cachedDetail) {
-      setDetail(cachedDetail);
+    if (cachedDetail?.version === CHARACTER_DETAIL_CACHE_VERSION) {
+      setDetail(cachedDetail.detail);
       setIsLoading(false);
       return;
+    }
+
+    if (cachedDetail) {
+      characterDetailCache.delete(cacheKey);
     }
 
     const controller = new AbortController();
@@ -77,7 +82,10 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
         }
 
         const parsedDetail = normalizeCharacterDetail(payload);
-        characterDetailCache.set(cacheKey, parsedDetail);
+        characterDetailCache.set(cacheKey, {
+          version: CHARACTER_DETAIL_CACHE_VERSION,
+          detail: parsedDetail,
+        });
         setDetail(parsedDetail);
       } catch (error) {
         if (controller.signal.aborted) return;

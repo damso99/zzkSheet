@@ -49,6 +49,7 @@ function normalizeEquipment(equipment) {
       const icon = normalizeIconUrl(item.Icon);
       const category = getEquipmentCategory(type, name);
       const isStone = isAbilityStone(type, name);
+      const abilityStoneLines = isStone ? getTooltipLines(item.Tooltip, { preserveBracketText: true }) : [];
 
       return {
         category,
@@ -61,7 +62,7 @@ function normalizeEquipment(equipment) {
         ),
         enhancement: extractEnhancement(item.Name),
         options: getEquipmentOptions({ category, name, type, tooltipLines }),
-        abilityStone: isStone ? parseAbilityStoneDetail(tooltipLines, { name, icon }) : null,
+        abilityStone: isStone ? parseAbilityStoneDetail(abilityStoneLines, { name, icon }) : null,
       };
     });
 }
@@ -273,7 +274,7 @@ export function parseAbilityStoneOptions(tooltipLines) {
 
 export function parseAbilityStoneDetail(tooltipLines, { name = "", icon = "" } = {}) {
   const rawLines = tooltipLines
-    .map(cleanTooltipLine)
+    .map((line) => cleanTooltipLine(line, { preserveBracketText: true }))
     .filter(Boolean)
     .flatMap((line) => splitOptionCandidates(line))
     .map(sanitizeAbilityStoneLine)
@@ -358,7 +359,7 @@ function parseBraceletOptions(tooltipLines, { name = "", type = "" } = {}) {
     .slice(0, 10);
 }
 
-function getTooltipLines(value) {
+function getTooltipLines(value, { preserveBracketText = false } = {}) {
   const parsed = parseMaybeJson(value);
   const rawLines = parsed ? collectStrings(parsed) : [value];
 
@@ -366,13 +367,14 @@ function getTooltipLines(value) {
     String(line || "")
       .replace(/<br\s*\/?>/gi, "\n")
       .split(/\n|ㆍ|●|◆|※/)
-      .map(cleanTooltipLine),
+      .map((value) => cleanTooltipLine(value, { preserveBracketText })),
   );
 }
 
-function cleanTooltipLine(value) {
-  return stripHtml(value)
-    .replace(/\[[^\]]*]/g, " ")
+function cleanTooltipLine(value, { preserveBracketText = false } = {}) {
+  const strippedText = stripHtml(value);
+
+  return (preserveBracketText ? strippedText : strippedText.replace(/\[[^\]]*]/g, " "))
     .replace(/부여\s*옵션/gi, " ")
     .replace(/nameTagBox/gi, " ")
     .replace(/태그\s*:/g, " ")
@@ -432,7 +434,8 @@ const ABILITY_STONE_IGNORED_KEYWORDS = [
 ];
 
 function sanitizeAbilityStoneLine(line) {
-  return cleanTooltipLine(line)
+  return cleanTooltipLine(line, { preserveBracketText: true })
+    .replace(/\[\s*([^\]]+?)\s*]/g, "$1 ")
     .replace(/무작위\s*각인\s*효과/gi, " ")
     .replace(/각인\s*효과/gi, " ")
     .replace(/활성도/gi, " ")
