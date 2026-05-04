@@ -1093,6 +1093,12 @@
   overflow-wrap: anywhere;
 }
 
+.abilityStoneEngraving > strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
 .abilityStoneLevelBadge {
   display: inline-flex;
   justify-content: center;
@@ -1193,17 +1199,21 @@
 }
 
 .optionGradeHigh {
+  color: #000000;
+  background: #facc15;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.22);
+}
+
+.optionGradeMiddle {
+  color: #ffffff;
   background: #a855f7;
   box-shadow: 0 0 14px rgba(168, 85, 247, 0.22);
 }
 
-.optionGradeMiddle {
-  background: #3b82f6;
-  box-shadow: 0 0 14px rgba(59, 130, 246, 0.22);
-}
-
 .optionGradeLow {
-  background: #6b7280;
+  color: #ffffff;
+  background: #3b82f6;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.18);
 }
 
 .equipmentEmpty {

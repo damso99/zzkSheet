@@ -99,7 +99,7 @@ function AccessoryOptionSummary({ options, styles }) {
         return (
           <span key={`${option}-${index}`} className={styles.accessoryOptionItem}>
             <span className={styles.accessoryOptionText}>{option}</span>
-            <span className={badgeClassName}>[{grade}]</span>
+            <span className={badgeClassName}>{grade}</span>
           </span>
         );
       })}
@@ -142,19 +142,12 @@ function AbilityStoneCard({ item, styles }) {
 
         {engravings.length ? (
           <ul className={styles.abilityStoneEngravings}>
-            {engravings.map((engraving, index) => {
-              const isDecrease = engraving.name.includes("감소") || engraving.direction === "감소";
-              const badgeClassName = isDecrease
-                ? `${styles.abilityStoneLevelBadge} ${styles.abilityStoneLevelDecrease}`
-                : `${styles.abilityStoneLevelBadge} ${styles.abilityStoneLevelIncrease}`;
-
-              return (
-                <li key={`${engraving.name}-${index}`} className={styles.abilityStoneEngraving}>
-                  <span>{engraving.name}</span>
-                  <strong className={badgeClassName}>[{displayValue(engraving.level)}]</strong>
-                </li>
-              );
-            })}
+            {engravings.map((engraving, index) => (
+              <li key={`${engraving.name}-${index}`} className={styles.abilityStoneEngraving}>
+                <span>{engraving.name}</span>
+                <strong>{displayValue(engraving.level)}</strong>
+              </li>
+            ))}
           </ul>
         ) : null}
       </div>
