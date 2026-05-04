@@ -52,7 +52,6 @@
 .hero {
   display: block;
   padding-bottom: 26px;
-  border-bottom: 1px solid rgba(104, 150, 255, 0.22);
 }
 
 .eyebrow {
@@ -115,9 +114,8 @@
   justify-content: space-between;
   gap: 18px;
   align-items: center;
-  margin-top: 26px;
-  padding: 0 0 18px;
-  border-bottom: 1px solid rgba(104, 150, 255, 0.18);
+  margin-top: 18px;
+  padding: 0 0 8px;
 }
 
 .tabs {
@@ -195,11 +193,11 @@
 
 /* Section headings */
 .section {
-  margin-top: 30px;
+  margin-top: 42px;
 }
 
 .sectionHeading {
-  margin-bottom: 20px;
+  margin-bottom: 26px;
 }
 
 .sectionHeading h2 {

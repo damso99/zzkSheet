@@ -148,9 +148,6 @@ export default function RaidSchedulePage() {
           <div>
             <p className={styles.eyebrow}>Lostark Weekly Planner</p>
             <h1>레이드 일정표</h1>
-            <p className={styles.description}>
-              Google Spreadsheet의 공개 데이터를 읽어 금일 일정, 주간 일정, 이름 검색 화면으로 정리했습니다.
-            </p>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
               <span>{sourceMeta.isFallback ? "상태 더미 데이터" : "상태 실시간 시트"}</span>
