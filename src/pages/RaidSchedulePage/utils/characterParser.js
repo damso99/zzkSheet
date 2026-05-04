@@ -272,12 +272,13 @@ export function parseAbilityStoneOptions(tooltipLines) {
 }
 
 export function parseAbilityStoneDetail(tooltipLines, { name = "", icon = "" } = {}) {
-  const lines = tooltipLines
+  const rawLines = tooltipLines
     .map(cleanTooltipLine)
     .filter(Boolean)
     .flatMap((line) => splitOptionCandidates(line))
     .map(sanitizeAbilityStoneLine)
-    .filter((line) => !isIgnoredAbilityStoneLine(line));
+    .filter(Boolean);
+  const lines = rawLines.filter((line) => !isIgnoredAbilityStoneLine(line));
   const basicEffects = lines
     .map(normalizeAbilityStoneBaseEffect)
     .filter(Boolean)
@@ -289,7 +290,7 @@ export function parseAbilityStoneDetail(tooltipLines, { name = "", icon = "" } =
     icon,
     baseEffect: basicEffects[0] || "",
     basicEffects,
-    engravings: normalizeAbilityStoneEngravings(lines),
+    engravings: normalizeAbilityStoneEngravings(rawLines),
   };
 }
 
@@ -391,13 +392,14 @@ function splitOptionCandidates(line) {
 }
 
 function extractAbilityStoneCandidates(line) {
+  const sourceLine = stripAbilityStoneNoiseTokens(line);
   const candidates = [];
-  const pattern = /(.+?)\s*Lv\.?\s*(\d+)(?=\s|$|[가-힣A-Za-z])/gi;
-  let match = pattern.exec(line);
+  const pattern = /([가-힣A-Za-z][가-힣A-Za-z0-9\s]{0,24}?)\s*Lv\.?\s*(\d+)(?=\s|$|[가-힣A-Za-z])/gi;
+  let match = pattern.exec(sourceLine);
 
   while (match) {
-    candidates.push(match[0]);
-    match = pattern.exec(line);
+    candidates.push(`${match[1].trim()} Lv.${match[2]}`);
+    match = pattern.exec(sourceLine);
   }
 
   return candidates.length ? candidates : [line];
@@ -438,13 +440,24 @@ function sanitizeAbilityStoneLine(line) {
     .trim();
 }
 
+function stripAbilityStoneNoiseTokens(line) {
+  return sanitizeAbilityStoneLine(line)
+    .replace(/ItemPartBox/gi, " ")
+    .replace(/IndentStringGroup/gi, " ")
+    .replace(/Element(?:_\d+)?/gi, " ")
+    .replace(/추가\s*효과/gi, " ")
+    .replace(/설명/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function isIgnoredAbilityStoneLine(line) {
   const cleanedLine = sanitizeAbilityStoneLine(line);
   return !cleanedLine || isIgnoredDropSourceLine(cleanedLine) || ABILITY_STONE_IGNORED_KEYWORDS.some((keyword) => cleanedLine.includes(keyword));
 }
 
 function isUsefulAbilityStoneCandidate(line) {
-  const cleanedLine = cleanTooltipLine(line);
+  const cleanedLine = stripAbilityStoneNoiseTokens(line);
   if (!cleanedLine || !/Lv\.?\s*\d+/i.test(cleanedLine)) return false;
   if (isIgnoredAbilityStoneLine(cleanedLine)) return false;
   if (/기본/.test(cleanedLine)) return false;
@@ -463,7 +476,7 @@ function normalizeAbilityStoneBaseEffect(line) {
 function normalizeAbilityStoneEngraving(line) {
   if (!isUsefulAbilityStoneCandidate(line)) return null;
 
-  const compactLine = cleanTooltipLine(line);
+  const compactLine = stripAbilityStoneNoiseTokens(line);
   const directMatch = compactLine.match(/(.+?)\s*Lv\.?\s*(\d+)/i);
   if (!directMatch) return null;
 
