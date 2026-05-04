@@ -18,7 +18,7 @@ export default function CharacterGemGrid({ gems, styles }) {
           <div>
             <span className={styles.gemLevel}>Lv.{displayValue(gem.level)}</span>
             <h4>{gem.skillName || displayValue(gem.name)}</h4>
-            <p>{displayValue(gem.effect)}</p>
+            <p>{gem.effect || displayValue("")}</p>
             {gem.skillName ? <small className={styles.gemName}>{displayValue(gem.name)}</small> : null}
           </div>
         </article>

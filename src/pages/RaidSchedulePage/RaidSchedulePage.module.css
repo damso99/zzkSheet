@@ -953,7 +953,11 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  margin-top: 0;
+  color: #ffffff;
+  font-weight: 950;
   line-height: 1.35;
+  text-shadow: 0 0 12px rgba(85, 167, 255, 0.2);
 }
 
 .itemBadges {
@@ -973,10 +977,24 @@
   font-weight: 900;
 }
 
+.equipmentOptions {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(104, 150, 255, 0.12);
+}
+
+.equipmentOptions > strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--gold);
+  font-size: 0.74rem;
+  font-weight: 950;
+}
+
 .equipmentOptionList {
   display: grid;
   gap: 5px;
-  margin: 10px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }

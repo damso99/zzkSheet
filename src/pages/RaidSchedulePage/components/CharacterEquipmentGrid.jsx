@@ -58,11 +58,14 @@ function EquipmentCard({ item, styles }) {
           {item.enhancement ? <span>강화 {item.enhancement}</span> : null}
         </div>
         {item.options?.length ? (
-          <ul className={styles.equipmentOptionList}>
-            {item.options.map((option, index) => (
-              <li key={`${option}-${index}`}>{option}</li>
-            ))}
-          </ul>
+          <div className={styles.equipmentOptions}>
+            <strong>부여 옵션</strong>
+            <ul className={styles.equipmentOptionList}>
+              {item.options.map((option, index) => (
+                <li key={`${option}-${index}`}>{option}</li>
+              ))}
+            </ul>
+          </div>
         ) : null}
       </div>
     </article>

@@ -70,21 +70,21 @@ function normalizeGems(gemsPayload, skills = []) {
 
   return asArray(gemsPayload?.Gems || gemsPayload).map((gem) => {
     const effect = effectsBySlot.get(String(gem.Slot ?? "")) || {};
-    const effectText = displayValue(
-      effect.Name || effect.Description || toPlainTooltip(effect.Tooltip) || toPlainTooltip(gem.Tooltip),
-    );
+    const rawEffectText = getGemRawEffectText({ effect, gem });
     const skillName = matchGemSkillName({
-      effectText,
+      effectText: rawEffectText,
       gemName: gem.Name,
       skills,
       tooltipText: toPlainTooltip(gem.Tooltip),
     });
+    const effectType = getGemEffectType(`${rawEffectText} ${gem.Name}`);
 
     return {
       name: displayValue(stripHtml(gem.Name)),
       icon: normalizeIconUrl(gem.Icon),
       level: displayValue(gem.Level || extractGemLevel(gem.Name)),
-      effect: effectText,
+      effect: formatGemEffect({ effectType, skillName }),
+      effectType,
       skillName,
     };
   });
@@ -244,13 +244,46 @@ function getEquipmentCategory(type, name) {
 
 function getEquipmentOptions({ category, name, type, tooltipLines }) {
   if (category === "gear") return [];
+  if (isAbilityStone(type, name)) return parseAbilityStoneOptions(tooltipLines);
+  if (category === "accessory") return parseAccessoryOptions(tooltipLines, { name, type });
+  if (category === "bracelet") return parseBraceletOptions(tooltipLines, { name, type });
 
+  return [];
+}
+
+export function parseAbilityStoneOptions(tooltipLines) {
   return tooltipLines
     .map(cleanTooltipLine)
     .filter(Boolean)
-    .filter((line) => isUsefulEquipmentOption(line, { category, name, type }))
+    .flatMap((line) => extractAbilityStoneCandidates(line))
+    .map(normalizeAbilityStoneLine)
+    .filter(Boolean)
+    .filter((line) => !/Lv\.0/.test(line))
+    .filter((line) => !/무작위\s*각인\s*효과/.test(line))
     .filter((line, index, lines) => lines.indexOf(line) === index)
-    .slice(0, category === "bracelet" ? 10 : 8);
+    .slice(0, 6);
+}
+
+export function parseAccessoryOptions(tooltipLines, { name = "", type = "" } = {}) {
+  return tooltipLines
+    .map(cleanTooltipLine)
+    .filter(Boolean)
+    .flatMap((line) => splitOptionCandidates(line))
+    .map(cleanTooltipLine)
+    .filter((line) => isUsefulAccessoryOption(line, { name, type }))
+    .filter((line, index, lines) => lines.indexOf(line) === index)
+    .slice(0, 8);
+}
+
+function parseBraceletOptions(tooltipLines, { name = "", type = "" } = {}) {
+  return tooltipLines
+    .map(cleanTooltipLine)
+    .filter(Boolean)
+    .flatMap((line) => splitOptionCandidates(line))
+    .map(cleanTooltipLine)
+    .filter((line) => isUsefulBraceletOption(line, { name, type }))
+    .filter((line, index, lines) => lines.indexOf(line) === index)
+    .slice(0, 10);
 }
 
 function getTooltipLines(value) {
@@ -268,26 +301,84 @@ function getTooltipLines(value) {
 function cleanTooltipLine(value) {
   return stripHtml(value)
     .replace(/\[[^\]]*]/g, " ")
+    .replace(/부여\s*옵션/gi, " ")
     .replace(/nameTagBox/gi, " ")
     .replace(/태그\s*:/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function isUsefulEquipmentOption(line, { category, name, type }) {
-  if (!line || line === name || line === type) return false;
-  if (line.length < 2 || line.length > 90) return false;
-  if (/nameTagBox|Element_|slotData|아이템\s*정보|판매|분해|거래|귀속|획득|내구도|장착|레벨|티어|품질\s*\d*$/i.test(line)) {
-    return false;
+function isAbilityStone(type, name) {
+  return /어빌리티\s*스톤|스톤/.test(`${type} ${name}`);
+}
+
+function splitOptionCandidates(line) {
+  return String(line || "")
+    .split(/\n|ㆍ|●|◆|※/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function extractAbilityStoneCandidates(line) {
+  const candidates = [];
+  const pattern = /(.+?)\s*(?:Lv\.?\s*(\d+)|레벨\s*(\d+))\s*(증가|감소)?(?=\s|$)/gi;
+  let match = pattern.exec(line);
+
+  while (match) {
+    candidates.push(match[0]);
+    match = pattern.exec(line);
   }
 
-  const statPattern = /(치명|특화|제압|신속|인내|숙련)\s*\+?\s*\d/;
-  const engravingPattern = /(각인|활성도|감소|Lv\.?\s*\d|레벨\s*\d)/;
-  const braceletPattern = /(힘|민첩|지능|체력|무기\s*공격력|공격력|치명타|피해|추가|효과|회복|보호막|정밀|순환|망치|열정|냉정|습격|쐐기|돌진|응원|비수|약점|상처|우월|멸시|타격|마나|전투\s*중)/;
+  return candidates.length ? candidates : [line];
+}
 
-  if (statPattern.test(line) || engravingPattern.test(line)) return true;
-  if (category === "bracelet" && braceletPattern.test(line)) return true;
-  return false;
+function normalizeAbilityStoneLine(line) {
+  if (!line || /무작위\s*각인\s*효과/.test(line)) return "";
+
+  const compactLine = cleanTooltipLine(line);
+  const directMatch = compactLine.match(
+    /(.+?)\s*(?:Lv\.?\s*(\d+)|레벨\s*(\d+))\s*(증가|감소)?/i,
+  );
+  if (!directMatch) return "";
+
+  const name = cleanOptionName(directMatch[1]);
+  const level = directMatch[2] || directMatch[3] || "0";
+  if (!name || Number(level) === 0) return "";
+
+  const direction = directMatch[4] || (/(공격속도|이동속도|방어력|감소|패널티)/.test(name) ? "감소" : "증가");
+  return `${name} Lv.${level} ${direction}`;
+}
+
+function isUsefulAccessoryOption(line, { name, type }) {
+  if (!line || line === name || line === type) return false;
+  if (!hasOptionNumber(line)) return false;
+  return !isIgnoredEquipmentLine(line);
+}
+
+function isUsefulBraceletOption(line, { name, type }) {
+  if (!line || line === name || line === type) return false;
+  if (!hasOptionNumber(line) && !/(효과|피해|공격력|치명타|쿨타임|재사용|회복|보호막|약점|비수|응원|정밀|순환|우월)/.test(line)) {
+    return false;
+  }
+  return !isIgnoredEquipmentLine(line);
+}
+
+function hasOptionNumber(line) {
+  return /[+-]?\s*\d+(?:\.\d+)?\s*%?|Lv\.?\s*\d/i.test(line);
+}
+
+function isIgnoredEquipmentLine(line) {
+  if (line.length < 2 || line.length > 100) return true;
+  return /nameTagBox|Element_|slotData|아이템\s*정보|판매|분해|거래|귀속|획득|내구도|장착|레벨|티어|^품질\s*:?\s*\d*$|설명|무작위\s*각인\s*효과|효과가\s*부여|옵션을\s*부여|부여\s*옵션$/i.test(line);
+}
+
+function cleanOptionName(value) {
+  return cleanTooltipLine(value)
+    .replace(/각인\s*효과/g, "")
+    .replace(/활성도/g, "")
+    .replace(/감소\s*효과/g, "감소")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function shouldSkipTooltipKey(key) {
@@ -309,6 +400,40 @@ export function matchGemSkillName({ effectText = "", gemName = "", skills = [], 
 
 function normalizeMatchText(value) {
   return stripHtml(value).replace(/\s+/g, "").toLowerCase();
+}
+
+function getGemRawEffectText({ effect, gem }) {
+  const directText = [effect.Name, effect.Description, effect.Effect, effect.Text]
+    .filter(Boolean)
+    .map(stripHtml)
+    .find((value) => isUsefulGemEffectText(value));
+
+  if (directText) return directText;
+
+  const tooltipText = [...getTooltipLines(effect.Tooltip), ...getTooltipLines(gem.Tooltip)].find(isUsefulGemEffectText);
+  return tooltipText || "";
+}
+
+function isUsefulGemEffectText(value) {
+  const text = cleanTooltipLine(value);
+  if (!text || text.length > 80) return false;
+  if (/NameTagBox|ItemTitle|SingleTextBox|MultiTextBox|Element_|장착|거래|귀속|아이템|티어|레벨|보석/i.test(text)) {
+    return false;
+  }
+  return /피해|데미지|대미지|재사용|쿨타임|쿨\s*감|감소|증가/.test(text);
+}
+
+function getGemEffectType(value) {
+  if (/재사용|쿨타임|쿨\s*감|감소/.test(value)) return "쿨감";
+  if (/피해|데미지|대미지|증가/.test(value)) return "데미지";
+  return "";
+}
+
+function formatGemEffect({ effectType, skillName }) {
+  if (!skillName && !effectType) return "";
+  if (!skillName) return effectType;
+  if (!effectType) return skillName;
+  return `${skillName} · ${effectType}`;
 }
 
 function normalizeIconUrl(value) {
