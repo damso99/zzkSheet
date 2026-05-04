@@ -33,11 +33,12 @@ export async function getLostarkCharacterBundle(characterName) {
   const lostarkApiKey = getLostarkApiKey();
   if (!lostarkApiKey) {
     return {
-      status: 500,
+      status: 503,
       body: {
+        code: "MISSING_LOSTARK_API_KEY",
         error: "LOSTARK_API_KEY is missing. Add it to server environment variables.",
         detail:
-          "프론트 번들에 키를 넣지 말고 Vercel Environment Variables 또는 로컬 .env.local/.env에 LOSTARK_API_KEY를 설정해 주세요.",
+          "Vercel Environment Variables에 LOSTARK_API_KEY를 추가한 뒤 Production 재배포를 해주세요. 프론트 번들에는 키를 넣지 않습니다.",
       },
     };
   }

@@ -60,7 +60,7 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
         const payload = await readJsonSafely(response);
 
         if (!response.ok) {
-          throw new Error(payload?.detail || payload?.error || "캐릭터 정보를 불러오지 못했습니다.");
+          throw new Error(buildErrorMessage(payload, response.status));
         }
 
         const parsedDetail = normalizeCharacterDetail(payload);
@@ -164,6 +164,14 @@ function renderTabPanel(activeTab, detail, styles) {
   }
 
   return <CharacterSkillList skills={detail.skills} styles={styles} />;
+}
+
+function buildErrorMessage(payload, status) {
+  if (payload?.code === "MISSING_LOSTARK_API_KEY") {
+    return payload.detail || "Vercel 환경변수 LOSTARK_API_KEY 설정이 필요합니다.";
+  }
+
+  return payload?.detail || payload?.error || `캐릭터 정보를 불러오지 못했습니다. (${status})`;
 }
 
 async function readJsonSafely(response) {
