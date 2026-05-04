@@ -181,6 +181,9 @@ export default function RaidSchedulePage() {
                 {label}
               </button>
             ))}
+            <a className={styles.tab} href="/personal" role="tab" aria-selected="false">
+              개인 일정
+            </a>
           </div>
 
           {activeTab === "search" ? (

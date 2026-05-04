@@ -131,6 +131,7 @@
   padding: 10px 0;
   color: var(--muted);
   font-weight: 800;
+  text-decoration: none;
   background: transparent;
   transition:
     color 180ms ease,

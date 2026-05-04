@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/personal",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/personal/",
+      "destination": "/index.html"
+    }
+  ]
+}

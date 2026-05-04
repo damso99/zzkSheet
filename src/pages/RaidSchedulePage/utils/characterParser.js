@@ -34,7 +34,7 @@ function normalizeProfile(profile, fallbackName) {
     expeditionLevel: displayValue(profile.ExpeditionLevel),
     characterLevel: displayValue(profile.CharacterLevel),
     guildName: displayValue(profile.GuildName),
-    title: displayValue(profile.Title),
+    title: displayValue(cleanTitleText(profile.Title)),
   };
 }
 
@@ -46,6 +46,7 @@ function normalizeEquipment(equipment) {
       const tooltipLines = getTooltipLines(item.Tooltip);
       const type = displayValue(item.Type);
       const name = displayValue(stripHtml(item.Name));
+      const icon = normalizeIconUrl(item.Icon);
       const category = getEquipmentCategory(type, name);
       const isStone = isAbilityStone(type, name);
 
@@ -53,14 +54,14 @@ function normalizeEquipment(equipment) {
         category,
         type,
         name,
-        icon: normalizeIconUrl(item.Icon),
+        icon,
         grade: displayValue(item.Grade),
         quality: displayValue(
           item.Quality !== "" && item.Quality != null ? item.Quality : findDeepValue(tooltipObject, "qualityValue"),
         ),
         enhancement: extractEnhancement(item.Name),
         options: getEquipmentOptions({ category, name, type, tooltipLines }),
-        abilityStone: isStone ? parseAbilityStoneDetail(tooltipLines) : null,
+        abilityStone: isStone ? parseAbilityStoneDetail(tooltipLines, { name, icon }) : null,
       };
     });
 }
@@ -222,7 +223,20 @@ function findDeepValue(value, targetKey) {
 function stripHtml(value) {
   return String(value || "")
     .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<img[^>]*>/gi, " ")
     .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function cleanTitleText(value) {
+  return String(value || "")
+    .replace(/<img[^>]*>/gi, "")
+    .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
@@ -257,19 +271,24 @@ export function parseAbilityStoneOptions(tooltipLines) {
   return parseAbilityStoneDetail(tooltipLines).engravings.map((engraving) => `${engraving.name} [${engraving.level}]`);
 }
 
-export function parseAbilityStoneDetail(tooltipLines) {
+export function parseAbilityStoneDetail(tooltipLines, { name = "", icon = "" } = {}) {
   const lines = tooltipLines
     .map(cleanTooltipLine)
     .filter(Boolean)
     .flatMap((line) => splitOptionCandidates(line))
-    .map(cleanTooltipLine)
+    .map(sanitizeAbilityStoneLine)
     .filter((line) => !isIgnoredAbilityStoneLine(line));
+  const basicEffects = lines
+    .map(normalizeAbilityStoneBaseEffect)
+    .filter(Boolean)
+    .filter((line, index, list) => list.indexOf(line) === index)
+    .slice(0, 3);
 
   return {
-    basicEffects: lines
-      .filter(isAbilityStoneBasicEffect)
-      .filter((line, index, list) => list.indexOf(line) === index)
-      .slice(0, 3),
+    name,
+    icon,
+    baseEffect: basicEffects[0] || "",
+    basicEffects,
     engravings: lines
       .flatMap((line) => extractAbilityStoneCandidates(line))
       .filter(isUsefulAbilityStoneCandidate)
@@ -338,7 +357,7 @@ function splitOptionCandidates(line) {
 
 function extractAbilityStoneCandidates(line) {
   const candidates = [];
-  const pattern = /(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)?(?=\s|$)/gi;
+  const pattern = /(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)?(?=\s|$|[가-힣A-Za-z])/gi;
   let match = pattern.exec(line);
 
   while (match) {
@@ -354,13 +373,21 @@ const ABILITY_STONE_IGNORED_KEYWORDS = [
   "아이템 레벨",
   "장비 레벨",
   "품질",
-  "무작위 각인 효과",
   "획득처",
   "드랍",
 ];
 
+function sanitizeAbilityStoneLine(line) {
+  return cleanTooltipLine(line)
+    .replace(/무작위\s*각인\s*효과/gi, " ")
+    .replace(/각인\s*효과/gi, " ")
+    .replace(/활성도/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function isIgnoredAbilityStoneLine(line) {
-  const cleanedLine = cleanTooltipLine(line);
+  const cleanedLine = sanitizeAbilityStoneLine(line);
   return !cleanedLine || isIgnoredDropSourceLine(cleanedLine) || ABILITY_STONE_IGNORED_KEYWORDS.some((keyword) => cleanedLine.includes(keyword));
 }
 
@@ -374,9 +401,10 @@ function isUsefulAbilityStoneCandidate(line) {
   return Boolean(optionName);
 }
 
-function isAbilityStoneBasicEffect(line) {
+function normalizeAbilityStoneBaseEffect(line) {
   if (isIgnoredAbilityStoneLine(line)) return false;
-  return /기본/.test(line) && hasOptionNumber(line);
+  const match = cleanTooltipLine(line).match(/기본\s*[가-힣A-Za-z\s]*?\s*[+-]\s*\d+(?:\.\d+)?\s*%?/);
+  return match?.[0]?.replace(/\s+/g, " ").trim() || "";
 }
 
 function normalizeAbilityStoneEngraving(line) {
@@ -441,6 +469,7 @@ function cleanOptionName(value) {
     .replace(/각인\s*효과/g, "")
     .replace(/활성도/g, "")
     .replace(/감소\s*효과/g, "감소")
+    .replace(/\s+감소$/g, "감소")
     .replace(/\s+/g, " ")
     .trim();
 }

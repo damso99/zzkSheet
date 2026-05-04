@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
+import { CHARACTER_PLACEHOLDER_IMAGE, cleanTitleText, displayValue } from "../utils/characterParser.js";
 
 export default function CharacterProfileHeader({ profile, styles }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -13,7 +13,7 @@ export default function CharacterProfileHeader({ profile, styles }) {
     ["아이템 레벨", profile.itemAvgLevel],
     ["전투력", profile.combatPower],
     ["길드", profile.guildName],
-    ["칭호", profile.title],
+    ["칭호", cleanTitleText(profile.title)],
   ];
 
   return (
