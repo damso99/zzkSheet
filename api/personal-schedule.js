@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const scriptUrl = process.env.PERSONAL_SCHEDULE_SCRIPT_URL;
+  const scriptUrl = cleanScriptUrl(process.env.PERSONAL_SCHEDULE_SCRIPT_URL);
 
   if (!scriptUrl) {
     return res.status(500).json({
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       });
       const text = await response.text();
 
-      return sendProxyResponse(res, response.status || 200, text);
+      return sendProxyResponse(res, response, text);
     }
 
     if (req.method === "POST") {
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       });
       const text = await response.text();
 
-      return sendProxyResponse(res, response.status || 200, text);
+      return sendProxyResponse(res, response, text);
     }
 
     return res.status(405).json({
@@ -50,10 +50,33 @@ export default async function handler(req, res) {
   }
 }
 
-function sendProxyResponse(res, status, text) {
+function cleanScriptUrl(value) {
+  return String(value || "")
+    .replace(/^["']|["']$/g, "")
+    .trim();
+}
+
+function sendProxyResponse(res, response, text) {
+  const status = response.status || 200;
+  const contentType = response.headers.get("content-type") || "";
+
+  if (looksLikeHtml(text, contentType)) {
+    return res.status(502).json({
+      success: false,
+      message:
+        "Apps Script returned an HTML error page. Check PERSONAL_SCHEDULE_SCRIPT_URL and deploy the Apps Script Web App with Execute as Me / Anyone access.",
+      upstreamStatus: status,
+      upstreamUrl: response.url,
+    });
+  }
+
   try {
     return res.status(status).json(JSON.parse(text));
   } catch {
     return res.status(status).send(text);
   }
+}
+
+function looksLikeHtml(text, contentType) {
+  return contentType.includes("text/html") || /^\s*<!doctype html/i.test(text) || /^\s*<html/i.test(text);
 }

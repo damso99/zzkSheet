@@ -113,7 +113,7 @@ async function handleLostarkCharacterRequest(response, url) {
 }
 
 async function handlePersonalScheduleRequest(request, response, url) {
-  const scriptUrl = process.env.PERSONAL_SCHEDULE_SCRIPT_URL;
+  const scriptUrl = cleanEnvValue(process.env.PERSONAL_SCHEDULE_SCRIPT_URL);
 
   if (!scriptUrl) {
     sendJson(response, 500, {
@@ -133,7 +133,7 @@ async function handlePersonalScheduleRequest(request, response, url) {
         redirect: "follow",
       });
       const text = await scriptResponse.text();
-      sendProxyText(response, scriptResponse.status || 200, text);
+      sendProxyText(response, scriptResponse, text);
       return;
     }
 
@@ -148,7 +148,7 @@ async function handlePersonalScheduleRequest(request, response, url) {
         redirect: "follow",
       });
       const text = await scriptResponse.text();
-      sendProxyText(response, scriptResponse.status || 200, text);
+      sendProxyText(response, scriptResponse, text);
       return;
     }
 
@@ -236,6 +236,12 @@ function getCellValue(cell) {
   return String(cell.v);
 }
 
+function cleanEnvValue(value) {
+  return String(value || "")
+    .replace(/^["']|["']$/g, "")
+    .trim();
+}
+
 function readRequestBody(request) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -248,13 +254,31 @@ function readRequestBody(request) {
   });
 }
 
-function sendProxyText(response, status, text) {
+function sendProxyText(response, scriptResponse, text) {
+  const status = scriptResponse.status || 200;
+  const contentType = scriptResponse.headers.get("content-type") || "";
+
+  if (looksLikeHtml(text, contentType)) {
+    sendJson(response, 502, {
+      success: false,
+      message:
+        "Apps Script returned an HTML error page. Check PERSONAL_SCHEDULE_SCRIPT_URL and deploy the Apps Script Web App with Execute as Me / Anyone access.",
+      upstreamStatus: status,
+      upstreamUrl: scriptResponse.url,
+    });
+    return;
+  }
+
   try {
     sendJson(response, status, JSON.parse(text));
   } catch {
     response.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
     response.end(text);
   }
+}
+
+function looksLikeHtml(text, contentType) {
+  return contentType.includes("text/html") || /^\s*<!doctype html/i.test(text) || /^\s*<html/i.test(text);
 }
 
 async function serveStaticFile(response, pathname) {
