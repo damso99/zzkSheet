@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ko } from "date-fns/locale";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/style.css";
 import styles from "./PersonalSchedulePage.module.css";
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
@@ -20,10 +23,13 @@ export default function PersonalSchedulePage() {
   const [sortMode, setSortMode] = useState("latest");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const datePickerRef = useRef(null);
 
   const sortedItems = useMemo(() => sortPersonalSchedules(items, sortMode), [items, sortMode]);
+  const selectedDate = form.date ? new Date(`${form.date}T00:00:00`) : undefined;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -31,6 +37,17 @@ export default function PersonalSchedulePage() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    function handlePointerDown(event) {
+      if (!datePickerRef.current?.contains(event.target)) {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    if (isCalendarOpen) document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isCalendarOpen]);
 
   async function loadPersonalSchedules({ signal, silent = false } = {}) {
     if (!silent) {
@@ -114,6 +131,12 @@ export default function PersonalSchedulePage() {
     }));
   }
 
+  function handleDateSelect(date) {
+    if (!date) return;
+    updateField("date", formatDateForInput(date));
+    setIsCalendarOpen(false);
+  }
+
   return (
     <main className={styles.page}>
       <div className={styles.backdrop} />
@@ -136,9 +159,22 @@ export default function PersonalSchedulePage() {
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>
+            <label className={styles.datePickerField} ref={datePickerRef}>
               <span>날짜</span>
-              <input type="date" value={form.date} required onChange={(event) => updateField("date", event.target.value)} />
+              <button
+                type="button"
+                className={styles.datePickerButton}
+                onClick={() => setIsCalendarOpen((current) => !current)}
+                aria-expanded={isCalendarOpen}
+              >
+                <CalendarIcon />
+                <strong>{selectedDate ? formatDateButtonLabel(selectedDate) : "날짜 선택"}</strong>
+              </button>
+              {isCalendarOpen ? (
+                <div className={styles.calendarPopover}>
+                  <DayPicker mode="single" selected={selectedDate} onSelect={handleDateSelect} locale={ko} />
+                </div>
+              ) : null}
             </label>
             <label>
               <span>이름</span>
@@ -268,6 +304,22 @@ function normalizeDateTime(value) {
   return date.toISOString();
 }
 
+function formatDateForInput(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatDateButtonLabel(date) {
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+}
+
 function formatDateLabel(value) {
   if (!value) return "날짜 없음";
 
@@ -280,6 +332,21 @@ function formatDateLabel(value) {
   } catch {
     return value;
   }
+}
+
+function CalendarIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={styles.calendarIcon}>
+      <path
+        d="M7 2.75v2.5M17 2.75v2.5M3.75 9.25h16.5M6.25 5.25h11.5a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H6.25a2.5 2.5 0 0 1-2.5-2.5v-10a2.5 2.5 0 0 1 2.5-2.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
 }
 
 async function readJsonSafely(response) {

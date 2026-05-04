@@ -205,7 +205,117 @@
   box-shadow: 0 0 0 3px rgba(105, 230, 255, 0.12);
 }
 
-.form button {
+.datePickerField {
+  position: relative;
+  overflow: visible;
+}
+
+.datePickerButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid rgba(104, 150, 255, 0.22);
+  border-radius: 14px;
+  color: #ffffff;
+  background: rgba(4, 9, 22, 0.72);
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.datePickerButton:hover,
+.datePickerButton[aria-expanded="true"] {
+  border-color: rgba(105, 230, 255, 0.62);
+  background: rgba(11, 20, 42, 0.88);
+  box-shadow: 0 0 0 3px rgba(105, 230, 255, 0.12);
+}
+
+.datePickerButton strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendarIcon {
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  color: #e5e7eb;
+}
+
+.calendarPopover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  width: min(330px, calc(100vw - 56px));
+  padding: 12px;
+  border: 1px solid rgba(104, 150, 255, 0.32);
+  border-radius: 18px;
+  color: #eef5ff;
+  background:
+    linear-gradient(135deg, rgba(85, 167, 255, 0.16), transparent 48%),
+    rgba(5, 11, 27, 0.98);
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.42),
+    0 0 28px rgba(85, 167, 255, 0.18);
+}
+
+.calendarPopover :global(.rdp-root) {
+  --rdp-accent-color: #8b5cf6;
+  --rdp-accent-background-color: rgba(139, 92, 246, 0.26);
+  --rdp-day_button-border-radius: 12px;
+  --rdp-selected-border: 0;
+  margin: 0;
+}
+
+.calendarPopover :global(.rdp-month_caption) {
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.calendarPopover :global(.rdp-chevron) {
+  fill: #e5e7eb;
+}
+
+.calendarPopover :global(.rdp_weekday) {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.calendarPopover :global(.rdp-day_button) {
+  color: #e5e7eb;
+  border-radius: 12px;
+}
+
+.calendarPopover :global(.rdp-day_button:hover) {
+  color: #ffffff;
+  background: rgba(85, 167, 255, 0.18);
+}
+
+.calendarPopover :global(.rdp-selected .rdp-day_button) {
+  color: #ffffff;
+  background: linear-gradient(135deg, #8b5cf6, #55a7ff);
+  box-shadow: 0 0 22px rgba(85, 167, 255, 0.26);
+}
+
+.calendarPopover :global(.rdp-today .rdp-day_button) {
+  border: 1px solid rgba(255, 216, 138, 0.58);
+}
+
+.form > button {
   height: 44px;
   padding: 0 18px;
   border-radius: 14px;
@@ -219,12 +329,12 @@
     opacity 160ms ease;
 }
 
-.form button:hover:not(:disabled) {
+.form > button:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.06);
 }
 
-.form button:disabled {
+.form > button:disabled {
   cursor: not-allowed;
   opacity: 0.52;
 }
@@ -321,7 +431,7 @@
     flex-direction: column;
   }
 
-  .form button {
+  .form > button {
     width: 100%;
   }
 }
@@ -335,6 +445,15 @@
   .form input {
     padding-right: 10px;
     padding-left: 10px;
+  }
+
+  .datePickerButton {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .calendarPopover {
+    width: min(318px, calc(100vw - 64px));
   }
 
   .scheduleList {
