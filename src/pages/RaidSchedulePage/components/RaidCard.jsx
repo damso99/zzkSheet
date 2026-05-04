@@ -3,7 +3,6 @@ import RaidParticipantTable from "./RaidParticipantTable.jsx";
 
 export default function RaidCard({ raid, styles, onCharacterClick, collapsible = false, isHighlighted = false }) {
   const [isOpen, setIsOpen] = useState(!collapsible);
-  const statusLabel = raid.status || "예정";
 
   function toggleOpen() {
     if (!collapsible) return;
@@ -33,7 +32,6 @@ export default function RaidCard({ raid, styles, onCharacterClick, collapsible =
           <h3>{raid.raidName}</h3>
         </div>
         <div className={styles.cardHeaderActions}>
-          <span className={`${styles.statusBadge} ${styles.scheduled}`}>{statusLabel}</span>
           {collapsible ? (
             <button
               type="button"

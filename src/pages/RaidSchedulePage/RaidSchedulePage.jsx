@@ -265,7 +265,7 @@ export default function RaidSchedulePage() {
             ) : (
               <div className={styles.weekStack}>
                 {weeklyGroups.map((group) => (
-                  <details key={group.date} className={styles.dayGroup} open={group.date === todayIsoDate}>
+                  <details key={group.date} className={styles.dayGroup}>
                     <summary className={styles.dayHeader}>
                       <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
                       <span>{group.raids.length}개 일정</span>
