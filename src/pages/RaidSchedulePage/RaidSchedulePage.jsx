@@ -284,24 +284,18 @@ export default function RaidSchedulePage() {
                           <div>
                             <h3>{item.raidName}</h3>
                           </div>
-                          <dl className={styles.searchDetailList}>
-                            <div>
-                              <dt>참여 캐릭터</dt>
-                              <dd>
-                                <button
-                                  type="button"
-                                  className={styles.searchCharacterButton}
-                                  onClick={() => setSelectedCharacterName(item.characterName)}
-                                >
-                                  {item.characterName}
-                                </button>
-                              </dd>
-                            </div>
-                            <div>
-                              <dt>이름</dt>
-                              <dd>{item.ownerName}</dd>
-                            </div>
-                          </dl>
+                          <p className={styles.searchInlineMeta}>
+                            <span>참여 캐릭터</span>
+                            <button
+                              type="button"
+                              className={styles.searchCharacterButton}
+                              onClick={() => setSelectedCharacterName(item.characterName)}
+                            >
+                              {item.characterName}
+                            </button>
+                            <span>이름</span>
+                            <strong>{item.ownerName}</strong>
+                          </p>
                         </article>
                       ))}
                     </div>

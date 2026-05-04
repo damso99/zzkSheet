@@ -45,7 +45,7 @@ function normalizeEquipment(equipment) {
     return {
       type: displayValue(item.Type),
       name: displayValue(stripHtml(item.Name)),
-      icon: item.Icon || CHARACTER_PLACEHOLDER_IMAGE,
+      icon: normalizeIconUrl(item.Icon),
       grade: displayValue(item.Grade),
       quality: displayValue(item.Quality ?? findDeepValue(tooltipObject, "qualityValue")),
       tooltip,
@@ -64,7 +64,7 @@ function normalizeGems(gemsPayload) {
 
     return {
       name: displayValue(stripHtml(gem.Name)),
-      icon: gem.Icon || CHARACTER_PLACEHOLDER_IMAGE,
+      icon: normalizeIconUrl(gem.Icon),
       level: displayValue(gem.Level || extractGemLevel(gem.Name)),
       effect: displayValue(effect.Name || effect.Description || toPlainTooltip(effect.Tooltip)),
     };
@@ -72,28 +72,33 @@ function normalizeGems(gemsPayload) {
 }
 
 function normalizeEngravings(engravingsPayload) {
+  const abilityEngravings = asArray(engravingsPayload?.Engravings).map((engraving) =>
+    normalizeEngravingItem(engraving, "활성 각인"),
+  );
   const normalEffects = asArray(engravingsPayload?.Effects).map((effect) => ({
     name: displayValue(stripHtml(effect.Name)),
     level: displayValue(effect.Level || extractLevel(effect.Name || effect.Description)),
     description: displayValue(stripHtml(effect.Description)),
-    icon: effect.Icon || CHARACTER_PLACEHOLDER_IMAGE,
+    icon: normalizeIconUrl(effect.Icon || extractIconFromTooltip(effect.Tooltip || effect.Description)),
   }));
 
   const arkPassiveEffects = asArray(engravingsPayload?.ArkPassiveEffects).map((effect) => ({
     name: displayValue(stripHtml(effect.Name)),
     level: displayValue(effect.Level || extractLevel(effect.Name || effect.Description)),
     description: displayValue(stripHtml(effect.Description || "아크 패시브 각인 효과")),
-    icon: effect.Icon || CHARACTER_PLACEHOLDER_IMAGE,
+    icon: normalizeIconUrl(effect.Icon || extractIconFromTooltip(effect.Tooltip || effect.Description)),
   }));
 
-  return [...normalEffects, ...arkPassiveEffects];
+  return [...abilityEngravings, ...normalEffects, ...arkPassiveEffects].filter(
+    (engraving, index, list) => list.findIndex((item) => item.name === engraving.name) === index,
+  );
 }
 
 function normalizeCards(cardsPayload) {
   return {
     cards: asArray(cardsPayload?.Cards).map((card) => ({
       name: displayValue(stripHtml(card.Name)),
-      icon: card.Icon || CHARACTER_PLACEHOLDER_IMAGE,
+      icon: normalizeIconUrl(card.Icon),
       awakeCount: displayValue(card.AwakeCount ?? card.AwakeTotal),
     })),
     effects: asArray(cardsPayload?.Effects).flatMap((effect) => {
@@ -109,7 +114,7 @@ function normalizeCards(cardsPayload) {
 
 function normalizeSkills(skillsPayload) {
   return asArray(skillsPayload)
-    .filter((skill) => Number(skill.Level || 0) > 0 || skill.Name)
+    .filter((skill) => getSkillPoint(skill) >= 2)
     .map((skill) => {
       const tripods = asArray(skill.Tripods)
         .filter((tripod) => tripod.IsSelected || tripod.Name)
@@ -121,12 +126,22 @@ function normalizeSkills(skillsPayload) {
 
       return {
         name: displayValue(stripHtml(skill.Name)),
-        icon: skill.Icon || CHARACTER_PLACEHOLDER_IMAGE,
+        icon: normalizeIconUrl(skill.Icon),
         level: displayValue(skill.Level),
+        point: displayValue(getSkillPoint(skill)),
         rune: displayValue(skill.Rune?.Name || skill.RuneName),
         tripods,
       };
     });
+}
+
+function normalizeEngravingItem(engraving, fallbackDescription) {
+  return {
+    name: displayValue(stripHtml(engraving.Name)),
+    level: displayValue(engraving.Level || extractLevel(engraving.Name || engraving.Description)),
+    description: displayValue(stripHtml(engraving.Description || fallbackDescription)),
+    icon: normalizeIconUrl(engraving.Icon || extractIconFromTooltip(engraving.Tooltip || engraving.Description)),
+  };
 }
 
 function asArray(value) {
@@ -192,6 +207,50 @@ function stripHtml(value) {
     .replace(/&gt;/gi, ">")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeIconUrl(value) {
+  const icon = String(value || "").trim();
+  if (!icon) return CHARACTER_PLACEHOLDER_IMAGE;
+  if (/^https?:\/\//i.test(icon)) return icon;
+  if (icon.startsWith("//")) return `https:${icon}`;
+  if (icon.startsWith("/")) return `https://cdn-lostark.game.onstove.com${icon}`;
+  if (/^[a-z0-9_.-]+\.(png|jpg|jpeg|webp)$/i.test(icon)) {
+    return `/api/asset?name=${encodeURIComponent(icon)}`;
+  }
+
+  return `https://cdn-lostark.game.onstove.com/${icon.replace(/^\.?\//, "")}`;
+}
+
+function extractIconFromTooltip(value) {
+  const text = typeof value === "string" ? value : JSON.stringify(value || "");
+  const urlMatch = text.match(/https?:\/\/[^"')\s]+?\.(?:png|jpg|jpeg|webp)/i);
+  if (urlMatch) return urlMatch[0];
+
+  const pathMatch = text.match(/(?:\/)?(?:EFUI|efui)[^"')\s]+?\.(?:png|jpg|jpeg|webp)/i);
+  if (pathMatch) {
+    const path = pathMatch[0].replace(/\\/g, "/");
+    return path.startsWith("/") ? path : `/${path}`;
+  }
+
+  return "";
+}
+
+function getSkillPoint(skill) {
+  const explicitPoint = Number(
+    skill.Point ??
+      skill.SkillPoint ??
+      skill.SkillPoints ??
+      skill.SkillPointCost ??
+      skill.RequiredSkillPoint ??
+      "",
+  );
+
+  if (Number.isFinite(explicitPoint) && explicitPoint > 0) return explicitPoint;
+
+  // 일부 OpenAPI 응답은 투자 포인트 대신 스킬 레벨만 내려와 레벨 2 이상을 투자 스킬로 봅니다.
+  const level = Number(skill.Level || 0);
+  return Number.isFinite(level) ? level : 0;
 }
 
 function extractEnhancement(name) {

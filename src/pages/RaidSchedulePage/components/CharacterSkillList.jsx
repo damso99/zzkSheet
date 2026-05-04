@@ -18,7 +18,7 @@ export default function CharacterSkillList({ skills, styles }) {
             />
             <span>
               <strong>{displayValue(skill.name)}</strong>
-              <small>Lv. {displayValue(skill.level)} · 룬 {displayValue(skill.rune)}</small>
+              <small>Lv. {displayValue(skill.level)} · 포인트 {displayValue(skill.point)} · 룬 {displayValue(skill.rune)}</small>
             </span>
           </summary>
           <div className={styles.tripodList}>

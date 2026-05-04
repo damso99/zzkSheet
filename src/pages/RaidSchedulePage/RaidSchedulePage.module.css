@@ -537,43 +537,36 @@
 .searchResultCard {
   display: flex;
   justify-content: space-between;
-  gap: 18px;
-  padding: 20px;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px;
   border: 1px solid rgba(104, 150, 255, 0.22);
-  border-radius: 22px;
+  border-radius: 18px;
   background: var(--panel);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
 }
 
 .searchResultCard h3 {
-  margin: 6px 0 0;
+  margin: 0;
   color: #ffffff;
   font-size: 1.12rem;
 }
 
-.searchDetailList {
-  display: grid;
-  gap: 10px;
-  min-width: 220px;
+.searchInlineMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  justify-content: flex-end;
   margin: 0;
-}
-
-.searchDetailList div {
-  padding: 11px 13px;
-  border: 1px solid rgba(104, 150, 255, 0.18);
-  border-radius: 16px;
-  background: rgba(2, 7, 18, 0.32);
-}
-
-.searchDetailList dt {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
-.searchDetailList dd {
-  margin: 4px 0 0;
+.searchInlineMeta strong {
   color: #ffffff;
-  font-weight: 900;
+  font-size: 0.94rem;
 }
 
 /* Character detail modal */
@@ -985,6 +978,10 @@
     align-items: stretch;
   }
 
+  .searchInlineMeta {
+    justify-content: flex-start;
+  }
+
   .summaryChips {
     justify-content: flex-start;
   }
@@ -1039,10 +1036,6 @@
 
   .participantTable {
     min-width: 540px;
-  }
-
-  .searchDetailList {
-    min-width: 0;
   }
 
   .modalOverlay {
