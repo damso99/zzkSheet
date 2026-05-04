@@ -224,17 +224,17 @@ export default function RaidSchedulePage() {
             ) : (
               <div className={styles.weekStack}>
                 {weeklyGroups.map((group) => (
-                  <section key={group.date} className={styles.dayGroup}>
-                    <header className={styles.dayHeader}>
-                      <h3>{group.label}</h3>
+                  <details key={group.date} className={styles.dayGroup} open={group.date === todayIsoDate}>
+                    <summary className={styles.dayHeader}>
+                      <span className={styles.dayTitle}>{group.label}</span>
                       <span>{group.raids.length}개 일정</span>
-                    </header>
+                    </summary>
                     <div className={styles.cardGrid}>
                       {group.raids.map((raid) => (
                         <RaidCard key={raid.id} raid={raid} styles={styles} showDate />
                       ))}
                     </div>
-                  </section>
+                  </details>
                 ))}
               </div>
             )}

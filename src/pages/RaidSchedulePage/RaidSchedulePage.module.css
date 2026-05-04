@@ -438,11 +438,19 @@
 /* Weekly groups */
 .weekStack {
   display: grid;
-  gap: 28px;
+  gap: 14px;
 }
 
 .dayGroup {
-  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(20, 31, 62, 0.7), rgba(7, 13, 29, 0.7)),
+    rgba(15, 23, 45, 0.68);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .dayHeader {
@@ -450,20 +458,57 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  margin-bottom: 14px;
+  min-height: 64px;
+  padding: 18px 20px;
+  list-style: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
-.dayHeader h3 {
-  margin: 0;
+.dayHeader::-webkit-details-marker {
+  display: none;
+}
+
+.dayHeader::before {
+  width: 10px;
+  height: 10px;
+  content: "";
+  border-right: 2px solid var(--cyan);
+  border-bottom: 2px solid var(--cyan);
+  transform: rotate(-45deg);
+  transition: transform 180ms ease;
+  box-shadow: 4px 4px 18px rgba(105, 230, 255, 0.35);
+}
+
+.dayGroup[open] .dayHeader {
+  background: rgba(105, 230, 255, 0.06);
+}
+
+.dayGroup[open] .dayHeader::before {
+  transform: rotate(45deg);
+}
+
+.dayHeader:hover {
+  background: rgba(105, 230, 255, 0.08);
+}
+
+.dayTitle {
   color: #ffffff;
+  flex: 1;
   font-size: 1.12rem;
   font-weight: 900;
   text-shadow: 0 0 14px rgba(85, 167, 255, 0.35);
 }
 
-.dayHeader span {
+.dayHeader > span:not(.dayTitle) {
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.dayGroup .cardGrid {
+  margin: 0 20px 20px;
 }
 
 /* Search */
