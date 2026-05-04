@@ -703,6 +703,22 @@
   padding: 22px 26px 28px;
 }
 
+.modalBody::-webkit-scrollbar,
+.modalContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalBody::-webkit-scrollbar-track,
+.modalContent::-webkit-scrollbar-track {
+  background: rgba(2, 7, 18, 0.32);
+}
+
+.modalBody::-webkit-scrollbar-thumb,
+.modalContent::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #555;
+}
+
 .modalLoading,
 .modalError,
 .modalEmpty,
@@ -796,6 +812,7 @@
   font-weight: 900;
 }
 
+.equipmentLayout,
 .equipmentGrid,
 .gemGrid,
 .cardSetGrid {
@@ -803,8 +820,43 @@
   gap: 14px;
 }
 
-.equipmentGrid {
+.equipmentLayout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.equipmentSideColumn {
+  display: grid;
+  gap: 14px;
+}
+
+.equipmentSection {
+  min-width: 0;
+}
+
+.equipmentSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.equipmentSectionHeader h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.equipmentSectionHeader span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.equipmentGrid {
+  grid-template-columns: 1fr;
 }
 
 .gemGrid,
@@ -839,8 +891,8 @@
 
 .equipmentCard {
   grid-template-columns: 62px minmax(0, 1fr);
-  align-items: center;
-  min-height: 112px;
+  align-items: start;
+  min-height: 108px;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
@@ -921,7 +973,37 @@
   font-weight: 900;
 }
 
-.tooltipText,
+.equipmentOptionList {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.equipmentOptionList li {
+  min-width: 0;
+  color: #dbe7ff;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.equipmentOptionList li::before {
+  color: var(--cyan);
+  content: "+ ";
+  font-weight: 900;
+}
+
+.equipmentEmpty {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid rgba(104, 150, 255, 0.14);
+  border-radius: 16px;
+  color: var(--muted);
+  background: rgba(2, 7, 18, 0.28);
+}
+
 .gemCard p,
 .engravingCard p,
 .cardSet p,
@@ -933,15 +1015,16 @@
   line-height: 1.55;
 }
 
-.tooltipText {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
 .gemGrid {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.gemName {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
 }
 
 .engravingList,
@@ -1123,6 +1206,7 @@
     grid-template-columns: 1fr;
   }
 
+  .equipmentLayout,
   .equipmentGrid,
   .gemGrid,
   .cardSetGrid {

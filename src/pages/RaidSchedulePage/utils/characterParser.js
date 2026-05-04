@@ -4,14 +4,15 @@ export const EMPTY_TEXT = "정보 없음";
 export function normalizeCharacterDetail(payload = {}) {
   const armory = payload.armory || {};
   const profileSource = armory.profile || payload.character || {};
+  const skills = normalizeSkills(armory.combatSkills);
 
   return {
     profile: normalizeProfile(profileSource, payload.characterName),
     equipment: normalizeEquipment(armory.equipment),
-    gems: normalizeGems(armory.gems),
+    gems: normalizeGems(armory.gems, skills),
     engravings: normalizeEngravings(armory.engravings),
     cards: normalizeCards(armory.cards),
-    skills: normalizeSkills(armory.combatSkills),
+    skills,
     warnings: Object.keys(payload.errors || {}),
     fetchedAt: payload.fetchedAt || "",
   };
@@ -38,33 +39,53 @@ function normalizeProfile(profile, fallbackName) {
 }
 
 function normalizeEquipment(equipment) {
-  return asArray(equipment).map((item) => {
-    const tooltipObject = parseMaybeJson(item.Tooltip);
+  return asArray(equipment)
+    .filter((item) => !isExcludedEquipment(item))
+    .map((item) => {
+      const tooltipObject = parseMaybeJson(item.Tooltip);
+      const tooltipLines = getTooltipLines(item.Tooltip);
+      const type = displayValue(item.Type);
+      const name = displayValue(stripHtml(item.Name));
+      const category = getEquipmentCategory(type, name);
 
-    return {
-      type: displayValue(item.Type),
-      name: displayValue(stripHtml(item.Name)),
-      icon: normalizeIconUrl(item.Icon),
-      grade: displayValue(item.Grade),
-      quality: displayValue(item.Quality !== "" && item.Quality != null ? item.Quality : findDeepValue(tooltipObject, "qualityValue")),
-      enhancement: extractEnhancement(item.Name),
-    };
-  });
+      return {
+        category,
+        type,
+        name,
+        icon: normalizeIconUrl(item.Icon),
+        grade: displayValue(item.Grade),
+        quality: displayValue(
+          item.Quality !== "" && item.Quality != null ? item.Quality : findDeepValue(tooltipObject, "qualityValue"),
+        ),
+        enhancement: extractEnhancement(item.Name),
+        options: getEquipmentOptions({ category, name, type, tooltipLines }),
+      };
+    });
 }
 
-function normalizeGems(gemsPayload) {
+function normalizeGems(gemsPayload, skills = []) {
   const effectsBySlot = new Map(
     asArray(gemsPayload?.Effects).map((effect) => [String(effect.GemSlot ?? effect.Slot ?? ""), effect]),
   );
 
   return asArray(gemsPayload?.Gems || gemsPayload).map((gem) => {
     const effect = effectsBySlot.get(String(gem.Slot ?? "")) || {};
+    const effectText = displayValue(
+      effect.Name || effect.Description || toPlainTooltip(effect.Tooltip) || toPlainTooltip(gem.Tooltip),
+    );
+    const skillName = matchGemSkillName({
+      effectText,
+      gemName: gem.Name,
+      skills,
+      tooltipText: toPlainTooltip(gem.Tooltip),
+    });
 
     return {
       name: displayValue(stripHtml(gem.Name)),
       icon: normalizeIconUrl(gem.Icon),
       level: displayValue(gem.Level || extractGemLevel(gem.Name)),
-      effect: displayValue(effect.Name || effect.Description || toPlainTooltip(effect.Tooltip)),
+      effect: effectText,
+      skillName,
     };
   });
 }
@@ -170,6 +191,7 @@ function toPlainTooltip(value) {
 
 function collectStrings(value, key = "") {
   if (value == null) return [];
+  if (shouldSkipTooltipKey(key)) return [];
   if (typeof value === "string") {
     if (/icon|image|slotdata/i.test(key) || value.startsWith("http")) return [];
     return [value];
@@ -197,7 +219,7 @@ function findDeepValue(value, targetKey) {
 
 function stripHtml(value) {
   return String(value || "")
-    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -205,6 +227,88 @@ function stripHtml(value) {
     .replace(/&gt;/gi, ">")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isExcludedEquipment(item) {
+  const type = stripHtml(item?.Type);
+  const name = stripHtml(item?.Name);
+  return /부적|문장|나침반/.test(`${type} ${name}`);
+}
+
+function getEquipmentCategory(type, name) {
+  const text = `${type} ${name}`;
+  if (/팔찌/.test(text)) return "bracelet";
+  if (/목걸이|귀걸이|반지|어빌리티\s*스톤|스톤/.test(text)) return "accessory";
+  return "gear";
+}
+
+function getEquipmentOptions({ category, name, type, tooltipLines }) {
+  if (category === "gear") return [];
+
+  return tooltipLines
+    .map(cleanTooltipLine)
+    .filter(Boolean)
+    .filter((line) => isUsefulEquipmentOption(line, { category, name, type }))
+    .filter((line, index, lines) => lines.indexOf(line) === index)
+    .slice(0, category === "bracelet" ? 10 : 8);
+}
+
+function getTooltipLines(value) {
+  const parsed = parseMaybeJson(value);
+  const rawLines = parsed ? collectStrings(parsed) : [value];
+
+  return rawLines.flatMap((line) =>
+    String(line || "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .split(/\n|ㆍ|●|◆|※/)
+      .map(cleanTooltipLine),
+  );
+}
+
+function cleanTooltipLine(value) {
+  return stripHtml(value)
+    .replace(/\[[^\]]*]/g, " ")
+    .replace(/nameTagBox/gi, " ")
+    .replace(/태그\s*:/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isUsefulEquipmentOption(line, { category, name, type }) {
+  if (!line || line === name || line === type) return false;
+  if (line.length < 2 || line.length > 90) return false;
+  if (/nameTagBox|Element_|slotData|아이템\s*정보|판매|분해|거래|귀속|획득|내구도|장착|레벨|티어|품질\s*\d*$/i.test(line)) {
+    return false;
+  }
+
+  const statPattern = /(치명|특화|제압|신속|인내|숙련)\s*\+?\s*\d/;
+  const engravingPattern = /(각인|활성도|감소|Lv\.?\s*\d|레벨\s*\d)/;
+  const braceletPattern = /(힘|민첩|지능|체력|무기\s*공격력|공격력|치명타|피해|추가|효과|회복|보호막|정밀|순환|망치|열정|냉정|습격|쐐기|돌진|응원|비수|약점|상처|우월|멸시|타격|마나|전투\s*중)/;
+
+  if (statPattern.test(line) || engravingPattern.test(line)) return true;
+  if (category === "bracelet" && braceletPattern.test(line)) return true;
+  return false;
+}
+
+function shouldSkipTooltipKey(key) {
+  return /nameTagBox|slotData|icon|image|button|profile|qualityProgress/i.test(key);
+}
+
+export function matchGemSkillName({ effectText = "", gemName = "", skills = [], tooltipText = "" }) {
+  const sourceText = normalizeMatchText(`${effectText} ${gemName} ${tooltipText}`);
+  const matchedSkill = skills.find((skill) => {
+    const skillName = normalizeMatchText(skill.name);
+    return skillName && sourceText.includes(skillName);
+  });
+
+  if (matchedSkill) return matchedSkill.name;
+
+  const skillMatch = stripHtml(`${effectText} ${tooltipText}`).match(/([가-힣A-Za-z0-9\s]{2,30})(?:의)?\s*(?:피해|재사용|쿨타임|스킬)/);
+  return skillMatch?.[1]?.trim() || "";
+}
+
+function normalizeMatchText(value) {
+  return stripHtml(value).replace(/\s+/g, "").toLowerCase();
 }
 
 function normalizeIconUrl(value) {
