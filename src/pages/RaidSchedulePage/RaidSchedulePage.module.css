@@ -475,6 +475,7 @@
 
 .dayGroup[open] .dayHeader {
   background: rgba(105, 230, 255, 0.06);
+  border-bottom: 1px solid rgba(104, 150, 255, 0.12);
 }
 
 .dayGroup[open] .dayHeader::before {
@@ -500,7 +501,7 @@
 
 .dayGroup .cardGrid,
 .dayGroup .searchResults {
-  margin: 0 20px 20px;
+  margin: 22px 20px 22px;
 }
 
 /* Search */
