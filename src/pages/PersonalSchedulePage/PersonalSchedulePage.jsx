@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./PersonalSchedulePage.module.css";
 
-// Apps Script Web App URL만 넣습니다. CORS/권한 오류가 나면 배포 권한을 Anyone access로 확인하세요.
-const PERSONAL_SCHEDULE_SCRIPT_URL = import.meta.env.VITE_PERSONAL_SCHEDULE_SCRIPT_URL || "";
+const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
 
 const SORT_OPTIONS = {
   latest: "최신순",
@@ -25,16 +24,13 @@ export default function PersonalSchedulePage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const sortedItems = useMemo(() => sortPersonalSchedules(items, sortMode), [items, sortMode]);
-  const isScriptConfigured = Boolean(PERSONAL_SCHEDULE_SCRIPT_URL);
 
   useEffect(() => {
-    if (!isScriptConfigured) return;
-
     const controller = new AbortController();
     loadPersonalSchedules({ signal: controller.signal });
 
     return () => controller.abort();
-  }, [isScriptConfigured]);
+  }, []);
 
   async function loadPersonalSchedules({ signal, silent = false } = {}) {
     if (!silent) {
@@ -43,7 +39,7 @@ export default function PersonalSchedulePage() {
     }
 
     try {
-      const response = await fetch(`${PERSONAL_SCHEDULE_SCRIPT_URL}?type=personal`, {
+      const response = await fetch(`${PERSONAL_SCHEDULE_API_URL}?type=personal`, {
         method: "GET",
         signal,
       });
@@ -80,15 +76,10 @@ export default function PersonalSchedulePage() {
       return;
     }
 
-    if (!isScriptConfigured) {
-      setErrorMessage("VITE_PERSONAL_SCHEDULE_SCRIPT_URL 설정이 필요합니다.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(PERSONAL_SCHEDULE_SCRIPT_URL, {
+      const response = await fetch(PERSONAL_SCHEDULE_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain;charset=utf-8",
@@ -133,16 +124,8 @@ export default function PersonalSchedulePage() {
           </a>
           <p className={styles.eyebrow}>Personal Schedule</p>
           <h1>개인 일정</h1>
-          <p>레이드 참여가 어려운 날짜와 사유를 Google Sheet의 개인일정 탭에 기록합니다.</p>
+          <p>레이드 참여가 어려운 날짜와 사유를 Google Sheet 개인일정 탭에 기록합니다.</p>
         </header>
-
-        {!isScriptConfigured ? (
-          <div className={styles.notice} role="alert">
-            Apps Script Web App URL이 설정되지 않았습니다. `.env.local`에
-            `VITE_PERSONAL_SCHEDULE_SCRIPT_URL`을 추가하면 등록과 조회가 활성화됩니다.
-            CORS 또는 권한 오류가 나면 Apps Script 배포를 Web App으로 만들고 접근 권한을 Anyone으로 설정해 주세요.
-          </div>
-        ) : null}
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
@@ -155,12 +138,7 @@ export default function PersonalSchedulePage() {
           <form className={styles.form} onSubmit={handleSubmit}>
             <label>
               <span>날짜</span>
-              <input
-                type="date"
-                value={form.date}
-                required
-                onChange={(event) => updateField("date", event.target.value)}
-              />
+              <input type="date" value={form.date} required onChange={(event) => updateField("date", event.target.value)} />
             </label>
             <label>
               <span>이름</span>
@@ -168,7 +146,7 @@ export default function PersonalSchedulePage() {
                 type="text"
                 value={form.name}
                 required
-                placeholder="예: 성태"
+                placeholder="예: 태경"
                 onChange={(event) => updateField("name", event.target.value)}
               />
             </label>
@@ -182,7 +160,7 @@ export default function PersonalSchedulePage() {
                 onChange={(event) => updateField("reason", event.target.value)}
               />
             </label>
-            <button type="submit" disabled={isSubmitting || !isScriptConfigured}>
+            <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "등록 중..." : "등록"}
             </button>
           </form>
@@ -199,7 +177,7 @@ export default function PersonalSchedulePage() {
           <div className={styles.panelHeader}>
             <div>
               <h2>개인일정 목록</h2>
-              <p>Google Sheet의 개인일정 탭에서 읽어온 목록입니다.</p>
+              <p>Google Sheet 개인일정 탭에서 읽어온 목록입니다.</p>
             </div>
             <label className={styles.sortSelect}>
               <span>정렬</span>

@@ -30,6 +30,11 @@ createServer(async (request, response) => {
     return;
   }
 
+  if (url.pathname === "/api/personal-schedule") {
+    await handlePersonalScheduleRequest(request, response, url);
+    return;
+  }
+
   if (url.pathname.startsWith("/api/lostark/characters/")) {
     await handleLostarkCharacterRequest(response, url);
     return;
@@ -107,6 +112,59 @@ async function handleLostarkCharacterRequest(response, url) {
   }
 }
 
+async function handlePersonalScheduleRequest(request, response, url) {
+  const scriptUrl = process.env.PERSONAL_SCHEDULE_SCRIPT_URL;
+
+  if (!scriptUrl) {
+    sendJson(response, 500, {
+      success: false,
+      message: "PERSONAL_SCHEDULE_SCRIPT_URL is not configured",
+    });
+    return;
+  }
+
+  try {
+    if (request.method === "GET") {
+      const targetUrl = new URL(scriptUrl);
+      targetUrl.searchParams.set("type", url.searchParams.get("type") || "personal");
+
+      const scriptResponse = await fetch(targetUrl, {
+        method: "GET",
+        redirect: "follow",
+      });
+      const text = await scriptResponse.text();
+      sendProxyText(response, scriptResponse.status || 200, text);
+      return;
+    }
+
+    if (request.method === "POST") {
+      const body = await readRequestBody(request);
+      const scriptResponse = await fetch(scriptUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body,
+        redirect: "follow",
+      });
+      const text = await scriptResponse.text();
+      sendProxyText(response, scriptResponse.status || 200, text);
+      return;
+    }
+
+    sendJson(response, 405, {
+      success: false,
+      message: "Method not allowed",
+    });
+  } catch (error) {
+    console.error("[personal-schedule proxy]", error);
+    sendJson(response, 500, {
+      success: false,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 function loadLocalEnv(fileName) {
   const filePath = join(__dirname, fileName);
   if (!existsSync(filePath)) return;
@@ -176,6 +234,27 @@ function getCellValue(cell) {
   if (cell.f) return cell.f;
   if (cell.v == null) return "";
   return String(cell.v);
+}
+
+function readRequestBody(request) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    request.setEncoding("utf8");
+    request.on("data", (chunk) => {
+      body += chunk;
+    });
+    request.on("end", () => resolve(body));
+    request.on("error", reject);
+  });
+}
+
+function sendProxyText(response, status, text) {
+  try {
+    sendJson(response, status, JSON.parse(text));
+  } catch {
+    response.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end(text);
+  }
 }
 
 async function serveStaticFile(response, pathname) {
