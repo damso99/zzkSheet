@@ -1,33 +1,42 @@
 :root {
-  color-scheme: dark;
-  font-family:
-    Inter, Pretendard, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0c0d11;
-  color: #f5f6fb;
+  font-family: "SUIT Variable", "Pretendard", "Noto Sans KR", sans-serif;
+  color: #231815;
+  background:
+    radial-gradient(circle at top left, rgba(255, 198, 121, 0.45), transparent 28%),
+    radial-gradient(circle at top right, rgba(227, 122, 76, 0.2), transparent 24%),
+    linear-gradient(180deg, #f7efe1 0%, #f3e5d0 44%, #ead5ba 100%);
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
+html {
   min-width: 320px;
-  min-height: 100vh;
-  margin: 0;
-  background:
-    radial-gradient(circle at 12% 10%, rgba(113, 87, 255, 0.2), transparent 25%),
-    radial-gradient(circle at 88% 4%, rgba(57, 208, 189, 0.14), transparent 24%),
-    linear-gradient(180deg, #12131a 0%, #0c0d11 46%, #090a0e 100%);
 }
 
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+body,
 button,
-input,
-select {
+input {
   font: inherit;
 }
 
 button {
+  border: 0;
   cursor: pointer;
+}
+
+input {
+  border: 0;
 }
 
 #root {

@@ -1,23 +1,19 @@
 {
-  "name": "lostark-homework-party",
+  "name": "lostark-raid-schedule",
   "version": "0.1.0",
   "private": true,
-  "description": "Lost Ark roster homework party builder using the official OpenAPI.",
+  "description": "Lost Ark raid schedule visualizer backed by a Google Spreadsheet.",
   "type": "module",
   "scripts": {
     "dev": "node dev-server.js",
-    "api": "node server.js",
     "build": "vite build",
-    "preview": "node server.js",
-    "start": "node server.js",
-    "check": "node --check server.js && node --check dev-server.js"
+    "preview": "node server.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "vite": "^7.2.7",
-    "xlsx": "^0.18.5"
+    "vite": "^7.2.7"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,656 @@
+/* Page shell */
+.page {
+  --bg-0: #03050d;
+  --bg-1: #071021;
+  --bg-2: #10143a;
+  --panel: rgba(15, 23, 45, 0.78);
+  --panel-strong: rgba(18, 29, 58, 0.92);
+  --line: rgba(104, 150, 255, 0.34);
+  --text: #f4f7ff;
+  --muted: #9aa8c5;
+  --blue: #55a7ff;
+  --cyan: #69e6ff;
+  --purple: #a879ff;
+  --green: #54e89c;
+  --orange: #ffad5c;
+  --gold: #ffd88a;
+
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(3, 5, 13, 0.1), rgba(3, 5, 13, 0.7)),
+    linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 44%, var(--bg-2) 100%);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(85, 167, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(168, 121, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(120deg, rgba(255, 216, 138, 0.08), transparent 38%);
+  background-size:
+    72px 72px,
+    72px 72px,
+    100% 100%;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.5) 76%, transparent 100%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: 48px 20px 72px;
+}
+
+/* Header */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 24px;
+  align-items: end;
+  padding-bottom: 26px;
+  border-bottom: 1px solid rgba(104, 150, 255, 0.22);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 16px rgba(255, 216, 138, 0.42);
+}
+
+.hero h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(2.5rem, 6vw, 4.8rem);
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 16px rgba(85, 167, 255, 0.72),
+    0 0 36px rgba(168, 121, 255, 0.45);
+}
+
+.description {
+  max-width: 720px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.metaPanel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(104, 150, 255, 0.24);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(31, 43, 82, 0.84), rgba(11, 17, 34, 0.84));
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(85, 167, 255, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.metaPanel div {
+  display: grid;
+  gap: 4px;
+}
+
+.metaPanel span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.metaPanel strong {
+  color: #ffffff;
+  font-size: 0.98rem;
+}
+
+/* Tabs and controls */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-top: 26px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid rgba(104, 150, 255, 0.18);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+}
+
+.tab,
+.activeTab {
+  position: relative;
+  padding: 10px 0;
+  color: var(--muted);
+  font-weight: 800;
+  background: transparent;
+  transition:
+    color 180ms ease,
+    text-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.tab::after,
+.activeTab::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  content: "";
+  border-radius: 999px;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--purple), var(--blue), var(--cyan));
+  box-shadow: 0 0 16px rgba(105, 230, 255, 0.65);
+  transition: transform 180ms ease;
+}
+
+.tab:hover,
+.activeTab {
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(85, 167, 255, 0.46);
+}
+
+.tab:hover::after,
+.activeTab::after {
+  transform: scaleX(1);
+}
+
+.summaryChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.chip {
+  min-width: 112px;
+  padding: 10px 14px;
+  border: 1px solid rgba(104, 150, 255, 0.22);
+  border-radius: 18px;
+  background: rgba(15, 23, 45, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.chip span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.chip strong {
+  color: var(--cyan);
+  font-size: 1.05rem;
+}
+
+/* Section headings */
+.section {
+  margin-top: 30px;
+}
+
+.sectionHeading {
+  margin-bottom: 20px;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.5rem;
+  letter-spacing: 0;
+}
+
+.sectionHeading p {
+  margin: 7px 0 0;
+  color: var(--muted);
+}
+
+/* Timeline */
+.cardGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  padding-left: 34px;
+}
+
+.cardGrid::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 10px;
+  width: 2px;
+  content: "";
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, var(--blue), var(--purple), transparent);
+  box-shadow:
+    0 0 12px rgba(85, 167, 255, 0.55),
+    0 0 28px rgba(168, 121, 255, 0.32);
+}
+
+.raidCard {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid rgba(104, 150, 255, 0.22);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(24, 35, 70, 0.86), rgba(9, 14, 30, 0.9)),
+    var(--panel);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.35),
+    0 0 28px rgba(85, 167, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.raidCard::before {
+  position: absolute;
+  top: 27px;
+  left: -33px;
+  width: 14px;
+  height: 14px;
+  content: "";
+  border: 2px solid rgba(244, 247, 255, 0.9);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--cyan) 0 35%, var(--blue) 36% 100%);
+  box-shadow:
+    0 0 0 5px rgba(85, 167, 255, 0.14),
+    0 0 22px rgba(105, 230, 255, 0.72);
+}
+
+.raidCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(105, 230, 255, 0.58);
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.46),
+    0 0 34px rgba(85, 167, 255, 0.22),
+    0 0 46px rgba(168, 121, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Raid card header */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.cardHeader h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.cardMeta {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.timeBadge {
+  flex: 0 0 auto;
+  padding: 9px 13px;
+  border: 1px solid rgba(105, 230, 255, 0.36);
+  border-radius: 16px;
+  color: #dff9ff;
+  font-weight: 900;
+  white-space: nowrap;
+  background: rgba(39, 97, 178, 0.22);
+  box-shadow:
+    inset 0 0 18px rgba(85, 167, 255, 0.18),
+    0 0 20px rgba(85, 167, 255, 0.14);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.scheduled {
+  background: rgba(85, 167, 255, 0.22);
+  border: 1px solid rgba(85, 167, 255, 0.48);
+}
+
+.recruiting {
+  background: rgba(84, 232, 156, 0.2);
+  border: 1px solid rgba(84, 232, 156, 0.48);
+}
+
+.inProgress {
+  background: rgba(255, 173, 92, 0.22);
+  border: 1px solid rgba(255, 173, 92, 0.52);
+}
+
+.participantSummary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Participant table */
+.participantTableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(104, 150, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(2, 7, 18, 0.34);
+}
+
+.participantTable {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+}
+
+.participantTable th,
+.participantTable td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(104, 150, 255, 0.12);
+}
+
+.participantTable th {
+  color: #dbe7ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: rgba(104, 150, 255, 0.14);
+}
+
+.participantTable td {
+  color: #edf3ff;
+  font-size: 0.9rem;
+}
+
+.participantTable tbody tr {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.participantTable tbody tr:hover {
+  background: rgba(105, 230, 255, 0.09);
+}
+
+.participantTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.emptyParticipants {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+/* State and feedback */
+.statePanel,
+.errorBanner {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(104, 150, 255, 0.2);
+  border-radius: 22px;
+  background: rgba(15, 23, 45, 0.78);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+}
+
+.statePanel p,
+.errorBanner {
+  margin: 0;
+}
+
+.errorBanner {
+  color: #ffd7c2;
+  border-color: rgba(255, 173, 92, 0.32);
+  background: rgba(81, 34, 22, 0.72);
+}
+
+/* Weekly groups */
+.weekStack {
+  display: grid;
+  gap: 28px;
+}
+
+.dayGroup {
+  padding: 0;
+}
+
+.dayHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dayHeader h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.12rem;
+  font-weight: 900;
+  text-shadow: 0 0 14px rgba(85, 167, 255, 0.35);
+}
+
+.dayHeader span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+/* Search */
+.searchBox {
+  width: min(420px, 100%);
+}
+
+.searchBox label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.searchBox input {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid rgba(104, 150, 255, 0.28);
+  border-radius: 18px;
+  color: var(--text);
+  outline: none;
+  background: rgba(8, 14, 30, 0.88);
+  box-shadow: inset 0 0 18px rgba(85, 167, 255, 0.08);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.searchBox input::placeholder {
+  color: rgba(154, 168, 197, 0.72);
+}
+
+.searchBox input:focus {
+  border-color: rgba(105, 230, 255, 0.68);
+  box-shadow:
+    0 0 0 4px rgba(85, 167, 255, 0.14),
+    0 0 24px rgba(105, 230, 255, 0.16),
+    inset 0 0 18px rgba(85, 167, 255, 0.1);
+}
+
+.searchHint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.searchResults {
+  display: grid;
+  gap: 16px;
+}
+
+.searchResultCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid rgba(104, 150, 255, 0.22);
+  border-radius: 22px;
+  background: var(--panel);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.searchResultCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(105, 230, 255, 0.48);
+  box-shadow:
+    0 24px 62px rgba(0, 0, 0, 0.4),
+    0 0 28px rgba(85, 167, 255, 0.14);
+}
+
+.searchResultCard h3 {
+  margin: 6px 0 0;
+  color: #ffffff;
+  font-size: 1.12rem;
+}
+
+.searchMeta {
+  margin: 0;
+  color: var(--cyan);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.searchDetailList {
+  display: grid;
+  gap: 10px;
+  min-width: 220px;
+  margin: 0;
+}
+
+.searchDetailList div {
+  padding: 11px 13px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(2, 7, 18, 0.32);
+}
+
+.searchDetailList dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.searchDetailList dd {
+  margin: 4px 0 0;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar,
+  .searchResultCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .summaryChips {
+    justify-content: flex-start;
+  }
+
+  .metaPanel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .content {
+    padding: 32px 14px 52px;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .metaPanel {
+    grid-template-columns: 1fr;
+    border-radius: 20px;
+  }
+
+  .tabs {
+    gap: 16px;
+  }
+
+  .cardGrid {
+    padding-left: 24px;
+  }
+
+  .cardGrid::before {
+    left: 7px;
+  }
+
+  .raidCard {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .raidCard::before {
+    left: -24px;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+  }
+
+  .timeBadge {
+    align-self: flex-start;
+  }
+
+  .participantTableWrap {
+    margin-right: -4px;
+    margin-left: -4px;
+  }
+
+  .participantTable {
+    min-width: 540px;
+  }
+
+  .searchDetailList {
+    min-width: 0;
+  }
+}
