@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./PersonalSchedulePage.module.css";
 
+// Apps Script Web App URL만 넣습니다. CORS/권한 오류가 나면 배포 권한을 Anyone access로 확인하세요.
 const PERSONAL_SCHEDULE_SCRIPT_URL = import.meta.env.VITE_PERSONAL_SCHEDULE_SCRIPT_URL || "";
 
 const SORT_OPTIONS = {
@@ -35,9 +36,11 @@ export default function PersonalSchedulePage() {
     return () => controller.abort();
   }, [isScriptConfigured]);
 
-  async function loadPersonalSchedules({ signal } = {}) {
-    setIsLoading(true);
-    setErrorMessage("");
+  async function loadPersonalSchedules({ signal, silent = false } = {}) {
+    if (!silent) {
+      setIsLoading(true);
+      setErrorMessage("");
+    }
 
     try {
       const response = await fetch(`${PERSONAL_SCHEDULE_SCRIPT_URL}?type=personal`, {
@@ -53,9 +56,10 @@ export default function PersonalSchedulePage() {
       setItems(normalizePersonalSchedules(payload));
     } catch (error) {
       if (error?.name === "AbortError") return;
-      setErrorMessage(error instanceof Error ? error.message : String(error));
+      console.error("[personal schedule] failed to load schedules", error);
+      if (!silent) setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (!signal?.aborted && !silent) setIsLoading(false);
     }
   }
 
@@ -99,8 +103,13 @@ export default function PersonalSchedulePage() {
 
       setMessage("등록 완료");
       setForm(INITIAL_FORM);
-      await loadPersonalSchedules();
+      setItems((currentItems) => [
+        normalizePersonalScheduleItem({ ...payload, createdAt: new Date().toISOString() }, currentItems.length),
+        ...currentItems,
+      ]);
+      await loadPersonalSchedules({ silent: true });
     } catch (error) {
+      console.error("[personal schedule] failed to submit schedule", error);
       setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
       setIsSubmitting(false);
@@ -131,6 +140,7 @@ export default function PersonalSchedulePage() {
           <div className={styles.notice} role="alert">
             Apps Script Web App URL이 설정되지 않았습니다. `.env.local`에
             `VITE_PERSONAL_SCHEDULE_SCRIPT_URL`을 추가하면 등록과 조회가 활성화됩니다.
+            CORS 또는 권한 오류가 나면 Apps Script 배포를 Web App으로 만들고 접근 권한을 Anyone으로 설정해 주세요.
           </div>
         ) : null}
 

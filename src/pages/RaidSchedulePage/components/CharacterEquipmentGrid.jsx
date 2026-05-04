@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
 
 export default function CharacterEquipmentGrid({ equipment, styles }) {
@@ -45,7 +46,14 @@ function EquipmentCard({ item, styles }) {
     return <AbilityStoneCard item={item} styles={styles} />;
   }
 
+  return <NormalEquipmentCard item={item} styles={styles} />;
+}
+
+function NormalEquipmentCard({ item, styles }) {
+  const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const isCollapsibleOption = isAccessoryItem(item);
   const shouldShowQuality = !isAbilityStoneItem(item) && item.category !== "bracelet";
+  const shouldShowOptionList = item.options?.length && (!isCollapsibleOption || isOptionOpen);
 
   return (
     <article className={styles.equipmentCard}>
@@ -65,12 +73,26 @@ function EquipmentCard({ item, styles }) {
         </div>
         {item.options?.length ? (
           <div className={styles.equipmentOptions}>
-            <strong>부여 옵션</strong>
-            <ul className={styles.equipmentOptionList}>
-              {item.options.map((option, index) => (
-                <li key={`${option}-${index}`}>{option}</li>
-              ))}
-            </ul>
+            {isCollapsibleOption ? (
+              <button
+                type="button"
+                className={styles.equipmentOptionToggle}
+                onClick={() => setIsOptionOpen((currentValue) => !currentValue)}
+                aria-expanded={isOptionOpen}
+              >
+                <span>{isOptionOpen ? "옵션 접기" : "옵션 보기"}</span>
+                <span aria-hidden="true">{isOptionOpen ? "▲" : "▼"}</span>
+              </button>
+            ) : (
+              <strong>부여 옵션</strong>
+            )}
+            {shouldShowOptionList ? (
+              <ul className={styles.equipmentOptionList}>
+                {item.options.map((option, index) => (
+                  <li key={`${option}-${index}`}>{option}</li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -129,6 +151,10 @@ function AbilityStoneCard({ item, styles }) {
 
 function isAbilityStoneItem(item) {
   return /어빌리티\s*스톤|스톤/.test(`${item?.type || ""} ${item?.name || ""}`);
+}
+
+function isAccessoryItem(item) {
+  return item?.category === "accessory" && /목걸이|귀걸이|반지/.test(`${item?.type || ""} ${item?.name || ""}`);
 }
 
 function replaceWithPlaceholder(event) {
