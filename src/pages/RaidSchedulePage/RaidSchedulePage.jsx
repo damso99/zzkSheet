@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import styles from "./RaidSchedulePage.module.css";
+import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import RaidCard from "./components/RaidCard.jsx";
 import RaidSearch from "./components/RaidSearch.jsx";
 import { getCurrentWeekRange, getTodayIsoDate, getWeekDates, isDateInRange, formatDateLabel } from "./utils/dateUtils.js";
@@ -9,7 +10,7 @@ import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./ut
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
-  search: "주인이름 검색",
+  search: "이름 검색",
 };
 
 export default function RaidSchedulePage() {
@@ -17,6 +18,7 @@ export default function RaidSchedulePage() {
   const [raids, setRaids] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedCharacterName, setSelectedCharacterName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
@@ -120,6 +122,29 @@ export default function RaidSchedulePage() {
     );
   }, [deferredSearchQuery, raids]);
 
+  const searchGroups = useMemo(() => {
+    const groupedResults = new Map();
+
+    searchResults
+      .slice()
+      .sort(compareRaidTime)
+      .forEach((item) => {
+        if (!groupedResults.has(item.date)) groupedResults.set(item.date, []);
+        groupedResults.get(item.date).push(item);
+      });
+
+    return Array.from(groupedResults.entries()).map(([date, items]) => ({
+      date,
+      label: formatDateLabel(date),
+      items,
+    }));
+  }, [searchResults]);
+
+  const searchDefaultOpenDate = useMemo(() => {
+    if (searchGroups.some((group) => group.date === todayIsoDate)) return todayIsoDate;
+    return searchGroups[0]?.date || "";
+  }, [searchGroups, todayIsoDate]);
+
   return (
     <div className={styles.page}>
       <div className={styles.backdrop} />
@@ -129,7 +154,7 @@ export default function RaidSchedulePage() {
             <p className={styles.eyebrow}>Lost Ark Weekly Planner</p>
             <h1>레이드 일정표</h1>
             <p className={styles.description}>
-              Google Spreadsheet의 공개 데이터를 읽어 금일 일정, 주간 일정, 주인이름 검색 화면으로 정리했습니다.
+              Google Spreadsheet의 공개 데이터를 읽어 금일 일정, 주간 일정, 이름 검색 화면으로 정리했습니다.
             </p>
           </div>
 
@@ -205,7 +230,12 @@ export default function RaidSchedulePage() {
             ) : (
               <div className={styles.cardGrid}>
                 {todayRaids.sort(compareRaidTime).map((raid) => (
-                  <RaidCard key={raid.id} raid={raid} styles={styles} />
+                  <RaidCard
+                    key={raid.id}
+                    raid={raid}
+                    styles={styles}
+                    onCharacterClick={setSelectedCharacterName}
+                  />
                 ))}
               </div>
             )}
@@ -231,7 +261,13 @@ export default function RaidSchedulePage() {
                     </summary>
                     <div className={styles.cardGrid}>
                       {group.raids.map((raid) => (
-                        <RaidCard key={raid.id} raid={raid} styles={styles} showDate />
+                        <RaidCard
+                          key={raid.id}
+                          raid={raid}
+                          styles={styles}
+                          showDate
+                          onCharacterClick={setSelectedCharacterName}
+                        />
                       ))}
                     </div>
                   </details>
@@ -246,37 +282,63 @@ export default function RaidSchedulePage() {
             <SectionHeading
               styles={styles}
               title={TAB_LABELS.search}
-              subtitle="주인이름으로 참여 레이드만 빠르게 찾을 수 있습니다."
+              subtitle="이름으로 참여 레이드를 요일별로 빠르게 찾을 수 있습니다."
             />
             {!deferredSearchQuery ? (
-              <StatePanel styles={styles} message="주인이름을 입력해 주세요." />
+              <StatePanel styles={styles} message="이름을 입력해 주세요." />
             ) : searchResults.length === 0 ? (
               <StatePanel styles={styles} message="일정이 없습니다." />
             ) : (
-              <div className={styles.searchResults}>
-                {searchResults.map((item) => (
-                  <article key={item.id} className={styles.searchResultCard}>
-                    <div>
-                      <p className={styles.searchMeta}>{formatDateLabel(item.date)} · {item.time}</p>
-                      <h3>{item.raidName}</h3>
+              <div className={styles.weekStack}>
+                {searchGroups.map((group) => (
+                  <details key={group.date} className={styles.dayGroup} open={group.date === searchDefaultOpenDate}>
+                    <summary className={styles.dayHeader}>
+                      <span className={styles.dayTitle}>{group.label}</span>
+                      <span>{group.items.length}개 결과</span>
+                    </summary>
+                    <div className={styles.searchResults}>
+                      {group.items.map((item) => (
+                        <article key={item.id} className={styles.searchResultCard}>
+                          <div>
+                            <p className={styles.searchMeta}>{item.time}</p>
+                            <h3>{item.raidName}</h3>
+                          </div>
+                          <dl className={styles.searchDetailList}>
+                            <div>
+                              <dt>참여 캐릭터</dt>
+                              <dd>
+                                <button
+                                  type="button"
+                                  className={styles.searchCharacterButton}
+                                  onClick={() => setSelectedCharacterName(item.characterName)}
+                                >
+                                  {item.characterName}
+                                </button>
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>이름</dt>
+                              <dd>{item.ownerName}</dd>
+                            </div>
+                          </dl>
+                        </article>
+                      ))}
                     </div>
-                    <dl className={styles.searchDetailList}>
-                      <div>
-                        <dt>참여 캐릭터</dt>
-                        <dd>{item.characterName}</dd>
-                      </div>
-                      <div>
-                        <dt>주인이름</dt>
-                        <dd>{item.ownerName}</dd>
-                      </div>
-                    </dl>
-                  </article>
+                  </details>
                 ))}
               </div>
             )}
           </section>
         ) : null}
       </div>
+
+      {selectedCharacterName ? (
+        <CharacterDetailModal
+          characterName={selectedCharacterName}
+          onClose={() => setSelectedCharacterName("")}
+          styles={styles}
+        />
+      ) : null}
     </div>
   );
 }

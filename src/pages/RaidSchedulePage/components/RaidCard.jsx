@@ -1,7 +1,7 @@
 import RaidParticipantTable from "./RaidParticipantTable.jsx";
 import { formatDateLabel } from "../utils/dateUtils.js";
 
-export default function RaidCard({ raid, styles, showDate = false }) {
+export default function RaidCard({ raid, styles, showDate = false, onCharacterClick }) {
   return (
     <article className={styles.raidCard}>
       <header className={styles.cardHeader}>
@@ -16,7 +16,7 @@ export default function RaidCard({ raid, styles, showDate = false }) {
       </header>
 
       <p className={styles.participantSummary}>참여자 명단 {raid.participants.length}명</p>
-      <RaidParticipantTable participants={raid.participants} styles={styles} />
+      <RaidParticipantTable participants={raid.participants} styles={styles} onCharacterClick={onCharacterClick} />
     </article>
   );
 }

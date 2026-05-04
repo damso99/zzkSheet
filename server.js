@@ -1,12 +1,17 @@
 import { createServer } from "node:http";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getLostarkCharacterBundle } from "./api/_lostark.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const distDir = join(__dirname, "dist");
 const publicDir = existsSync(distDir) ? distDir : join(__dirname, "public");
+
+loadLocalEnv(".env.local");
+loadLocalEnv(".env");
+
 const port = Number(process.env.PORT || 5178);
 
 const mimeTypes = {
@@ -22,6 +27,11 @@ createServer(async (request, response) => {
 
   if (url.pathname === "/api/raid-sheet") {
     await handleRaidSheetRequest(response, url);
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/lostark/characters/")) {
+    await handleLostarkCharacterRequest(response, url);
     return;
   }
 
@@ -80,6 +90,35 @@ async function handleRaidSheetRequest(response, url) {
       error: "Failed to fetch Google Sheets data.",
       detail: error instanceof Error ? error.message : String(error),
     });
+  }
+}
+
+async function handleLostarkCharacterRequest(response, url) {
+  const characterName = decodeURIComponent(url.pathname.split("/").pop() || "").trim();
+
+  try {
+    const result = await getLostarkCharacterBundle(characterName);
+    sendJson(response, result.status, result.body);
+  } catch (error) {
+    sendJson(response, 502, {
+      error: "Failed to contact Lost Ark OpenAPI.",
+      detail: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+function loadLocalEnv(fileName) {
+  const filePath = join(__dirname, fileName);
+  if (!existsSync(filePath)) return;
+
+  const lines = readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+
+    const [key, ...valueParts] = trimmed.split("=");
+    const value = valueParts.join("=").trim().replace(/^["']|["']$/g, "");
+    if (key && process.env[key] == null) process.env[key] = value;
   }
 }
 

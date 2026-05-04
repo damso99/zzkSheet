@@ -1,5 +1,3 @@
-import XLSX from "xlsx";
-
 export const ARMORY_ENDPOINTS = {
   profile: "profiles",
   equipment: "equipment",
@@ -69,6 +67,7 @@ export async function getSheetData(sheetUrl, requestedSheet = "") {
     };
   }
 
+  const { default: XLSX } = await import("xlsx");
   const workbook = XLSX.read(Buffer.from(buffer), { type: "buffer" });
   const sheetNames = workbook.SheetNames;
   const gidSheetName = requestedGid ? findSheetNameByGid(workbook, requestedGid) : "";

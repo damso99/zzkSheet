@@ -1,4 +1,4 @@
-import { fetchLostarkJson, getLostarkApiKey, sendJson } from "./_shared.js";
+import { fetchLostarkJson, getLostarkApiKey, sendJson } from "./_lostark.js";
 
 export default async function handler(request, response) {
   const lostarkApiKey = getLostarkApiKey();
