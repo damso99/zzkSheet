@@ -42,9 +42,9 @@ export function getCurrentWeekRange(isoDate) {
   const targetDate = new Date(`${isoDate}T00:00:00`);
   const start = new Date(targetDate);
   const day = start.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const daysSinceWednesday = (day + 4) % 7;
 
-  start.setDate(start.getDate() + diffToMonday);
+  start.setDate(start.getDate() - daysSinceWednesday);
   const end = new Date(start);
   end.setDate(end.getDate() + 6);
 
