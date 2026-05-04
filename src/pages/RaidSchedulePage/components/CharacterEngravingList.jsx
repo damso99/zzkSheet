@@ -2,7 +2,7 @@ import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterPar
 
 export default function CharacterEngravingList({ engravings, styles }) {
   if (!engravings.length) {
-    return <p className={styles.modalEmpty}>각인 정보 없음</p>;
+    return <p className={styles.modalEmpty}>0</p>;
   }
 
   return (
@@ -17,10 +17,10 @@ export default function CharacterEngravingList({ engravings, styles }) {
           />
           <div>
             <div className={styles.itemMeta}>
-              <strong>Lv. {displayValue(engraving.level)}</strong>
+              <strong>Lv.{formatEngravingLevel(engraving.level)}</strong>
             </div>
             <h4>{displayValue(engraving.name)}</h4>
-            <p>{displayValue(engraving.description)}</p>
+            {engraving.description ? <p>{engraving.description}</p> : null}
           </div>
         </article>
       ))}
@@ -31,4 +31,9 @@ export default function CharacterEngravingList({ engravings, styles }) {
 function replaceWithPlaceholder(event) {
   event.currentTarget.onerror = null;
   event.currentTarget.src = CHARACTER_PLACEHOLDER_IMAGE;
+}
+
+function formatEngravingLevel(level) {
+  if (level == null || level === "" || level === "정보 없음") return "0";
+  return String(level);
 }

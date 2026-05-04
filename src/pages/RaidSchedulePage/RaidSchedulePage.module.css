@@ -555,18 +555,32 @@
 .searchInlineMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 10px;
+  gap: 10px;
   align-items: center;
   justify-content: flex-end;
-  margin: 0;
+}
+
+.searchInlineField {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(2, 7, 18, 0.32);
+}
+
+.searchInlineField span {
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
-.searchInlineMeta strong {
+.searchInlineField strong {
   color: #ffffff;
   font-size: 0.94rem;
+  font-weight: 900;
 }
 
 /* Character detail modal */
@@ -627,10 +641,12 @@
 }
 
 .modalCloseButton {
-  display: inline-grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 42px;
   height: 42px;
+  padding: 0;
   border: 1px solid rgba(104, 150, 255, 0.32);
   border-radius: 50%;
   color: #ffffff;
@@ -784,8 +800,16 @@
 .gemGrid,
 .cardSetGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 14px;
+}
+
+.equipmentGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gemGrid,
+.cardSetGrid {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
 
 .equipmentCard,
@@ -811,6 +835,25 @@
   grid-template-columns: 54px minmax(0, 1fr);
   gap: 13px;
   padding: 14px;
+}
+
+.equipmentCard {
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  min-height: 112px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.equipmentCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(105, 230, 255, 0.42);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.34),
+    0 0 24px rgba(85, 167, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .itemIcon {
@@ -851,6 +894,14 @@
   margin: 7px 0;
   color: #ffffff;
   font-size: 0.98rem;
+}
+
+.equipmentCard h4 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.35;
 }
 
 .itemBadges {

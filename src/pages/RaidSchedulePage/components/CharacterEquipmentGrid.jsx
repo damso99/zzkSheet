@@ -16,16 +16,13 @@ export default function CharacterEquipmentGrid({ equipment, styles }) {
             onError={replaceWithPlaceholder}
           />
           <div className={styles.itemBody}>
-            <div className={styles.itemMeta}>
-              <span>{displayValue(item.type)}</span>
-              <strong>{displayValue(item.grade)}</strong>
-            </div>
             <h4>{displayValue(item.name)}</h4>
             <div className={styles.itemBadges}>
-              {item.enhancement ? <span>강화 {item.enhancement}</span> : null}
+              <span>{displayValue(item.type)}</span>
+              <span>{displayValue(item.grade)}</span>
               <span>품질 {displayValue(item.quality)}</span>
+              {item.enhancement ? <span>강화 {item.enhancement}</span> : null}
             </div>
-            {item.tooltip ? <p className={styles.tooltipText}>{item.tooltip}</p> : null}
           </div>
         </article>
       ))}

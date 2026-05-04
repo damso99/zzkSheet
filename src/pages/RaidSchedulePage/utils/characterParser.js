@@ -40,15 +40,13 @@ function normalizeProfile(profile, fallbackName) {
 function normalizeEquipment(equipment) {
   return asArray(equipment).map((item) => {
     const tooltipObject = parseMaybeJson(item.Tooltip);
-    const tooltip = toPlainTooltip(item.Tooltip);
 
     return {
       type: displayValue(item.Type),
       name: displayValue(stripHtml(item.Name)),
       icon: normalizeIconUrl(item.Icon),
       grade: displayValue(item.Grade),
-      quality: displayValue(item.Quality ?? findDeepValue(tooltipObject, "qualityValue")),
-      tooltip,
+      quality: displayValue(item.Quality !== "" && item.Quality != null ? item.Quality : findDeepValue(tooltipObject, "qualityValue")),
       enhancement: extractEnhancement(item.Name),
     };
   });
@@ -77,15 +75,15 @@ function normalizeEngravings(engravingsPayload) {
   );
   const normalEffects = asArray(engravingsPayload?.Effects).map((effect) => ({
     name: displayValue(stripHtml(effect.Name)),
-    level: displayValue(effect.Level || extractLevel(effect.Name || effect.Description)),
-    description: displayValue(stripHtml(effect.Description)),
+    level: normalizeEngravingLevel(effect.Level || extractLevel(effect.Name || effect.Description)),
+    description: stripHtml(effect.Description),
     icon: normalizeIconUrl(effect.Icon || extractIconFromTooltip(effect.Tooltip || effect.Description)),
   }));
 
   const arkPassiveEffects = asArray(engravingsPayload?.ArkPassiveEffects).map((effect) => ({
     name: displayValue(stripHtml(effect.Name)),
-    level: displayValue(effect.Level || extractLevel(effect.Name || effect.Description)),
-    description: displayValue(stripHtml(effect.Description || "아크 패시브 각인 효과")),
+    level: normalizeEngravingLevel(effect.Level || extractLevel(effect.Name || effect.Description)),
+    description: stripHtml(effect.Description || "아크 패시브 각인 효과"),
     icon: normalizeIconUrl(effect.Icon || extractIconFromTooltip(effect.Tooltip || effect.Description)),
   }));
 
@@ -138,8 +136,8 @@ function normalizeSkills(skillsPayload) {
 function normalizeEngravingItem(engraving, fallbackDescription) {
   return {
     name: displayValue(stripHtml(engraving.Name)),
-    level: displayValue(engraving.Level || extractLevel(engraving.Name || engraving.Description)),
-    description: displayValue(stripHtml(engraving.Description || fallbackDescription)),
+    level: normalizeEngravingLevel(engraving.Level || extractLevel(engraving.Name || engraving.Description)),
+    description: stripHtml(engraving.Description || fallbackDescription),
     icon: normalizeIconUrl(engraving.Icon || extractIconFromTooltip(engraving.Tooltip || engraving.Description)),
   };
 }
@@ -251,6 +249,14 @@ function getSkillPoint(skill) {
   // 일부 OpenAPI 응답은 투자 포인트 대신 스킬 레벨만 내려와 레벨 2 이상을 투자 스킬로 봅니다.
   const level = Number(skill.Level || 0);
   return Number.isFinite(level) ? level : 0;
+}
+
+function normalizeEngravingLevel(value) {
+  if (value == null || value === "") return "0";
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue)) return String(numericValue);
+  const extractedLevel = extractLevel(value);
+  return extractedLevel || "0";
 }
 
 function extractEnhancement(name) {

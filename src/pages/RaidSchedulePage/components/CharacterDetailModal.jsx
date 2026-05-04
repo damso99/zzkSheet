@@ -34,6 +34,15 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
   }, [onClose]);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
     const normalizedName = characterName.trim();
     const cacheKey = normalizedName.toLocaleLowerCase("ko-KR");
     const cachedDetail = characterDetailCache.get(cacheKey);
@@ -83,7 +92,7 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
   const modalTitle = detail?.profile?.characterName || characterName;
 
   return (
-    <div className={styles.modalOverlay} role="presentation" onMouseDown={handleBackdropMouseDown}>
+    <div className={styles.modalOverlay} role="presentation">
       <section
         className={styles.modalShell}
         role="dialog"
@@ -137,9 +146,6 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
     </div>
   );
 
-  function handleBackdropMouseDown(event) {
-    if (event.target === event.currentTarget) onClose();
-  }
 }
 
 function renderTabPanel(activeTab, detail, styles) {
