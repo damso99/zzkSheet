@@ -19,6 +19,7 @@ export default function RaidSchedulePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [selectedCharacterName, setSelectedCharacterName] = useState("");
+  const [selectedOwnerName, setSelectedOwnerName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
@@ -221,19 +222,32 @@ export default function RaidSchedulePage() {
               title={TAB_LABELS.today}
               subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
             />
-            <TodayParticipantList ownerNames={todayOwnerNames} styles={styles} />
+            <TodayParticipantList
+              ownerNames={todayOwnerNames}
+              selectedOwnerName={selectedOwnerName}
+              onSelectOwnerName={setSelectedOwnerName}
+              styles={styles}
+            />
             {todayRaids.length === 0 ? (
               <StatePanel styles={styles} message="일정이 없습니다." />
             ) : (
               <div className={styles.cardGrid}>
-                {todayRaids.sort(compareRaidTime).map((raid) => (
-                  <RaidCard
-                    key={raid.id}
-                    raid={raid}
-                    styles={styles}
-                    onCharacterClick={setSelectedCharacterName}
-                  />
-                ))}
+                {todayRaids.sort(compareRaidTime).map((raid) => {
+                  const isHighlighted =
+                    Boolean(selectedOwnerName) &&
+                    raid.participants.some((participant) => participant.ownerName === selectedOwnerName);
+
+                  return (
+                    <RaidCard
+                      key={raid.id}
+                      raid={raid}
+                      styles={styles}
+                      onCharacterClick={setSelectedCharacterName}
+                      collapsible
+                      isHighlighted={isHighlighted}
+                    />
+                  );
+                })}
               </div>
             )}
           </section>
@@ -336,7 +350,7 @@ export default function RaidSchedulePage() {
   );
 }
 
-function TodayParticipantList({ ownerNames, styles }) {
+function TodayParticipantList({ ownerNames, selectedOwnerName, onSelectOwnerName, styles }) {
   return (
     <section className={styles.todayParticipantPanel} aria-labelledby="today-participant-title">
       <div className={styles.todayParticipantHeader}>
@@ -346,9 +360,16 @@ function TodayParticipantList({ ownerNames, styles }) {
       {ownerNames.length ? (
         <div className={styles.todayParticipantBadges}>
           {ownerNames.map((ownerName) => (
-            <span key={ownerName} className={styles.todayParticipantBadge}>
+            <button
+              key={ownerName}
+              type="button"
+              className={`${styles.todayParticipantBadge} ${
+                selectedOwnerName === ownerName ? styles.activeTodayParticipantBadge : ""
+              }`}
+              onClick={() => onSelectOwnerName(selectedOwnerName === ownerName ? "" : ownerName)}
+            >
               {ownerName}
-            </span>
+            </button>
           ))}
         </div>
       ) : (
