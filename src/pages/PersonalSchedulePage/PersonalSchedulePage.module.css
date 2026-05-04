@@ -205,7 +205,7 @@
   box-shadow: 0 0 0 3px rgba(105, 230, 255, 0.12);
 }
 
-.datePickerField {
+.form .datePickerField {
   position: relative;
   overflow: visible;
 }
