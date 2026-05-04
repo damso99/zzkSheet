@@ -305,6 +305,47 @@ export function parseAccessoryOptions(tooltipLines, { name = "", type = "" } = {
     .slice(0, 8);
 }
 
+export function getOptionGrade(optionText) {
+  const text = cleanTooltipLine(optionText);
+  const compactText = text.replace(/\s+/g, "");
+  const value = extractOptionNumericValue(text);
+  const isPercentOption = /%/.test(text);
+
+  if (!Number.isFinite(value)) return "하";
+
+  if (/아군공격력강화효과/.test(compactText)) return getGradeByThreshold(value, 5, 3);
+  if (/아군피해량강화효과/.test(compactText)) return getGradeByThreshold(value, 7.5, 4.5);
+  if (/치명타적중률/.test(compactText)) return getGradeByThreshold(value, 1.55, 0.95);
+  if (/치명타피해/.test(compactText)) return getGradeByThreshold(value, 4, 2.4);
+
+  if (/추가피해/.test(compactText)) return getGradeByThreshold(value, 2.6, 1.6);
+  if (/적에게주는피해/.test(compactText)) return getGradeByThreshold(value, 2, 1.2);
+  if (/서폿아덴획득량/.test(compactText)) return getGradeByThreshold(value, 6, 3.6);
+  if (/낙인력/.test(compactText)) return getGradeByThreshold(value, 8, 4.8);
+
+  if (/무기공격력/.test(compactText)) {
+    return isPercentOption ? getGradeByThreshold(value, 3, 1.8) : getGradeByThreshold(value, 960, 480);
+  }
+
+  if (/공격력/.test(compactText)) {
+    return isPercentOption ? getGradeByThreshold(value, 1.55, 0.95) : getGradeByThreshold(value, 390, 195);
+  }
+
+  return "하";
+}
+
+function getGradeByThreshold(value, highThreshold, middleThreshold) {
+  if (value >= highThreshold) return "상";
+  if (value >= middleThreshold) return "중";
+  return "하";
+}
+
+function extractOptionNumericValue(optionText) {
+  const normalizedText = String(optionText || "").replace(/,/g, "");
+  const match = normalizedText.match(/[+-]\s*(\d+(?:\.\d+)?)/) || normalizedText.match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : Number.NaN;
+}
+
 function parseBraceletOptions(tooltipLines, { name = "", type = "" } = {}) {
   return tooltipLines
     .map(cleanTooltipLine)

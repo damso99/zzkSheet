@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
+import { CHARACTER_PLACEHOLDER_IMAGE, displayValue, getOptionGrade } from "../utils/characterParser.js";
 
 export default function CharacterEquipmentGrid({ equipment, styles }) {
   if (!equipment.length) {
@@ -50,10 +49,8 @@ function EquipmentCard({ item, styles }) {
 }
 
 function NormalEquipmentCard({ item, styles }) {
-  const [isOptionOpen, setIsOptionOpen] = useState(false);
-  const isCollapsibleOption = isAccessoryItem(item);
+  const isAccessoryOption = isAccessoryItem(item);
   const shouldShowQuality = !isAbilityStoneItem(item) && item.category !== "bracelet";
-  const shouldShowOptionList = item.options?.length && (!isCollapsibleOption || isOptionOpen);
 
   return (
     <article className={styles.equipmentCard}>
@@ -73,31 +70,47 @@ function NormalEquipmentCard({ item, styles }) {
         </div>
         {item.options?.length ? (
           <div className={styles.equipmentOptions}>
-            {isCollapsibleOption ? (
-              <button
-                type="button"
-                className={styles.equipmentOptionToggle}
-                onClick={() => setIsOptionOpen((currentValue) => !currentValue)}
-                aria-expanded={isOptionOpen}
-              >
-                <span>{isOptionOpen ? "옵션 접기" : "옵션 보기"}</span>
-                <span aria-hidden="true">{isOptionOpen ? "▲" : "▼"}</span>
-              </button>
+            {isAccessoryOption ? (
+              <AccessoryOptionSummary options={item.options} styles={styles} />
             ) : (
-              <strong>부여 옵션</strong>
+              <>
+                <strong>부여 옵션</strong>
+                <ul className={styles.equipmentOptionList}>
+                  {item.options.map((option, index) => (
+                    <li key={`${option}-${index}`}>{option}</li>
+                  ))}
+                </ul>
+              </>
             )}
-            {shouldShowOptionList ? (
-              <ul className={styles.equipmentOptionList}>
-                {item.options.map((option, index) => (
-                  <li key={`${option}-${index}`}>{option}</li>
-                ))}
-              </ul>
-            ) : null}
           </div>
         ) : null}
       </div>
     </article>
   );
+}
+
+function AccessoryOptionSummary({ options, styles }) {
+  return (
+    <div className={styles.accessoryOptionSummary} aria-label="악세서리 옵션 요약">
+      {options.map((option, index) => {
+        const grade = getOptionGrade(option);
+        const badgeClassName = `${styles.optionGradeBadge} ${getOptionGradeClassName(grade, styles)}`;
+
+        return (
+          <span key={`${option}-${index}`} className={styles.accessoryOptionItem}>
+            <span className={styles.accessoryOptionText}>{option}</span>
+            <span className={badgeClassName}>[{grade}]</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function getOptionGradeClassName(grade, styles) {
+  if (grade === "상") return styles.optionGradeHigh;
+  if (grade === "중") return styles.optionGradeMiddle;
+  return styles.optionGradeLow;
 }
 
 function AbilityStoneCard({ item, styles }) {

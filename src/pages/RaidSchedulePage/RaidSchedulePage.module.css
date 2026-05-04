@@ -1132,33 +1132,6 @@
   font-weight: 950;
 }
 
-.equipmentOptionToggle {
-  display: inline-flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid rgba(105, 230, 255, 0.2);
-  border-radius: 12px;
-  color: var(--cyan);
-  font-size: 0.78rem;
-  font-weight: 950;
-  text-align: left;
-  background: rgba(85, 167, 255, 0.09);
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    color 160ms ease;
-}
-
-.equipmentOptionToggle:hover {
-  color: #ffffff;
-  border-color: rgba(105, 230, 255, 0.48);
-  background: rgba(85, 167, 255, 0.16);
-}
-
 .equipmentOptionList {
   display: grid;
   gap: 5px;
@@ -1179,6 +1152,58 @@
   color: var(--cyan);
   content: "+ ";
   font-weight: 900;
+}
+
+.accessoryOptionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 9px;
+  min-width: 0;
+  color: #dbe7ff;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.accessoryOptionItem {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+  font-weight: 850;
+  white-space: normal;
+}
+
+.accessoryOptionText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.optionGradeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 950;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.optionGradeHigh {
+  background: #a855f7;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.22);
+}
+
+.optionGradeMiddle {
+  background: #3b82f6;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.22);
+}
+
+.optionGradeLow {
+  background: #6b7280;
 }
 
 .equipmentEmpty {
