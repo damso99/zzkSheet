@@ -248,7 +248,7 @@ function decorateParticipant(characterName, metadataByCharacter) {
   return {
     characterName,
     level: metadata?.level || "-",
-    ownerName: metadata?.ownerName || "정보없음",
+    ownerName: metadata?.ownerName || "-",
     power: metadata?.power || "-",
   };
 }
