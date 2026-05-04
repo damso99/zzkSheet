@@ -100,6 +100,7 @@ export default function RaidSchedulePage() {
         date: isoDate,
         label: formatDateLabel(isoDate),
         raids: dateRaids.sort(compareRaidTime),
+        startTime: getFirstStartTime(dateRaids),
       }))
       .filter((group) => group.raids.length > 0);
   }, [currentWeekRange, raids]);
@@ -137,6 +138,7 @@ export default function RaidSchedulePage() {
       date,
       label: formatDateLabel(date),
       items,
+      startTime: getFirstStartTime(items),
     }));
   }, [searchResults]);
 
@@ -237,7 +239,7 @@ export default function RaidSchedulePage() {
                 {weeklyGroups.map((group) => (
                   <details key={group.date} className={styles.dayGroup} open={group.date === todayIsoDate}>
                     <summary className={styles.dayHeader}>
-                      <span className={styles.dayTitle}>{group.label}</span>
+                      <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
                       <span>{group.raids.length}개 일정</span>
                     </summary>
                     <div className={styles.cardGrid}>
@@ -246,7 +248,6 @@ export default function RaidSchedulePage() {
                           key={raid.id}
                           raid={raid}
                           styles={styles}
-                          showDate
                           onCharacterClick={setSelectedCharacterName}
                         />
                       ))}
@@ -274,14 +275,13 @@ export default function RaidSchedulePage() {
                 {searchGroups.map((group) => (
                   <details key={group.date} className={styles.dayGroup}>
                     <summary className={styles.dayHeader}>
-                      <span className={styles.dayTitle}>{group.label}</span>
+                      <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
                       <span>{group.items.length}개 결과</span>
                     </summary>
                     <div className={styles.searchResults}>
                       {group.items.map((item) => (
                         <article key={item.id} className={styles.searchResultCard}>
                           <div>
-                            <p className={styles.searchMeta}>{item.time}</p>
                             <h3>{item.raidName}</h3>
                           </div>
                           <dl className={styles.searchDetailList}>
@@ -345,6 +345,17 @@ function StatePanel({ styles, message }) {
 
 function compareRaidTime(left, right) {
   return `${left.date} ${left.time}`.localeCompare(`${right.date} ${right.time}`);
+}
+
+function getFirstStartTime(items) {
+  return items
+    .map((item) => item.time)
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right))[0] || "";
+}
+
+function formatGroupTitle(group) {
+  return group.startTime ? `${group.label} · ${group.startTime}` : group.label;
 }
 
 function formatFetchedAt(value) {

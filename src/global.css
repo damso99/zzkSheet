@@ -16,6 +16,7 @@
 
 html {
   min-width: 320px;
+  overflow-y: scroll;
 }
 
 body {

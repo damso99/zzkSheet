@@ -20,7 +20,16 @@ export function sendJson(response, status, body) {
 }
 
 export function getLostarkApiKey() {
-  return String(process.env.LOSTARK_API_KEY || "").replace(/^["']|["']$/g, "").trim();
+  return String(
+    process.env.LOSTARK_API_KEY ||
+      process.env.LOSTARK_OPENAPI_KEY ||
+      process.env.LOSTARK_API_JWT ||
+      process.env.LOSTARK_JWT ||
+      process.env.VITE_LOSTARK_API_KEY ||
+      "",
+  )
+    .replace(/^["']|["']$/g, "")
+    .trim();
 }
 
 export async function getLostarkCharacterBundle(characterName) {
