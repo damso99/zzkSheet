@@ -29,25 +29,11 @@ export function buildRaidSchedule({ settingRows, calendarRows, raidCalendarRows 
 
   for (const dayCode of WEEKDAY_CODES) {
     const slots = calendarSlotsByDay.get(dayCode) || [];
-    const participantGroups = participantGroupsByDay.get(dayCode) || [];
-    let participantCursor = 0;
+    const participantQueues = buildParticipantQueues(participantGroupsByDay.get(dayCode) || []);
 
     slots.forEach((slot, slotIndex) => {
       const normalizedRaidName = normalizeRaidName(slot.raidName);
-      let matchedGroup = null;
-
-      for (let index = participantCursor; index < participantGroups.length; index += 1) {
-        if (participantGroups[index].raidName === normalizedRaidName) {
-          matchedGroup = participantGroups[index];
-          participantCursor = index + 1;
-          break;
-        }
-      }
-
-      if (!matchedGroup && participantCursor < participantGroups.length) {
-        matchedGroup = participantGroups[participantCursor];
-        participantCursor += 1;
-      }
+      const matchedGroup = participantQueues.get(normalizedRaidName)?.shift() || null;
 
       raids.push({
         date: slot.date,
@@ -62,6 +48,19 @@ export function buildRaidSchedule({ settingRows, calendarRows, raidCalendarRows 
   }
 
   return raids.sort((left, right) => `${left.date}${left.time}`.localeCompare(`${right.date}${right.time}`));
+}
+
+function buildParticipantQueues(participantGroups) {
+  const queues = new Map();
+
+  participantGroups.forEach((group) => {
+    const raidName = normalizeRaidName(group.raidName);
+    if (!raidName) return;
+    if (!queues.has(raidName)) queues.set(raidName, []);
+    queues.get(raidName).push(group);
+  });
+
+  return queues;
 }
 
 export function buildFallbackRaidSchedule(todayIsoDate) {
