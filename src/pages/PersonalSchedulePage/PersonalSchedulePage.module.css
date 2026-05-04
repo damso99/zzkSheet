@@ -161,6 +161,7 @@
 
 .form input,
 .sortSelect select {
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   height: 44px;
@@ -288,6 +289,15 @@
     grid-template-columns: 1fr;
   }
 
+  .form label,
+  .form input,
+  .sortSelect,
+  .sortSelect select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
   .panelHeader {
     flex-direction: column;
   }
@@ -301,6 +311,11 @@
   .panel {
     padding: 18px;
     border-radius: 22px;
+  }
+
+  .form input {
+    padding-right: 10px;
+    padding-left: 10px;
   }
 
   .scheduleList {
