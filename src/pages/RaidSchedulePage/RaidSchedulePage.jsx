@@ -83,6 +83,16 @@ export default function RaidSchedulePage() {
     [raids, todayIsoDate],
   );
 
+  const todayOwnerNames = useMemo(() => {
+    const ownerNames = todayRaids.flatMap((raid) =>
+      raid.participants
+        .map((participant) => participant.ownerName?.trim())
+        .filter(Boolean),
+    );
+
+    return [...new Set(ownerNames)];
+  }, [todayRaids]);
+
   const weeklyGroups = useMemo(() => {
     const raidsByDate = new Map(
       getWeekDates(currentWeekRange).map((isoDate) => [isoDate, []]),
@@ -208,6 +218,7 @@ export default function RaidSchedulePage() {
               title={TAB_LABELS.today}
               subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
             />
+            <TodayParticipantList ownerNames={todayOwnerNames} styles={styles} />
             {todayRaids.length === 0 ? (
               <StatePanel styles={styles} message="일정이 없습니다." />
             ) : (
@@ -319,6 +330,28 @@ export default function RaidSchedulePage() {
         />
       ) : null}
     </div>
+  );
+}
+
+function TodayParticipantList({ ownerNames, styles }) {
+  return (
+    <section className={styles.todayParticipantPanel} aria-labelledby="today-participant-title">
+      <div className={styles.todayParticipantHeader}>
+        <h3 id="today-participant-title">금일 참여자 목록</h3>
+        <span>{ownerNames.length}명</span>
+      </div>
+      {ownerNames.length ? (
+        <div className={styles.todayParticipantBadges}>
+          {ownerNames.map((ownerName) => (
+            <span key={ownerName} className={styles.todayParticipantBadge}>
+              {ownerName}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className={styles.todayParticipantEmpty}>금일 참여자가 없습니다.</p>
+      )}
+    </section>
   );
 }
 

@@ -41,6 +41,8 @@ function EquipmentSection({ title, items, styles, emptyMessage }) {
 }
 
 function EquipmentCard({ item, styles }) {
+  const shouldShowQuality = !isAbilityStoneItem(item) && item.category !== "bracelet";
+
   return (
     <article className={styles.equipmentCard}>
       <img
@@ -54,7 +56,7 @@ function EquipmentCard({ item, styles }) {
         <div className={styles.itemBadges}>
           <span>{displayValue(item.type)}</span>
           <span>{displayValue(item.grade)}</span>
-          <span>품질 {displayValue(item.quality)}</span>
+          {shouldShowQuality ? <span>품질 {displayValue(item.quality)}</span> : null}
           {item.enhancement ? <span>강화 {item.enhancement}</span> : null}
         </div>
         {item.options?.length ? (
@@ -70,6 +72,10 @@ function EquipmentCard({ item, styles }) {
       </div>
     </article>
   );
+}
+
+function isAbilityStoneItem(item) {
+  return /어빌리티\s*스톤|스톤/.test(`${item?.type || ""} ${item?.name || ""}`);
 }
 
 function replaceWithPlaceholder(event) {

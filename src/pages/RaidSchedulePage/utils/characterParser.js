@@ -256,10 +256,10 @@ export function parseAbilityStoneOptions(tooltipLines) {
     .map(cleanTooltipLine)
     .filter(Boolean)
     .flatMap((line) => extractAbilityStoneCandidates(line))
+    .filter(isUsefulAbilityStoneCandidate)
     .map(normalizeAbilityStoneLine)
     .filter(Boolean)
     .filter((line) => !/Lv\.0/.test(line))
-    .filter((line) => !/무작위\s*각인\s*효과/.test(line))
     .filter((line, index, lines) => lines.indexOf(line) === index)
     .slice(0, 6);
 }
@@ -281,6 +281,7 @@ function parseBraceletOptions(tooltipLines, { name = "", type = "" } = {}) {
     .filter(Boolean)
     .flatMap((line) => splitOptionCandidates(line))
     .map(cleanTooltipLine)
+    .filter((line) => !isIgnoredBraceletOption(line))
     .filter((line) => isUsefulBraceletOption(line, { name, type }))
     .filter((line, index, lines) => lines.indexOf(line) === index)
     .slice(0, 10);
@@ -321,7 +322,7 @@ function splitOptionCandidates(line) {
 
 function extractAbilityStoneCandidates(line) {
   const candidates = [];
-  const pattern = /(.+?)\s*(?:Lv\.?\s*(\d+)|레벨\s*(\d+))\s*(증가|감소)?(?=\s|$)/gi;
+  const pattern = /(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)(?=\s|$)/gi;
   let match = pattern.exec(line);
 
   while (match) {
@@ -332,35 +333,65 @@ function extractAbilityStoneCandidates(line) {
   return candidates.length ? candidates : [line];
 }
 
+const ABILITY_STONE_IGNORED_KEYWORDS = [
+  "거래 제한",
+  "아이템 레벨",
+  "장비 레벨",
+  "품질",
+  "무작위 각인 효과",
+];
+
+function isUsefulAbilityStoneCandidate(line) {
+  const cleanedLine = cleanTooltipLine(line);
+  if (!cleanedLine || !/Lv\.?\s*\d+/i.test(cleanedLine)) return false;
+  if (!/(증가|감소)/.test(cleanedLine)) return false;
+  if (ABILITY_STONE_IGNORED_KEYWORDS.some((keyword) => cleanedLine.includes(keyword))) return false;
+
+  const nameMatch = cleanedLine.match(/^(.+?)\s*Lv\.?\s*\d+\s*(증가|감소)/i);
+  const optionName = cleanOptionName(nameMatch?.[1] || "");
+  return Boolean(optionName);
+}
+
 function normalizeAbilityStoneLine(line) {
-  if (!line || /무작위\s*각인\s*효과/.test(line)) return "";
+  if (!isUsefulAbilityStoneCandidate(line)) return "";
 
   const compactLine = cleanTooltipLine(line);
-  const directMatch = compactLine.match(
-    /(.+?)\s*(?:Lv\.?\s*(\d+)|레벨\s*(\d+))\s*(증가|감소)?/i,
-  );
+  const directMatch = compactLine.match(/(.+?)\s*Lv\.?\s*(\d+)\s*(증가|감소)/i);
   if (!directMatch) return "";
 
   const name = cleanOptionName(directMatch[1]);
-  const level = directMatch[2] || directMatch[3] || "0";
+  const level = directMatch[2] || "0";
   if (!name || Number(level) === 0) return "";
 
-  const direction = directMatch[4] || (/(공격속도|이동속도|방어력|감소|패널티)/.test(name) ? "감소" : "증가");
+  const direction = directMatch[3];
   return `${name} Lv.${level} ${direction}`;
 }
 
 function isUsefulAccessoryOption(line, { name, type }) {
   if (!line || line === name || line === type) return false;
+  if (isBaseAccessoryStatLine(line)) return false;
   if (!hasOptionNumber(line)) return false;
   return !isIgnoredEquipmentLine(line);
 }
 
+function isBaseAccessoryStatLine(line) {
+  const normalizedLine = String(line || "").replace(/,/g, "").trim();
+  return /^\d+$/.test(normalizedLine) || /^(힘|민첩|지능|체력)\s*\+\s*\d+/.test(normalizedLine);
+}
+
 function isUsefulBraceletOption(line, { name, type }) {
   if (!line || line === name || line === type) return false;
+  if (isIgnoredBraceletOption(line)) return false;
   if (!hasOptionNumber(line) && !/(효과|피해|공격력|치명타|쿨타임|재사용|회복|보호막|약점|비수|응원|정밀|순환|우월)/.test(line)) {
     return false;
   }
   return !isIgnoredEquipmentLine(line);
+}
+
+function isIgnoredBraceletOption(line) {
+  const normalizedLine = String(line || "").trim();
+  if (!normalizedLine || normalizedLine === "-1") return true;
+  return /팔찌\s*효과|효과\s*부여\s*불가|아크\s*패시브\s*포인트\s*효과/.test(normalizedLine);
 }
 
 function hasOptionNumber(line) {
