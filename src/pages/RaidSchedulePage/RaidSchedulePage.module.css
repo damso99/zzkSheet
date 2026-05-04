@@ -553,6 +553,14 @@
   gap: 14px;
 }
 
+.weekSearchBox {
+  margin-bottom: 18px;
+}
+
+.weekSearchBox .searchBox {
+  width: min(520px, 100%);
+}
+
 .dayGroup {
   overflow: hidden;
   border: 1px solid rgba(104, 150, 255, 0.18);

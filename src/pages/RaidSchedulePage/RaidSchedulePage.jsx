@@ -10,7 +10,6 @@ import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./ut
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
-  search: "이름 검색",
 };
 
 export default function RaidSchedulePage() {
@@ -120,7 +119,7 @@ export default function RaidSchedulePage() {
     if (!deferredSearchQuery) return [];
 
     const loweredQuery = deferredSearchQuery.toLowerCase();
-    return raids.flatMap((raid) =>
+    return raids.filter((raid) => isDateInRange(raid.date, currentWeekRange)).flatMap((raid) =>
       raid.participants
         .filter((participant) => participant.ownerName.toLowerCase().includes(loweredQuery))
         .map((participant) => ({
@@ -132,7 +131,7 @@ export default function RaidSchedulePage() {
           time: raid.time,
         })),
     );
-  }, [deferredSearchQuery, raids]);
+  }, [currentWeekRange, deferredSearchQuery, raids]);
 
   const searchGroups = useMemo(() => {
     const groupedResults = new Map();
@@ -187,24 +186,20 @@ export default function RaidSchedulePage() {
             </a>
           </div>
 
-          {activeTab === "search" ? (
-            <RaidSearch value={searchQuery} onChange={setSearchQuery} styles={styles} />
-          ) : (
-            <div className={styles.summaryChips}>
-              <div className={styles.chip}>
-                <span>금일 일정</span>
-                <strong>{todayRaids.length}개</strong>
-              </div>
-              <div className={styles.chip}>
-                <span>주간 일정</span>
-                <strong>{weeklyGroups.reduce((count, group) => count + group.raids.length, 0)}개</strong>
-              </div>
-              <div className={styles.chip}>
-                <span>전체 레이드</span>
-                <strong>{raids.length}개</strong>
-              </div>
+          <div className={styles.summaryChips}>
+            <div className={styles.chip}>
+              <span>금일 일정</span>
+              <strong>{todayRaids.length}개</strong>
             </div>
-          )}
+            <div className={styles.chip}>
+              <span>주간 일정</span>
+              <strong>{weeklyGroups.reduce((count, group) => count + group.raids.length, 0)}개</strong>
+            </div>
+            <div className={styles.chip}>
+              <span>전체 레이드</span>
+              <strong>{raids.length}개</strong>
+            </div>
+          </div>
         </section>
 
         {isLoading && <StatePanel styles={styles} message="레이드 일정을 불러오는 중입니다." />}
@@ -260,7 +255,50 @@ export default function RaidSchedulePage() {
               title={TAB_LABELS.week}
               subtitle={`${formatDateLabel(currentWeekRange.start)} ~ ${formatDateLabel(currentWeekRange.end)}`}
             />
-            {weeklyGroups.length === 0 ? (
+            <div className={styles.weekSearchBox}>
+              <RaidSearch value={searchQuery} onChange={setSearchQuery} styles={styles} />
+            </div>
+            {deferredSearchQuery ? (
+              searchResults.length === 0 ? (
+                <StatePanel styles={styles} message="일정이 없습니다." />
+              ) : (
+                <div className={styles.weekStack}>
+                  {searchGroups.map((group) => (
+                    <details key={group.date} className={styles.dayGroup}>
+                      <summary className={styles.dayHeader}>
+                        <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
+                        <span>{group.items.length}개 결과</span>
+                      </summary>
+                      <div className={styles.searchResults}>
+                        {group.items.map((item) => (
+                          <article key={item.id} className={styles.searchResultCard}>
+                            <div>
+                              <h3>{item.raidName}</h3>
+                            </div>
+                            <div className={styles.searchInlineMeta}>
+                              <div className={styles.searchInlineField}>
+                                <span>참여 캐릭터</span>
+                                <button
+                                  type="button"
+                                  className={styles.searchCharacterButton}
+                                  onClick={() => setSelectedCharacterName(item.characterName)}
+                                >
+                                  {item.characterName}
+                                </button>
+                              </div>
+                              <div className={styles.searchInlineField}>
+                                <span>이름</span>
+                                <strong>{item.ownerName}</strong>
+                              </div>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              )
+            ) : weeklyGroups.length === 0 ? (
               <StatePanel styles={styles} message="일정이 없습니다." />
             ) : (
               <div className={styles.weekStack}>
@@ -278,57 +316,6 @@ export default function RaidSchedulePage() {
                           styles={styles}
                           onCharacterClick={setSelectedCharacterName}
                         />
-                      ))}
-                    </div>
-                  </details>
-                ))}
-              </div>
-            )}
-          </section>
-        ) : null}
-
-        {!isLoading && activeTab === "search" ? (
-          <section className={styles.section}>
-            <SectionHeading
-              styles={styles}
-              title={TAB_LABELS.search}
-              subtitle="이름으로 참여 레이드를 요일별로 빠르게 찾을 수 있습니다."
-            />
-            {!deferredSearchQuery ? (
-              <StatePanel styles={styles} message="이름을 입력해 주세요." />
-            ) : searchResults.length === 0 ? (
-              <StatePanel styles={styles} message="일정이 없습니다." />
-            ) : (
-              <div className={styles.weekStack}>
-                {searchGroups.map((group) => (
-                  <details key={group.date} className={styles.dayGroup}>
-                    <summary className={styles.dayHeader}>
-                      <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
-                      <span>{group.items.length}개 결과</span>
-                    </summary>
-                    <div className={styles.searchResults}>
-                      {group.items.map((item) => (
-                        <article key={item.id} className={styles.searchResultCard}>
-                          <div>
-                            <h3>{item.raidName}</h3>
-                          </div>
-                          <div className={styles.searchInlineMeta}>
-                            <div className={styles.searchInlineField}>
-                              <span>참여 캐릭터</span>
-                              <button
-                                type="button"
-                                className={styles.searchCharacterButton}
-                                onClick={() => setSelectedCharacterName(item.characterName)}
-                              >
-                                {item.characterName}
-                              </button>
-                            </div>
-                            <div className={styles.searchInlineField}>
-                              <span>이름</span>
-                              <strong>{item.ownerName}</strong>
-                            </div>
-                          </div>
-                        </article>
                       ))}
                     </div>
                   </details>
