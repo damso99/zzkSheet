@@ -139,18 +139,25 @@ function AbilityStoneCard({ item, styles }) {
             ))}
           </div>
         ) : null}
+      </div>
 
-        {engravings.length ? (
-          <ul className={styles.abilityStoneEngravings}>
-            {engravings.map((engraving, index) => (
-              <li key={`${engraving.name}-${index}`} className={styles.abilityStoneEngraving}>
+      {engravings.length ? (
+        <ul className={styles.abilityStoneEngravings}>
+          {engravings.map((engraving, index) => {
+            const isNegative = engraving.name.includes("감소") || engraving.isNegative;
+            const className = isNegative
+              ? `${styles.abilityStoneEngraving} ${styles.abilityStoneEngravingNegative}`
+              : styles.abilityStoneEngraving;
+
+            return (
+              <li key={`${engraving.name}-${index}`} className={className}>
                 <span>{engraving.name}</span>
                 <strong>{displayValue(engraving.level)}</strong>
               </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+            );
+          })}
+        </ul>
+      ) : null}
     </article>
   );
 }

@@ -1052,6 +1052,7 @@
 }
 
 .abilityStoneCard {
+  grid-template-columns: 62px minmax(0, 1fr) minmax(130px, auto);
   border-color: rgba(168, 121, 255, 0.28);
   background:
     linear-gradient(135deg, rgba(168, 121, 255, 0.16), transparent 46%),
@@ -1069,23 +1070,39 @@
 }
 
 .abilityStoneEngravings {
-  display: grid;
-  gap: 7px;
-  margin: 12px 0 0;
-  padding: 11px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  align-self: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   list-style: none;
-  border-top: 1px solid rgba(104, 150, 255, 0.14);
 }
 
 .abilityStoneEngraving {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 7px;
   align-items: center;
+  width: 100%;
   min-width: 0;
+  max-width: 170px;
+  padding: 5px 8px;
+  border: 1px solid rgba(168, 121, 255, 0.32);
+  border-radius: 999px;
   color: #ffffff;
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 900;
+  background: rgba(168, 121, 255, 0.16);
+  box-shadow: 0 0 16px rgba(168, 121, 255, 0.12);
+}
+
+.abilityStoneEngravingNegative {
+  border-color: rgba(255, 94, 117, 0.42);
+  background: rgba(255, 94, 117, 0.16);
+  box-shadow: 0 0 16px rgba(255, 94, 117, 0.12);
 }
 
 .abilityStoneEngraving > span {
@@ -1094,9 +1111,16 @@
 }
 
 .abilityStoneEngraving > strong {
-  color: #ffffff;
-  font-size: 0.9rem;
+  display: inline-flex;
+  justify-content: center;
+  min-width: 22px;
+  color: var(--gold);
+  font-size: 0.82rem;
   font-weight: 950;
+}
+
+.abilityStoneEngravingNegative > strong {
+  color: #ffd7d7;
 }
 
 .abilityStoneLevelBadge {
@@ -1510,6 +1534,24 @@
   .gemGrid,
   .cardSetGrid {
     grid-template-columns: 1fr;
+  }
+
+  .abilityStoneCard {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .abilityStoneEngravings {
+    grid-column: 1 / -1;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 10px;
+    border-top: 1px solid rgba(104, 150, 255, 0.14);
+  }
+
+  .abilityStoneEngraving {
+    width: auto;
+    max-width: 100%;
   }
 
   .tripodList {
