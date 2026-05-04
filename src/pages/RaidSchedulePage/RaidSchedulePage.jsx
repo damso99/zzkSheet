@@ -152,7 +152,7 @@ export default function RaidSchedulePage() {
             <h1>레이드 일정표</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
-              <span>{sourceMeta.isFallback ? "상태 더미 데이터" : "상태 실시간 시트"}</span>
+              <span>{sourceMeta.isFallback ? "Disconnected" : "Connected"}</span>
             </div>
           </div>
         </header>
