@@ -1,93 +1,83 @@
-import { parseSheetDate, parseSheetTime, shiftIsoDate } from "./dateUtils.js";
+import { parseSheetDate, parseSheetTime } from "./dateUtils.js";
 
-const RAID_NAME_ALIASES = {
-  노르모체: "아르모체",
-  지평성당: "지평막걸리",
-  하기르: "에기르",
+const DAY_CODE_TO_LABEL = {
+  WED: "수",
+  THU: "목",
+  FRI: "금",
+  SAT: "토",
+  SUN: "일",
+  MON: "월",
+  TUE: "화",
 };
 
-const KOREAN_DAY_TO_CODE = {
-  수: "WED",
-  목: "THU",
-  금: "FRI",
-  토: "SAT",
-  일: "SUN",
-  월: "MON",
-  화: "TUE",
-};
+const DAY_LABEL_TO_CODE = Object.fromEntries(
+  Object.entries(DAY_CODE_TO_LABEL).map(([code, label]) => [label, code]),
+);
 
-const WEEKDAY_CODES = ["WED", "THU", "FRI", "SAT", "SUN", "MON", "TUE"];
-const KNOWN_RAID_NAMES = ["카제로스", "세르카", "아르모체", "지평성당", "지평막걸리", "에기르", "하기르", "익스트림"];
-const SCHEDULE_NOTE_ROW_MARKERS = ["본캐일정", "배드민턴", "여행"];
+const DEFAULT_TIME_SEQUENCE = ["10:00", "10:30", "11:00", "11:30", "12:00"];
 
 export function buildRaidSchedule({ settingRows, calendarRows, raidCalendarRows }) {
-  const metadataByCharacter = parseSettingRows(settingRows);
-  const calendarSlotsByDay = parseCalendarRows(calendarRows);
-  const participantGroupsByDay = parseRaidCalendarRows(raidCalendarRows, calendarSlotsByDay);
+  const settingLookup = parseSettingRows(settingRows);
+  const calendarSlots = parseCalendarRows(calendarRows);
+  const raidBlocks = parseRaidCalendarRows(raidCalendarRows);
 
-  const raids = [];
-
-  for (const dayCode of WEEKDAY_CODES) {
-    const slots = calendarSlotsByDay.get(dayCode) || [];
-    const participantQueues = buildParticipantQueues(participantGroupsByDay.get(dayCode) || []);
-
-    slots.forEach((slot, slotIndex) => {
-      const normalizedRaidName = normalizeRaidName(slot.raidName);
-      const matchedGroup = participantQueues.get(normalizedRaidName)?.shift() || null;
-
-      raids.push({
-        date: slot.date,
-        id: `${slot.date}-${slot.time}-${normalizedRaidName}-${slotIndex}`,
-        participants: (matchedGroup?.characterNames || []).map((characterName) =>
-          decorateParticipant(characterName, metadataByCharacter),
-        ),
-        raidName: normalizedRaidName,
-        time: slot.time,
-      });
-    });
-  }
-
-  return raids.sort((left, right) => `${left.date}${left.time}`.localeCompare(`${right.date}${right.time}`));
-}
-
-function buildParticipantQueues(participantGroups) {
-  const queues = new Map();
-
-  participantGroups.forEach((group) => {
-    const raidName = normalizeRaidName(group.raidName);
-    if (!raidName) return;
-    if (!queues.has(raidName)) queues.set(raidName, []);
-    queues.get(raidName).push(group);
-  });
-
-  return queues;
+  return mergeRaidData({
+    calendarSlots,
+    raidBlocks,
+    settingLookup,
+  }).sort(compareRaidTime);
 }
 
 export function buildFallbackRaidSchedule(todayIsoDate) {
   return [
     {
       date: todayIsoDate,
-      id: `${todayIsoDate}-20:00-카제로스-A`,
+      dayLabel: "미지정",
+      id: `${todayIsoDate}-10:00-카제로스-0`,
       raidName: "카제로스",
-      time: "20:00",
+      time: "10:00",
       participants: [
-        { characterName: "포동포동한펭귄", ownerName: "펭귄", level: "1775.0", power: "5275.33" },
-        { characterName: "Erbia", ownerName: "리아", level: "1776.66", power: "5002.80" },
-        { characterName: "도롱다룽", ownerName: "지훈", level: "1775.83", power: "5230.92" },
+        { characterName: "코카콜라아이스가나초콜릿", ownerName: "미지정", level: "-", power: "-" },
+        { characterName: "Erbia", ownerName: "미지정", level: "-", power: "-" },
       ],
-    },
-    {
-      date: shiftIsoDate(todayIsoDate, 1),
-      id: `${shiftIsoDate(todayIsoDate, 1)}-21:00-세르카-B`,
-      raidName: "세르카",
-      time: "21:00",
-      participants: [
-        { characterName: "코카콜라아이스티맥주소주", ownerName: "치호", level: "1790.0", power: "6858.13" },
-        { characterName: "머키용Mk3", ownerName: "준현", level: "1780.83", power: "5774.47" },
-        { characterName: "탱글퐁듀", ownerName: "태경", level: "1770.0", power: "5260.48" },
-      ],
+      participantCount: 2,
     },
   ];
+}
+
+function mergeRaidData({ calendarSlots, raidBlocks, settingLookup }) {
+  const slotQueues = new Map();
+
+  calendarSlots.forEach((slot) => {
+    const key = buildSlotKey(slot.dayCode, slot.raidName);
+    if (!slotQueues.has(key)) slotQueues.set(key, []);
+    slotQueues.get(key).push(slot);
+  });
+
+  const merged = [];
+
+  raidBlocks.forEach((block) => {
+    block.raids.forEach((raid, raidIndex) => {
+      const queue = slotQueues.get(buildSlotKey(block.dayCode, raid.raidName));
+      const slot = queue?.shift() || null;
+      const participants = raid.characterNames.map((characterName) =>
+        decorateParticipant(characterName, settingLookup),
+      );
+
+      merged.push({
+        date: slot?.date || null,
+        dayCode: block.dayCode,
+        dayLabel: DAY_CODE_TO_LABEL[block.dayCode] || "미지정",
+        id: `${slot?.date || "unscheduled"}-${slot?.time || `slot-${raidIndex}`}-${raid.raidName}-${block.index}-${raidIndex}`,
+        participants,
+        participantCount: participants.length,
+        raidName: raid.raidName,
+        time: slot?.time || null,
+      });
+    });
+  });
+
+  return merged;
 }
 
 function parseSettingRows(rows) {
@@ -95,27 +85,24 @@ function parseSettingRows(rows) {
     row.some((cell) => cleanText(cell).toUpperCase() === "CHARACTER"),
   );
 
-  if (headerRowIndex < 0) return new Map();
-
   const metadataByCharacter = new Map();
 
-  // NOTE:
-  // The live sheet currently stores usable character metadata in fixed columns.
-  // If the SETTING tab changes, adjust these indexes first.
-  const CHARACTER_COLUMN = 1;
-  const LEVEL_COLUMN = 3;
-  const MAX_POWER_COLUMN = 4;
-  const OWNER_COLUMN = 9;
+  const characterColumn = 1;
+  const levelColumn = 3;
+  const powerColumn = 4;
+  const ownerColumn = 9;
+
+  if (headerRowIndex < 0) return metadataByCharacter;
 
   rows.slice(headerRowIndex + 1).forEach((row) => {
-    const characterName = cleanText(row[CHARACTER_COLUMN]);
-    if (!characterName || characterName === "CHARACTER") return;
+    const characterName = cleanText(row[characterColumn]);
+    if (!characterName || characterName.toUpperCase() === "CHARACTER") return;
 
-    metadataByCharacter.set(characterName, {
+    metadataByCharacter.set(normalizeKey(characterName), {
       characterName,
-      level: cleanText(row[LEVEL_COLUMN]) || "-",
-      ownerName: cleanText(row[OWNER_COLUMN]) || "정보없음",
-      power: cleanText(row[MAX_POWER_COLUMN]) || "-",
+      level: cleanText(row[levelColumn]) || "-",
+      ownerName: cleanText(row[ownerColumn]) || "미지정",
+      power: cleanText(row[powerColumn]) || "-",
     });
   });
 
@@ -123,78 +110,101 @@ function parseSettingRows(rows) {
 }
 
 function parseCalendarRows(rows) {
-  const result = new Map();
   const headerRowIndex = rows.findIndex((row) =>
-    row.some((cell) => WEEKDAY_CODES.includes(cleanText(cell).toUpperCase())),
+    row.some((cell) => WEEKDAY_CODES.has(cleanText(cell).toUpperCase())),
   );
 
-  if (headerRowIndex < 0) return result;
+  if (headerRowIndex < 0) return [];
 
   const dayColumns = rows[headerRowIndex]
     .map((cell, index) => ({
       dayCode: cleanText(cell).toUpperCase(),
       index,
     }))
-    .filter((item) => WEEKDAY_CODES.includes(item.dayCode));
+    .filter((item) => WEEKDAY_CODES.has(item.dayCode));
 
   const dateRowIndex = findDateRowIndex(rows, headerRowIndex, dayColumns);
-  const baseTimes = collectBaseTimes(rows, headerRowIndex);
-  const scanStartRowIndex = dateRowIndex + 1;
-  const scanEndRowIndex = findScheduleEndRowIndex(rows, scanStartRowIndex);
+  const timeRows = collectTimeRows(rows, headerRowIndex);
+  const endRowIndex = findScheduleEndRowIndex(rows, dateRowIndex + 1);
+
+  const slots = [];
 
   dayColumns.forEach(({ dayCode, index }) => {
-    const isoDate = dateRowIndex >= 0 ? parseSheetDate(rows[dateRowIndex][index]) : "";
-    const slots = [];
+    const date = dateRowIndex >= 0 ? parseSheetDate(rows[dateRowIndex]?.[index]) : "";
 
-    for (let rowIndex = scanStartRowIndex; rowIndex <= scanEndRowIndex; rowIndex += 1) {
-      const raidName = extractRaidName(rows[rowIndex][index]);
-      if (!raidName || !isoDate) continue;
+    for (let rowIndex = dateRowIndex + 1; rowIndex <= endRowIndex; rowIndex += 1) {
+      const raidName = normalizeRaidName(rows[rowIndex]?.[index]);
+      if (!raidName) continue;
 
-      const time = resolveTimeForRow(rowIndex, baseTimes);
-      if (!time) continue;
-
-      slots.push({ date: isoDate, raidName, time });
+      slots.push({
+        date: date || null,
+        dayCode,
+        raidName,
+        time: resolveTimeForRow(rowIndex, timeRows),
+      });
     }
-
-    result.set(dayCode, slots);
   });
 
-  return result;
+  return slots;
 }
 
-function parseRaidCalendarRows(rows, calendarSlotsByDay) {
-  const result = new Map();
-  const dayRows = rows
-    .map((row, index) => ({ dayCode: KOREAN_DAY_TO_CODE[cleanText(row[0])] || "", index }))
+function parseRaidCalendarRows(rows) {
+  const dayLabelRows = rows
+    .map((row, index) => ({
+      dayCode: DAY_LABEL_TO_CODE[cleanText(row[0])] || "",
+      index,
+    }))
     .filter((item) => item.dayCode);
 
-  dayRows.forEach(({ dayCode, index }, blockIndex) => {
+  return dayLabelRows.map(({ dayCode, index }, blockIndex) => {
     const headerRow = rows[index - 1] || [];
-    const nextDayIndex = dayRows[blockIndex + 1]?.index ?? rows.length;
-    const endRowIndex = nextDayIndex - 2;
-    const raidColumns = [];
-    const calendarSlots = calendarSlotsByDay.get(dayCode) || [];
-    const fallbackRaidNames = calendarSlots.map((slot) => slot.raidName);
-    const headerColumns = resolveHeaderColumns(headerRow, rows[index], fallbackRaidNames);
+    const nextIndex = dayLabelRows[blockIndex + 1]?.index ?? rows.length;
+    const raids = parseRaidColumns(headerRow, rows.slice(index, nextIndex));
 
-    headerColumns.forEach(({ columnIndex, raidName }) => {
-      const characterNames = [];
-      for (let rowIndex = index; rowIndex <= endRowIndex; rowIndex += 1) {
-        const characterName = cleanText(rows[rowIndex]?.[columnIndex]);
-        if (!characterName || characterName === "-") continue;
-        characterNames.push(characterName);
-      }
+    return {
+      dayCode,
+      index,
+      raids,
+    };
+  });
+}
 
-      raidColumns.push({
-        characterNames,
-        raidName,
-      });
-    });
+function parseRaidColumns(headerRow, bodyRows) {
+  const raidColumns = headerRow
+    .map((value, columnIndex) => ({
+      columnIndex,
+      raidName: normalizeRaidName(value),
+    }))
+    .filter((item) => item.columnIndex > 1 && item.raidName)
+    .slice(0, 4);
 
-    result.set(dayCode, raidColumns);
+  return raidColumns.map(({ columnIndex, raidName }) => ({
+    characterNames: collectParticipantsFromColumn(bodyRows, columnIndex),
+    raidName,
+  }));
+}
+
+function collectParticipantsFromColumn(rows, columnIndex) {
+  const participants = [];
+
+  rows.forEach((row) => {
+    const value = cleanText(row[columnIndex]);
+    if (!value || isNoiseCell(value) || isColorCode(value)) return;
+    if (!participants.includes(value)) participants.push(value);
   });
 
-  return result;
+  return participants;
+}
+
+function decorateParticipant(characterName, settingLookup) {
+  const metadata = settingLookup.get(normalizeKey(characterName));
+
+  return {
+    characterName,
+    level: metadata?.level || "-",
+    ownerName: metadata?.ownerName || "미지정",
+    power: metadata?.power || "-",
+  };
 }
 
 function findDateRowIndex(rows, headerRowIndex, dayColumns) {
@@ -203,7 +213,11 @@ function findDateRowIndex(rows, headerRowIndex, dayColumns) {
   const searchEndIndex = Math.min(rows.length - 1, headerRowIndex + 40);
 
   for (let rowIndex = headerRowIndex + 1; rowIndex <= searchEndIndex; rowIndex += 1) {
-    const score = dayColumns.reduce((count, item) => count + Number(Boolean(parseSheetDate(rows[rowIndex]?.[item.index]))), 0);
+    const score = dayColumns.reduce(
+      (count, item) => count + Number(Boolean(parseSheetDate(rows[rowIndex]?.[item.index]))),
+      0,
+    );
+
     if (score > bestScore) {
       bestRowIndex = rowIndex;
       bestScore = score;
@@ -217,109 +231,70 @@ function findDateRowIndex(rows, headerRowIndex, dayColumns) {
   return bestRowIndex;
 }
 
-function collectBaseTimes(rows, headerRowIndex) {
-  const baseTimes = [];
+function collectTimeRows(rows, headerRowIndex) {
+  const timeRows = [];
 
   for (let rowIndex = headerRowIndex + 1; rowIndex < rows.length; rowIndex += 1) {
-    const parsedTime = parseSheetTime(rows[rowIndex]?.[1]);
-    if (!parsedTime) continue;
-    baseTimes.push({ rowIndex, time: parsedTime });
+    const time = normalizeTimeLabel(parseSheetTime(rows[rowIndex]?.[1]));
+    if (!time) continue;
+    timeRows.push({ rowIndex, time });
   }
 
-  return baseTimes;
+  return timeRows.length > 0 ? timeRows : DEFAULT_TIME_SEQUENCE.map((time, index) => ({
+    rowIndex: headerRowIndex + 1 + index,
+    time,
+  }));
 }
 
-function resolveTimeForRow(rowIndex, baseTimes) {
+function resolveTimeForRow(rowIndex, timeRows) {
   let activeBase = null;
 
-  for (const baseTime of baseTimes) {
-    if (baseTime.rowIndex <= rowIndex) {
-      activeBase = baseTime;
+  for (const timeRow of timeRows) {
+    if (timeRow.rowIndex <= rowIndex) {
+      activeBase = timeRow;
       continue;
     }
     break;
   }
 
-  if (!activeBase) return "";
+  if (!activeBase) return null;
 
   const baseMinutes = toMinutes(activeBase.time);
   const halfHourSteps = Math.max(0, Math.ceil((rowIndex - activeBase.rowIndex) / 2));
   return toTimeLabel(baseMinutes + halfHourSteps * 30);
 }
 
-function decorateParticipant(characterName, metadataByCharacter) {
-  const metadata = metadataByCharacter.get(characterName);
-
-  return {
-    characterName,
-    level: metadata?.level || "-",
-    ownerName: metadata?.ownerName || "-",
-    power: metadata?.power || "-",
-  };
-}
-
-function normalizeRaidName(value) {
-  const text = cleanText(value);
-  if (!text) return "";
-  return RAID_NAME_ALIASES[text] || text;
-}
-
-function extractRaidName(value) {
-  const text = cleanText(value);
-  if (!text) return "";
-  const matchedRaidName = KNOWN_RAID_NAMES.find((raidName) => text === raidName);
-  return matchedRaidName ? normalizeRaidName(matchedRaidName) : "";
-}
-
-function findScheduleEndRowIndex(rows, scanStartRowIndex) {
+function findScheduleEndRowIndex(rows, startRowIndex) {
   const noteRowIndex = rows.findIndex((row, index) => {
-    if (index < scanStartRowIndex) return false;
-    return row.some((cell) =>
-      SCHEDULE_NOTE_ROW_MARKERS.some((marker) => cleanText(cell).includes(marker)),
-    );
+    if (index < startRowIndex) return false;
+    return row.some((cell) => SCHEDULE_NOTE_MARKERS.some((marker) => cleanText(cell).includes(marker)));
   });
 
   return noteRowIndex > 0 ? noteRowIndex - 1 : rows.length - 1;
 }
 
-function resolveHeaderColumns(headerRow, firstParticipantRow, fallbackRaidNames) {
-  const explicitHeaders = headerRow
-    .map((value, columnIndex) => ({
-      columnIndex,
-      raidName: extractRaidName(value),
-    }))
-    .filter((item) => item.raidName);
-
-  if (explicitHeaders.length > 0) return explicitHeaders;
-
-  // NOTE:
-  // The first "수요일" block in gviz does not keep a separate header row,
-  // so we borrow the day order from Calendar and map it to visible participant columns here.
-  const visibleNameColumns = firstParticipantRow
-    .map((value, columnIndex) => ({
-      columnIndex,
-      isString: typeof value === "string",
-      value: cleanText(value),
-    }))
-    .filter(
-      (item) =>
-        item.isString &&
-        item.columnIndex >= 2 &&
-        item.value &&
-        item.value !== "-" &&
-        !isColorCode(item.value) &&
-        item.value !== "수",
-    )
-    .slice(0, fallbackRaidNames.length);
-
-  return visibleNameColumns.map((item, index) => ({
-    columnIndex: item.columnIndex,
-    raidName: normalizeRaidName(fallbackRaidNames[index] || ""),
-  }));
+function buildSlotKey(dayCode, raidName) {
+  return `${dayCode}|${normalizeKey(raidName)}`;
 }
 
-function isColorCode(value) {
-  return /^#[0-9a-f]{6}$/i.test(value);
+function normalizeRaidName(value) {
+  const text = cleanText(value);
+  if (!text) return "";
+
+  return text
+    .replace(/\((?:하드|노말)\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeTimeLabel(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return "";
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return `${String(hours >= 24 ? hours - 24 : hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 function toMinutes(timeLabel) {
@@ -335,8 +310,42 @@ function toTimeLabel(totalMinutes) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+function compareRaidTime(left, right) {
+  const leftDate = left.date || "9999-12-31";
+  const rightDate = right.date || "9999-12-31";
+  const leftTime = left.time || "99:99";
+  const rightTime = right.time || "99:99";
+  return `${leftDate} ${leftTime}`.localeCompare(`${rightDate} ${rightTime}`);
+}
+
+function isColorCode(value) {
+  return /^#[0-9a-f]{6}$/i.test(String(value || "").trim());
+}
+
+function isNoiseCell(value) {
+  const text = String(value || "").trim();
+  return (
+    !text ||
+    text === "-" ||
+    text === "TRUE" ||
+    text === "FALSE" ||
+    text === "+" ||
+    text === "#REF!" ||
+    /^#[0-9a-f]{3,8}$/i.test(text) ||
+    /^https?:\/\//i.test(text)
+  );
+}
+
 function cleanText(value) {
   return String(value ?? "")
+    .replace(/\r/g, "")
     .replace(/\n/g, " ")
     .trim();
 }
+
+function normalizeKey(value) {
+  return cleanText(value).replace(/\s+/g, "").toLowerCase();
+}
+
+const WEEKDAY_CODES = new Set(["WED", "THU", "FRI", "SAT", "SUN", "MON", "TUE"]);
+const SCHEDULE_NOTE_MARKERS = ["공지", "안내", "주의", "참고", "메모", "notice"];
