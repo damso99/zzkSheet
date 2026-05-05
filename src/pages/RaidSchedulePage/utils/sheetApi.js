@@ -3,19 +3,19 @@ export const DEFAULT_SHEET_URL =
 
 export const DEFAULT_TARGET_GID = "57930127";
 
-const SHEETS = {
-  setting: { gid: "279415455", name: "SETTING" },
-  calendar: { gid: "521341679", name: "Calendar" },
-  raidCalendar: { gid: "57930127", name: "레이드캘린더" },
+const SHEET_GIDS = {
+  setting: "279415455",
+  calendar: "521341679",
+  raidCalendar: "57930127",
 };
 
 export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, targetGid = DEFAULT_TARGET_GID } = {}) {
   const targetSheetUrl = ensureGid(sheetUrl, targetGid);
 
   const [raidCalendarSheet, calendarSheet, settingSheet] = await Promise.all([
-    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEETS.raidCalendar.gid }),
-    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEETS.calendar.gid }),
-    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEETS.setting.gid }),
+    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.raidCalendar }),
+    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.calendar }),
+    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.setting }),
   ]);
 
   console.groupCollapsed("[sheetApi] raw Google Sheet rows");
