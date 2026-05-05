@@ -1,7 +1,7 @@
 export const DEFAULT_SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1pn-86CBr_9TzKI1zncCXpo3Ge0rKjg8zA99v6twX_gA/edit?gid=456006472#gid=456006472";
+  "https://docs.google.com/spreadsheets/d/1pn-86CBr_9TzKI1zncCXpo3Ge0rKjg8zA99v6twX_gA/edit?gid=521341679#gid=521341679";
 
-export const DEFAULT_TARGET_GID = "456006472";
+export const DEFAULT_TARGET_GID = "521341679";
 
 const REQUIRED_SHEETS = ["SETTING", "Calendar", "레이드캘린더"];
 

@@ -200,12 +200,17 @@ function parseRaidCalendarRows(rows, calendarSlotsByDay) {
 function findDateRowIndex(rows, headerRowIndex, dayColumns) {
   let bestRowIndex = -1;
   let bestScore = -1;
+  const searchEndIndex = Math.min(rows.length - 1, headerRowIndex + 40);
 
-  for (let rowIndex = headerRowIndex + 1; rowIndex <= headerRowIndex + 4; rowIndex += 1) {
+  for (let rowIndex = headerRowIndex + 1; rowIndex <= searchEndIndex; rowIndex += 1) {
     const score = dayColumns.reduce((count, item) => count + Number(Boolean(parseSheetDate(rows[rowIndex]?.[item.index]))), 0);
     if (score > bestScore) {
       bestRowIndex = rowIndex;
       bestScore = score;
+    }
+
+    if (score === dayColumns.length && score > 0) {
+      return rowIndex;
     }
   }
 
