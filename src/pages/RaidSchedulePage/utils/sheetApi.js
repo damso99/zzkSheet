@@ -18,12 +18,6 @@ export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, target
     fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.setting }),
   ]);
 
-  console.groupCollapsed("[sheetApi] raw Google Sheet rows");
-  console.log("레이드캘린더 rows", raidCalendarSheet.rows || []);
-  console.log("Calendar rows", calendarSheet.rows || []);
-  console.log("Setting rows", settingSheet.rows || []);
-  console.groupEnd();
-
   return {
     fetchedAt: new Date().toISOString(),
     raidCalendarRows: raidCalendarSheet.rows || [],

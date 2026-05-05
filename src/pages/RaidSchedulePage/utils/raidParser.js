@@ -20,8 +20,7 @@ const WEEKDAY_CODES = new Set(["WED", "THU", "FRI", "SAT", "SUN", "MON", "TUE"])
 export function buildRaidSchedule({ settingRows, calendarRows, raidCalendarRows }) {
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = parseRaidCalendarRows(raidCalendarRows);
-  const knownRaidNameSet = buildKnownRaidNameSet(raidBlocks);
-  const calendarSlots = parseCalendarRows(calendarRows, knownRaidNameSet);
+  const calendarSlots = parseCalendarRows(calendarRows);
 
   return mergeRaidData({ calendarSlots, raidBlocks, settingLookup }).sort(compareRaidTime);
 }
@@ -43,23 +42,34 @@ export function buildFallbackRaidSchedule(todayIsoDate) {
 }
 
 function mergeRaidData({ calendarSlots, raidBlocks, settingLookup }) {
-  const slotQueues = new Map();
+  const calendarMap = new Map();
 
   calendarSlots.forEach((slot) => {
-    const key = buildSlotKey(slot.dayCode, slot.raidName);
-    if (!slotQueues.has(key)) slotQueues.set(key, []);
-    slotQueues.get(key).push(slot);
+    calendarMap.set(slot.matchKey, slot);
   });
+
+  console.log("Calendar match keys:", [...calendarMap.keys()]);
 
   const merged = [];
 
   raidBlocks.forEach((block) => {
     block.raids.forEach((raid, raidIndex) => {
-      const queue = slotQueues.get(buildSlotKey(block.dayCode, raid.raidName));
-      const slot = queue?.shift() || null;
+      const matchKey = buildCalendarMatchKey(block.dayCode, raidIndex);
+      const slot = calendarMap.get(matchKey) || null;
       const participants = raid.characterNames.map((characterName) =>
         decorateParticipant(characterName, settingLookup),
       );
+
+      if (!slot) {
+        console.warn("Calendar 일정 매칭 실패:", {
+          raidName: raid.raidName,
+          day: DAY_CODE_TO_LABEL[block.dayCode] || block.dayCode,
+          columnIndex: raid.columnIndex,
+          rowIndex: block.index,
+          partyIndex: raidIndex,
+          matchKey,
+        });
+      }
 
       merged.push({
         date: slot?.date || null,
@@ -108,36 +118,46 @@ function parseSettingRows(rows) {
   return metadataByCharacter;
 }
 
-function parseCalendarRows(rows, knownRaidNameSet) {
+function parseCalendarRows(rows) {
   const dateRowIndex = findBestDateRowIndex(rows);
   const dateColumns = getDateColumns(rows[dateRowIndex] || []);
   const timeRows = collectTimeRows(rows, 0, rows.length - 1);
   const slots = [];
-  const seen = new Set();
 
   dateColumns.forEach((columnIndex) => {
     const date = parseSheetDate(rows[dateRowIndex]?.[columnIndex]);
     if (!date) return;
 
     const dayCode = toDayCode(date);
+    let partyIndex = 0;
+    let pendingTime = "";
+
     for (let rowIndex = dateRowIndex + 1; rowIndex < rows.length; rowIndex += 1) {
       const value = cleanText(rows[rowIndex]?.[columnIndex]);
-      if (!value || isNoiseCell(value) || isColorCode(value)) continue;
+      if (!value || isCalendarNoiseCell(value) || isColorCode(value)) continue;
 
-      const normalizedValue = normalizeKey(value);
-      if (knownRaidNameSet.size > 0 && !knownRaidNameSet.has(normalizedValue)) continue;
+      const inlineTime = normalizeTimeLabel(parseSheetTime(value));
+      if (inlineTime) {
+        pendingTime = inlineTime;
+        continue;
+      }
 
-      const time = resolveTimeForRow(rowIndex, timeRows);
-      const slotKey = `${date}|${time || "??"}|${normalizedValue}`;
-      if (seen.has(slotKey)) continue;
-      seen.add(slotKey);
+      if (isCalendarDetailRow(rows, rowIndex, columnIndex)) continue;
+
+      const matchKey = buildCalendarMatchKey(dayCode, partyIndex);
 
       slots.push({
+        columnIndex,
         date,
         dayCode,
-        raidName: value,
-        time,
+        matchKey,
+        partyIndex,
+        rowIndex,
+        time: pendingTime || resolveTimeForRow(rowIndex, timeRows),
       });
+
+      pendingTime = "";
+      partyIndex += 1;
     }
   });
 
@@ -209,19 +229,6 @@ function buildRaidTitleSet(headerRow, raidColumns) {
   });
 
   return titles;
-}
-
-function buildKnownRaidNameSet(raidBlocks) {
-  const knownNames = new Set();
-
-  raidBlocks.forEach((block) => {
-    block.raids.forEach((raid) => {
-      const normalized = normalizeKey(raid.raidName);
-      if (normalized) knownNames.add(normalized);
-    });
-  });
-
-  return knownNames;
 }
 
 function findBestDateRowIndex(rows) {
@@ -313,6 +320,14 @@ function rowHasParticipantContent(row, raidTitleSet) {
   });
 }
 
+function isCalendarDetailRow(rows, rowIndex, columnIndex) {
+  const value = cleanText(rows[rowIndex]?.[columnIndex]);
+  if (!isCalendarDetailCell(value)) return false;
+
+  const previousValue = cleanText(rows[rowIndex - 1]?.[columnIndex]);
+  return Boolean(previousValue) && !normalizeTimeLabel(parseSheetTime(previousValue));
+}
+
 function decorateParticipant(characterName, settingLookup) {
   const metadata = settingLookup.get(normalizeKey(characterName));
 
@@ -324,8 +339,8 @@ function decorateParticipant(characterName, settingLookup) {
   };
 }
 
-function buildSlotKey(dayCode, raidName) {
-  return `${dayCode}|${normalizeKey(raidName)}`;
+function buildCalendarMatchKey(dayCode, partyIndex) {
+  return `${dayCode}_${partyIndex}`;
 }
 
 function normalizeRaidName(value) {
@@ -406,6 +421,25 @@ function isNoiseCell(value) {
     /^#[0-9a-f]{3,8}$/i.test(text) ||
     /^https?:\/\//i.test(text)
   );
+}
+
+function isCalendarNoiseCell(value) {
+  const text = String(value || "").trim();
+  return (
+    !text ||
+    text === "-" ||
+    text === "+" ||
+    text === "TRUE" ||
+    text === "FALSE" ||
+    text === "#REF!" ||
+    /^#[0-9a-f]{3,8}$/i.test(text) ||
+    /^https?:\/\//i.test(text)
+  );
+}
+
+function isCalendarDetailCell(value) {
+  const text = cleanText(value);
+  return /^\d+$/.test(text) || /^[A-Z]$/i.test(text);
 }
 
 function cleanText(value) {
