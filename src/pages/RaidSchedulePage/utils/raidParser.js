@@ -8,15 +8,39 @@ import {
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
+const RAID_CALENDAR_DEBUG =
+  typeof globalThis !== "undefined" ? globalThis.__RAID_CALENDAR_DEBUG__ ?? true : true;
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
+  if (RAID_CALENDAR_DEBUG) {
+    console.log("🔥 ACTIVE RAID PARSER FILE");
+    console.log("🔥 RAID CALENDAR ROWS", raidCalendarRows);
+    console.table(
+      raidCalendarRows.map((row, index) => {
+        const value = row?.[0];
+
+        return {
+          cell: `A${index + 1}`,
+          normalizedTime: normalizeTime(value),
+          rawValue: value,
+          rowNumber: index + 1,
+          stringValue: String(value ?? ""),
+          type:
+            value instanceof Date
+              ? "Date"
+              : value === null
+              ? "null"
+              : Array.isArray(value)
+              ? "array"
+              : typeof value,
+        };
+      }),
+    );
+  }
+
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
-
-  if (import.meta?.env?.DEV) {
-    logRaidCalendarAColumnDebug(raidCalendarRows);
-  }
 
   const parsedRaids = parseRaidCalendarRows({
     raidBlocks,
@@ -200,7 +224,7 @@ function findBlockTimeFromColumnA(rows, dateRow, nextDateRow) {
   const startRow = dateRow + 1;
   const endRow = nextDateRow ? nextDateRow - 1 : rows.length - 1;
 
-  for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
+  for (let rowIndex = endRow; rowIndex > dateRow; rowIndex -= 1) {
     const time = normalizeTime(rows[rowIndex]?.[0]);
     if (time) {
       return time;
@@ -364,6 +388,13 @@ function normalizeTime(value) {
   }
 
   const text = String(value).trim();
+  const gvizMatch = text.match(/^Date\(\d{4},\d{1,2},\d{1,2},(\d{1,2}),(\d{1,2}),(\d{1,2})\)$/);
+  if (gvizMatch) {
+    const hh = String(Number(gvizMatch[1])).padStart(2, "0");
+    const mm = String(Number(gvizMatch[2])).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
   const match = text.match(/([01]?\d|2[0-3]):[0-5]\d/);
   return match ? match[0].padStart(5, "0") : "";
 }

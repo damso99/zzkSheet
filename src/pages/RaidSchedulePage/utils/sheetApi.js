@@ -9,8 +9,14 @@ const SHEET_GIDS = {
   setting: "279415455",
   raidCalendar: "57930127",
 };
+const RAID_CALENDAR_DEBUG =
+  typeof globalThis !== "undefined" ? globalThis.__RAID_CALENDAR_DEBUG__ ?? true : true;
 
 export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, targetGid = DEFAULT_TARGET_GID } = {}) {
+  if (RAID_CALENDAR_DEBUG) {
+    console.log("🔥 ACTIVE RAID CALENDAR FETCH FILE");
+  }
+
   const targetSheetUrl = ensureGid(sheetUrl, targetGid);
 
   const [raidCalendarSheet, settingSheet] = await Promise.all([
