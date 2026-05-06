@@ -7,6 +7,8 @@ import {
 
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
+const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
   console.log("[ACTIVE RAID PARSER]", "buildRaidSchedule");
@@ -23,7 +25,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
 
   console.table(
     parsedRaids.map((raid) => ({
-      blockTime: raid.time,
+      blockTime: raid.blockTime,
       date: raid.date,
       endCol: raid.endCol,
       endRow: raid.endRow,
@@ -32,6 +34,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       raidName: raid.raidName,
       startCol: raid.startCol,
       startRow: raid.startRow,
+      time: raid.time,
     })),
   );
 
@@ -39,17 +42,18 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
       const item = {
+        blockTime: raid.blockTime,
         date: raid.date,
         dayLabel: formatDateLabel(raid.date),
         endCol: raid.endCol,
         endRow: raid.endRow,
-        id: `${raid.date || "unscheduled"}-${raid.time || "time"}-${slugify(raid.raidName)}-${raidIndex}`,
+        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(raid.raidName)}-${raidIndex}`,
         participantCount: participants.length,
         participants,
         raidName: raid.raidName,
         startCol: raid.startCol,
         startRow: raid.startRow,
-        time: raid.time || DEFAULT_FALLBACK_TIME,
+        time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
       };
 
       console.log("[RAW RAID ITEM]", item);
@@ -63,6 +67,7 @@ export function buildFallbackRaidSchedule(todayIsoDate) {
 
   return [
     {
+      blockTime: DEFAULT_FALLBACK_TIME,
       date: normalizedDate,
       dayLabel: formatDateLabel(normalizedDate),
       endCol: 0,
@@ -90,10 +95,10 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
   const raids = [];
 
   dateRows.forEach((dateRow, dateRowIndex) => {
-    const nextDateRowIndex = dateRows[dateRowIndex + 1]?.index ?? rows.length;
+    const nextDateRow = dateRows[dateRowIndex + 1];
     const blockStartRow = dateRow.index;
-    const blockEndRow = nextDateRowIndex - 1;
-    const blockTime = findDateBlockTime(rows, blockStartRow + 1, blockEndRow);
+    const blockTime = findBlockTime(rows, dateRow.index, nextDateRow?.index, 0);
+    const blockEndRow = (nextDateRow?.index ?? rows.length) - 1;
 
     raidBlocks.forEach((block) => {
       raids.push(
@@ -126,12 +131,12 @@ function collectRaidsForBlock({
 }) {
   const raids = [];
   let currentParty = createParty({
+    blockTime,
     date,
     endCol: block.endCol,
     raidName: block.raidName,
     startCol: block.startCol,
     startRow: blockStartRow,
-    time: blockTime,
   });
   let seenMembers = new Set();
 
@@ -146,12 +151,12 @@ function collectRaidsForBlock({
       }
 
       currentParty = createParty({
+        blockTime,
         date,
         endCol: block.endCol,
         raidName: header,
         startCol: block.startCol,
         startRow: rowIndex,
-        time: blockTime,
       });
       seenMembers = new Set();
       continue;
@@ -174,8 +179,9 @@ function collectRaidsForBlock({
   return raids;
 }
 
-function createParty({ date, raidName, startCol, endCol, startRow, time = "" }) {
+function createParty({ blockTime = "", date, raidName, startCol, endCol, startRow }) {
   return {
+    blockTime: blockTime || "",
     date: normalizeSheetDateValue(date),
     endCol,
     endRow: startRow,
@@ -183,7 +189,7 @@ function createParty({ date, raidName, startCol, endCol, startRow, time = "" }) 
     raidName,
     startCol,
     startRow,
-    time: time || "",
+    time: blockTime || "",
   };
 }
 
@@ -197,9 +203,26 @@ function findDateRows(rows) {
 }
 
 function findDateInRow(row) {
-  for (const cell of row || []) {
-    const date = parseSheetDate(cell);
-    if (date) return date;
+  const text = String(row?.[0] ?? "").trim();
+  if (!text) return "";
+  if (DATE_RE.test(text) || parseSheetDate(text)) {
+    return normalizeSheetDateValue(text);
+  }
+  return "";
+}
+
+function findBlockTime(rows, dateRow, nextDateRow, dateCol = 0) {
+  const endRow = nextDateRow ? nextDateRow - 1 : rows.length - 1;
+
+  for (let rowIndex = endRow; rowIndex > dateRow; rowIndex -= 1) {
+    const value = rows[rowIndex]?.[dateCol];
+    const text = String(value || "").trim();
+    if (!text && value == null) continue;
+
+    const parsedTime = parseSheetTime(value);
+    if (parsedTime && parsedTime !== "00:00") return parsedTime;
+
+    if (TIME_RE.test(text)) return text;
   }
 
   return "";
@@ -248,24 +271,6 @@ function buildRaidNameLookup(raidBlocks) {
   return new Set(raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean));
 }
 
-function findDateBlockTime(rows, startIndex, endIndex) {
-  const times = [];
-
-  for (let rowIndex = startIndex; rowIndex <= endIndex; rowIndex += 1) {
-    const row = rows[rowIndex] || [];
-
-    for (const cell of row) {
-      const time = extractTimeLabel(cell);
-      if (time) {
-        times.push(time);
-      }
-    }
-  }
-
-  if (!times.length) return "";
-  return [...new Set(times)].sort((left, right) => left.localeCompare(right))[0] || "";
-}
-
 function findRaidHeaderInBlock(row, block, raidNameLookup) {
   for (let columnIndex = block.startCol; columnIndex <= block.endCol && columnIndex < row.length; columnIndex += 1) {
     const value = cleanText(row[columnIndex]);
@@ -294,21 +299,6 @@ function extractMembersFromRow(row, startCol, endCol, settingLookup) {
   }
 
   return members;
-}
-
-function extractTimeLabel(value) {
-  const text = cleanText(value);
-  if (!text) return "";
-  if (parseSheetDate(text)) return "";
-  if (isColorCode(text) || isNoiseCell(text)) return "";
-
-  const directTime = normalizeTimeLabel(parseSheetTime(text));
-  if (directTime) return directTime;
-
-  const inlineMatch = text.match(/\b(\d{1,2}:\d{2})\b/);
-  if (inlineMatch) return normalizeTimeLabel(inlineMatch[1]);
-
-  return "";
 }
 
 function parseSettingRows(rows) {
@@ -362,26 +352,20 @@ function decorateParticipant(characterName, settingLookup) {
 function compareRaidOrder(left, right) {
   const leftDate = left.date || "9999-12-31";
   const rightDate = right.date || "9999-12-31";
-  const leftStartCol = String(left.startCol ?? 9999).padStart(4, "0");
-  const rightStartCol = String(right.startCol ?? 9999).padStart(4, "0");
-  const leftStartRow = String(left.startRow ?? 9999).padStart(4, "0");
-  const rightStartRow = String(right.startRow ?? 9999).padStart(4, "0");
 
-  return `${leftDate} ${leftStartCol} ${leftStartRow}`.localeCompare(`${rightDate} ${rightStartCol} ${rightStartRow}`);
+  if (leftDate !== rightDate) {
+    return leftDate.localeCompare(rightDate);
+  }
+
+  if ((left.startCol ?? 0) !== (right.startCol ?? 0)) {
+    return (left.startCol ?? 0) - (right.startCol ?? 0);
+  }
+
+  return (left.startRow ?? 0) - (right.startRow ?? 0);
 }
 
 function normalizeRaidName(value) {
   return cleanText(value).replace(/\s+/g, " ").trim();
-}
-
-function normalizeTimeLabel(value) {
-  const text = String(value || "").trim();
-  const match = text.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return "";
-
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  return `${String(hours >= 24 ? hours - 24 : hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 function slugify(value) {

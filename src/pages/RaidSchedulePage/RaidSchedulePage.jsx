@@ -90,8 +90,28 @@ export default function RaidSchedulePage() {
     return [...new Set(ownerNames)];
   }, [todayRaids]);
 
-  const todayStartTime = useMemo(() => resolveGroupTime(todayRaids), [todayRaids]);
   const groupedRaids = useMemo(() => groupItemsByDate(raids), [raids]);
+  const todayGroup = useMemo(
+    () => groupedRaids.find((group) => group.date === todayIsoDate),
+    [groupedRaids, todayIsoDate],
+  );
+  const todayStartTime = useMemo(
+    () => todayGroup?.blockTime || todayGroup?.time || todayRaids?.[0]?.blockTime || todayRaids?.[0]?.time || "",
+    [todayGroup, todayRaids],
+  );
+
+  useEffect(() => {
+    console.log("[today time]", {
+      todayGroup,
+      todayStartTime,
+      todayRaids: todayRaids.map((raid) => ({
+        blockTime: raid.blockTime,
+        date: raid.date,
+        raidName: raid.raidName,
+        time: raid.time,
+      })),
+    });
+  }, [todayGroup, todayRaids, todayStartTime]);
 
   const searchResults = useMemo(() => {
     if (!deferredSearchQuery) return [];
@@ -385,13 +405,14 @@ function groupItemsByDate(items) {
 
   const grouped = Array.from(groups.values());
   grouped.forEach((group) => {
-    group.time = resolveGroupTime(group.items);
+    group.blockTime = resolveGroupBlockTime(group.items);
+    group.time = group.blockTime;
   });
 
   return grouped.sort((left, right) => `${left.date}`.localeCompare(`${right.date}`));
 }
 
-function resolveGroupTime(items = []) {
+function resolveGroupBlockTime(items = []) {
   const times = items
     .map((item) => item.time || item.blockTime || "")
     .map((value) => String(value || "").trim())
