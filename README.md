@@ -18,6 +18,8 @@ npm run dev
 
 API 키가 없어도 화면의 `샘플 불러오기`로 파티 생성 로직을 확인할 수 있습니다.
 
+배포 환경에서는 Vercel 서버리스 API를 통해 Google Sheet와 개인일정 데이터를 프록시합니다.
+
 ## 구조
 
 - `server.js`: 정적 파일 서버와 Lost Ark OpenAPI 프록시
