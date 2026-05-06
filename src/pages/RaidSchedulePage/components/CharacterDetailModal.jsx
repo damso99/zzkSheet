@@ -7,7 +7,7 @@ import CharacterProfileHeader from "./CharacterProfileHeader.jsx";
 import CharacterSkillList from "./CharacterSkillList.jsx";
 import { normalizeCharacterDetail } from "../utils/characterParser.js";
 
-const CHARACTER_DETAIL_CACHE_VERSION = "engraving-direct-icon-v4";
+const CHARACTER_DETAIL_CACHE_VERSION = "engraving-effect-map-v5";
 const characterDetailCache = new Map();
 
 const DETAIL_TABS = [
@@ -174,7 +174,13 @@ function renderTabPanel(activeTab, detail, styles) {
   }
 
   if (activeTab === "engravings") {
-    return <CharacterEngravingList engravings={detail.engravings} styles={styles} />;
+    return (
+      <CharacterEngravingList
+        engravings={detail.engravings}
+        engravingImageMap={detail.engravingImageMap}
+        styles={styles}
+      />
+    );
   }
 
   if (activeTab === "cards") {

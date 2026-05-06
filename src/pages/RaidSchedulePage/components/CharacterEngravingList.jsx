@@ -1,5 +1,5 @@
 import { useEffect, useId } from "react";
-import { displayValue } from "../utils/characterParser.js";
+import { displayValue, normalizeEngravingName } from "../utils/characterParser.js";
 
 const DEFAULT_ENGRAVING_ICON_SRC = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54" fill="none">
@@ -19,38 +19,56 @@ const DEFAULT_ENGRAVING_ICON_SRC = `data:image/svg+xml;charset=UTF-8,${encodeURI
   </svg>`,
 )}`;
 
-export default function CharacterEngravingList({ engravings = [], styles }) {
+export default function CharacterEngravingList({ engravings = [], engravingImageMap = new Map(), styles }) {
+  const map = engravingImageMap instanceof Map ? engravingImageMap : new Map();
+
   useEffect(() => {
     if (!isDevMode()) return;
 
+    const rawIcons = engravings.map((engraving) => getRawIconUrl(engraving));
+    const uniqueRawIcons = [...new Set(rawIcons.filter(Boolean))];
+    const commonIconUrl = uniqueRawIcons.length === 1 ? uniqueRawIcons[0] : "";
     const fallbackItems = [];
 
-    engravings.forEach((engraving, index) => {
-      const engravingName = getEngravingName(engraving);
-      const iconUrl = getEngravingIconUrl(engraving);
-      const iconFields = getEngravingIconFieldSnapshot(engraving);
+    console.table(
+      engravings.map((engraving) => {
+        const engravingName = getEngravingName(engraving);
+        const normalized = normalizeEngravingName(engravingName);
+        const rawIcon = getRawIconUrl(engraving);
+        const mapIcon = map.get(normalized) || "";
+        const finalIcon = resolveFinalIcon({ rawIcon, mapIcon, commonIconUrl, sharedRawIcon: uniqueRawIcons.length === 1 });
 
-      console.log("[lostark engravings] render engraving object", {
-        index,
-        engraving,
-        engravingName,
-        iconUrl,
-        iconFields,
-      });
+        if (!finalIcon) {
+          fallbackItems.push({
+            name: engravingName,
+            normalized,
+            rawIcon,
+            mapIcon,
+          });
+        }
 
-      if (!iconUrl) {
-        fallbackItems.push({
-          index,
-          engravingName,
-          iconFields,
-        });
-      }
-    });
+        return {
+          name: engravingName,
+          normalized,
+          rawIcon,
+          mapIcon,
+          finalIcon,
+        };
+      }),
+    );
 
+    console.log("[lostark engravings] image map keys", [...map.keys()]);
     if (fallbackItems.length) {
       console.warn("[lostark engravings] fallback engravings", fallbackItems);
     }
-  }, [engravings]);
+
+    if (uniqueRawIcons.length === 1 && engravings.length > 1) {
+      console.warn("[lostark engravings] all raw icons are identical and treated as fallback", {
+        commonIconUrl,
+        count: engravings.length,
+      });
+    }
+  }, [engravings, map]);
 
   if (!engravings.length) {
     return <p className={styles.modalEmpty}>0</p>;
@@ -60,7 +78,16 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
     <div className={styles.engravingList}>
       {engravings.map((engraving, index) => {
         const engravingName = getEngravingName(engraving);
-        const iconUrl = getEngravingIconUrl(engraving);
+        const normalized = normalizeEngravingName(engravingName);
+        const rawIcon = getRawIconUrl(engraving);
+        const mapIcon = map.get(normalized) || "";
+        const commonIconUrl = getSharedRawIconUrl(engravings);
+        const iconUrl = resolveFinalIcon({
+          rawIcon,
+          mapIcon,
+          commonIconUrl,
+          sharedRawIcon: Boolean(commonIconUrl),
+        });
 
         return (
           <article key={`${engravingName || "engraving"}-${index}`} className={styles.engravingCard}>
@@ -88,6 +115,23 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
   );
 }
 
+function getSharedRawIconUrl(engravings) {
+  const rawIcons = engravings.map((engraving) => getRawIconUrl(engraving)).filter(Boolean);
+  const uniqueRawIcons = [...new Set(rawIcons)];
+  return uniqueRawIcons.length === 1 && rawIcons.length > 1 ? uniqueRawIcons[0] : "";
+}
+
+function resolveFinalIcon({ rawIcon, mapIcon, commonIconUrl, sharedRawIcon }) {
+  const isCommonFallbackIcon =
+    !rawIcon ||
+    rawIcon.includes("profile") ||
+    rawIcon.includes("default") ||
+    rawIcon === commonIconUrl ||
+    (sharedRawIcon && rawIcon === commonIconUrl);
+
+  return mapIcon || (!isCommonFallbackIcon ? rawIcon : "");
+}
+
 function handleEngravingIconError(event) {
   event.currentTarget.onerror = null;
   event.currentTarget.src = DEFAULT_ENGRAVING_ICON_SRC;
@@ -105,36 +149,20 @@ function getEngravingName(engraving) {
   ).trim();
 }
 
-function getEngravingIconUrl(engraving) {
-  const rawIcon =
+function getRawIconUrl(engraving) {
+  return normalizeIconUrl(
     engraving?.Icon ??
-    engraving?.icon ??
-    engraving?.Effect?.Icon ??
-    engraving?.effect?.icon ??
-    engraving?.Image ??
-    engraving?.image ??
-    engraving?.IconUrl ??
-    engraving?.iconUrl ??
-    engraving?.ImageUrl ??
-    engraving?.imageUrl ??
-    "";
-
-  return normalizeIconUrl(rawIcon);
-}
-
-function getEngravingIconFieldSnapshot(engraving) {
-  return {
-    Icon: engraving?.Icon,
-    icon: engraving?.icon,
-    EffectIcon: engraving?.Effect?.Icon,
-    effectIcon: engraving?.effect?.icon,
-    Image: engraving?.Image,
-    image: engraving?.image,
-    IconUrl: engraving?.IconUrl,
-    iconUrl: engraving?.iconUrl,
-    ImageUrl: engraving?.ImageUrl,
-    imageUrl: engraving?.imageUrl,
-  };
+      engraving?.icon ??
+      engraving?.Effect?.Icon ??
+      engraving?.effect?.icon ??
+      engraving?.Image ??
+      engraving?.image ??
+      engraving?.IconUrl ??
+      engraving?.iconUrl ??
+      engraving?.ImageUrl ??
+      engraving?.imageUrl ??
+      "",
+  );
 }
 
 function normalizeIconUrl(value) {

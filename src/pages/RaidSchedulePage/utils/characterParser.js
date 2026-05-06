@@ -8,12 +8,14 @@ export function normalizeCharacterDetail(payload = {}) {
   const equipment = normalizeEquipment(armory.equipment || summary.ArmoryEquipment);
   const skills = normalizeSkills(armory.combatSkills || summary.ArmorySkills);
   const engravingsSource = armory.engravings || summary.ArmoryEngraving;
+  const engravingImageMap = buildEngravingImageMap(engravingsSource);
 
   return {
     profile: normalizeProfile(profileSource, payload.characterName, { equipment, armory }),
     equipment,
     gems: normalizeGems(armory.gems || summary.ArmoryGem, skills),
     engravings: normalizeEngravings(engravingsSource, armory),
+    engravingImageMap,
     cards: normalizeCards(armory.cards || summary.ArmoryCard),
     skills,
     warnings: Object.keys(payload.errors || {}),
@@ -127,28 +129,71 @@ function normalizeGems(gemsPayload, skills = []) {
 }
 
 function normalizeEngravings(engravingsPayload, armory = {}) {
-  const iconMap = createEngravingIconMap(
-    engravingsPayload,
-    armory.summary?.ArmoryEngraving,
-    armory.summary?.ArkPassive,
-  );
-  const rawItems = [
-    ...asArray(engravingsPayload?.Engravings),
-    ...asArray(engravingsPayload?.Effects),
-    ...asArray(engravingsPayload?.ArkPassiveEffects),
-  ];
+  const primaryItems = asArray(engravingsPayload?.Engravings);
+  const rawItems = primaryItems.length ? primaryItems : asArray(engravingsPayload?.ArkPassiveEffects);
 
-  logEngravingSourceDebug({
-    payload: engravingsPayload,
-    items: rawItems,
-    imageMap: iconMap,
-  });
-
-  const normalizedItems = rawItems.map((engraving) => normalizeEngravingItem(engraving, "활성 각인", iconMap));
+  const normalizedItems = rawItems.map((engraving) => normalizeEngravingItem(engraving, "??? ???"));
 
   return normalizedItems.filter(
     (engraving, index, list) =>
-      list.findIndex((item) => normalizeEngravingName(item.name) === normalizeEngravingName(engraving.name)) === index,
+      list.findIndex(
+        (item) => item.name === engraving.name && String(item.level) === String(engraving.level),
+      ) === index,
+  );
+}
+
+function buildEngravingImageMap(engravingsPayload = {}) {
+  const map = new Map();
+  const candidates = [
+    ...asArray(engravingsPayload?.Effects),
+    ...asArray(engravingsPayload?.Engravings),
+    ...asArray(engravingsPayload?.ArkPassiveEffects),
+  ]
+    .map((item) => ({
+      name: normalizeEngravingName(item?.Name || item?.name || item?.EngravingName || item?.Title || ""),
+      icon: normalizeOptionalIconUrl(getRawEngravingIconCandidate(item)),
+    }))
+    .filter((item) => item.name && item.icon && !isCommonEngravingIcon(item.icon));
+
+  const uniqueIcons = new Set(candidates.map((item) => item.icon));
+  if (candidates.length > 1 && uniqueIcons.size <= 1) {
+    return map;
+  }
+
+  for (const item of candidates) {
+    if (!map.has(item.name)) {
+      map.set(item.name, item.icon);
+    }
+  }
+
+  return map;
+}
+
+function getRawEngravingIconCandidate(item) {
+  return (
+    item?.Icon ||
+    item?.icon ||
+    item?.Effect?.Icon ||
+    item?.effect?.icon ||
+    item?.Image ||
+    item?.image ||
+    item?.IconUrl ||
+    item?.iconUrl ||
+    item?.ImageUrl ||
+    item?.imageUrl ||
+    ""
+  );
+}
+
+function isCommonEngravingIcon(value) {
+  const text = String(value || "").toLowerCase();
+  return (
+    !text ||
+    text.includes("profile") ||
+    text.includes("default") ||
+    text.includes("playerinfo") ||
+    text.includes("placeholder") ||
+    text.startsWith("data:image")
   );
 }
 
