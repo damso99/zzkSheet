@@ -7,7 +7,7 @@ import CharacterProfileHeader from "./CharacterProfileHeader.jsx";
 import CharacterSkillList from "./CharacterSkillList.jsx";
 import { normalizeCharacterDetail } from "../utils/characterParser.js";
 
-const CHARACTER_DETAIL_CACHE_VERSION = "orb-paradise-power-v1";
+const CHARACTER_DETAIL_CACHE_VERSION = "paradise-power-and-engraving-icons-v2";
 const characterDetailCache = new Map();
 
 const DETAIL_TABS = [

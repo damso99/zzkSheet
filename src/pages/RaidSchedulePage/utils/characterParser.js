@@ -3,15 +3,18 @@ export const EMPTY_TEXT = "정보 없음";
 
 export function normalizeCharacterDetail(payload = {}) {
   const armory = payload.armory || {};
-  const profileSource = armory.profile || payload.character || {};
-  const skills = normalizeSkills(armory.combatSkills);
+  const summary = armory.summary || {};
+  const profileSource = armory.profile || summary.ArmoryProfile || payload.character || {};
+  const equipment = normalizeEquipment(armory.equipment || summary.ArmoryEquipment);
+  const skills = normalizeSkills(armory.combatSkills || summary.ArmorySkills);
+  const engravingsSource = armory.engravings || summary.ArmoryEngraving;
 
   return {
-    profile: normalizeProfile(profileSource, payload.characterName),
-    equipment: normalizeEquipment(armory.equipment),
-    gems: normalizeGems(armory.gems, skills),
-    engravings: normalizeEngravings(armory.engravings),
-    cards: normalizeCards(armory.cards),
+    profile: normalizeProfile(profileSource, payload.characterName, { equipment, armory }),
+    equipment,
+    gems: normalizeGems(armory.gems || summary.ArmoryGem, skills),
+    engravings: normalizeEngravings(engravingsSource, armory),
+    cards: normalizeCards(armory.cards || summary.ArmoryCard),
     skills,
     warnings: Object.keys(payload.errors || {}),
     fetchedAt: payload.fetchedAt || "",
@@ -23,7 +26,7 @@ export function displayValue(value) {
   return String(value);
 }
 
-function normalizeProfile(profile, fallbackName) {
+function normalizeProfile(profile, fallbackName, { equipment = [], armory = {} } = {}) {
   return {
     characterName: displayValue(profile.CharacterName || fallbackName),
     serverName: displayValue(profile.ServerName),
@@ -35,7 +38,34 @@ function normalizeProfile(profile, fallbackName) {
     characterLevel: displayValue(profile.CharacterLevel),
     guildName: displayValue(profile.GuildName),
     title: displayValue(cleanTitleText(profile.Title)),
+    paradisePower: findParadisePower({ profile, equipment, armory }) || "-",
   };
+}
+
+function findParadisePower({ profile, equipment, armory }) {
+  const directCandidates = [
+    profile.ParadisePower,
+    profile.NakwonPower,
+    profile.NarkPower,
+    profile.NirvanaPower,
+    profile["낙원력"],
+    findStatValue(profile.Stats, "낙원력"),
+    findDeepValue(armory?.summary, "ParadisePower"),
+    findDeepValue(armory?.summary, "NakwonPower"),
+    findDeepValue(armory?.summary, "NarkPower"),
+    findDeepValue(armory?.summary, "NirvanaPower"),
+  ];
+
+  for (const candidate of directCandidates) {
+    const formattedValue = formatNumberText(candidate);
+    if (formattedValue) return formattedValue;
+  }
+
+  const orbPower = asArray(equipment)
+    .map((item) => item.orb?.paradisePowerValue || item.orb?.paradisePower)
+    .find(Boolean);
+
+  return formatNumberText(orbPower);
 }
 
 function normalizeEquipment(equipment) {
@@ -96,26 +126,32 @@ function normalizeGems(gemsPayload, skills = []) {
   });
 }
 
-function normalizeEngravings(engravingsPayload) {
+function normalizeEngravings(engravingsPayload, armory = {}) {
+  const iconMap = createEngravingIconMap(
+    engravingsPayload,
+    armory.summary?.ArmoryEngraving,
+    armory.summary?.ArkPassive,
+  );
   const abilityEngravings = asArray(engravingsPayload?.Engravings).map((engraving) =>
-    normalizeEngravingItem(engraving, "활성 각인"),
+    normalizeEngravingItem(engraving, "활성 각인", iconMap),
   );
   const normalEffects = asArray(engravingsPayload?.Effects).map((effect) => ({
     name: displayValue(stripHtml(effect.Name)),
     level: normalizeEngravingLevel(effect.Level || extractLevel(effect.Name || effect.Description)),
     description: stripHtml(effect.Description),
-    icon: normalizeIconUrl(effect.Icon || extractIconFromTooltip(effect.Tooltip || effect.Description)),
+    icon: resolveEngravingIcon(effect, iconMap),
   }));
 
   const arkPassiveEffects = asArray(engravingsPayload?.ArkPassiveEffects).map((effect) => ({
     name: displayValue(stripHtml(effect.Name)),
     level: normalizeEngravingLevel(effect.Level || extractLevel(effect.Name || effect.Description)),
     description: stripHtml(effect.Description || "아크 패시브 각인 효과"),
-    icon: normalizeIconUrl(effect.Icon || extractIconFromTooltip(effect.Tooltip || effect.Description)),
+    icon: resolveEngravingIcon(effect, iconMap),
   }));
 
   return [...abilityEngravings, ...normalEffects, ...arkPassiveEffects].filter(
-    (engraving, index, list) => list.findIndex((item) => item.name === engraving.name) === index,
+    (engraving, index, list) =>
+      list.findIndex((item) => normalizeEngravingName(item.name) === normalizeEngravingName(engraving.name)) === index,
   );
 }
 
@@ -160,12 +196,12 @@ function normalizeSkills(skillsPayload) {
     });
 }
 
-function normalizeEngravingItem(engraving, fallbackDescription) {
+function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Map()) {
   return {
     name: displayValue(stripHtml(engraving.Name)),
     level: normalizeEngravingLevel(engraving.Level || extractLevel(engraving.Name || engraving.Description)),
     description: stripHtml(engraving.Description || fallbackDescription),
-    icon: normalizeIconUrl(engraving.Icon || extractIconFromTooltip(engraving.Tooltip || engraving.Description)),
+    icon: resolveEngravingIcon(engraving, iconMap),
   };
 }
 
@@ -223,6 +259,22 @@ function findDeepValue(value, targetKey) {
   return "";
 }
 
+function formatNumberText(value) {
+  if (value == null || value === "") return "";
+
+  const text = stripHtml(value).replace(/,/g, "").trim();
+  if (!text) return "";
+
+  const values = [...text.matchAll(/\d+(?:\.\d+)?/g)].map((match) => match[0]);
+  const rawNumber = values.at(-1);
+  if (!rawNumber) return "";
+
+  const numericValue = Number(rawNumber);
+  if (!Number.isFinite(numericValue)) return rawNumber;
+
+  return numericValue.toLocaleString("ko-KR");
+}
+
 function stripHtml(value) {
   return String(value || "")
     .replace(/<br\s*\/?>/gi, "\n")
@@ -234,6 +286,70 @@ function stripHtml(value) {
     .replace(/&gt;/gi, ">")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function createEngravingIconMap(...sources) {
+  const iconMap = new Map();
+
+  sources.flatMap((source) => collectNamedIconItems(source)).forEach((item) => {
+    const normalizedName = normalizeEngravingName(item.Name || item.name);
+    const icon = getOptionalIconUrlFromItem(item);
+
+    if (normalizedName && icon && !iconMap.has(normalizedName)) {
+      iconMap.set(normalizedName, icon);
+    }
+  });
+
+  return iconMap;
+}
+
+function collectNamedIconItems(value, visited = new Set()) {
+  if (!value || typeof value !== "object" || visited.has(value)) return [];
+  visited.add(value);
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectNamedIconItems(item, visited));
+  }
+
+  const currentItem = value.Name || value.name ? [value] : [];
+  const nestedItems = Object.values(value).flatMap((childValue) => collectNamedIconItems(childValue, visited));
+
+  return [...currentItem, ...nestedItems];
+}
+
+function resolveEngravingIcon(item, iconMap = new Map()) {
+  const directIcon = getOptionalIconUrlFromItem(item);
+  if (directIcon) return directIcon;
+
+  const normalizedName = normalizeEngravingName(item?.Name || item?.name);
+  return iconMap.get(normalizedName) || CHARACTER_PLACEHOLDER_IMAGE;
+}
+
+function getOptionalIconUrlFromItem(item) {
+  const rawIcon =
+    item?.Icon ||
+    item?.icon ||
+    item?.IconPath ||
+    item?.Image ||
+    item?.ImageUrl ||
+    extractIconFromTooltip(item?.Tooltip || item?.ToolTip || item?.Description || item?.description);
+
+  return normalizeOptionalIconUrl(rawIcon);
+}
+
+function normalizeOptionalIconUrl(value) {
+  const icon = String(value || "").trim();
+  return icon ? normalizeIconUrl(icon) : "";
+}
+
+function normalizeEngravingName(value) {
+  return stripHtml(value)
+    .replace(/Lv\.?\s*\d+/gi, "")
+    .replace(/\[[^\]]*]/g, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s*(활성|각인|효과)\s*/g, "")
+    .replace(/[^가-힣a-zA-Z0-9]/g, "")
+    .toLowerCase();
 }
 
 export function cleanTitleText(value) {
@@ -393,31 +509,36 @@ function isOrb(type, name) {
 }
 
 export function parseOrbDetail(tooltipLines, { name = "", icon = "" } = {}) {
-  const paradisePower = tooltipLines
+  const paradisePowerValue = tooltipLines
     .map(cleanTooltipLine)
     .filter(Boolean)
     .flatMap((line) => splitOptionCandidates(line))
-    .map(normalizeParadisePowerLine)
+    .map(extractParadisePowerValue)
     .find(Boolean);
+  const formattedParadisePower = formatNumberText(paradisePowerValue);
 
   return {
     name,
     icon,
-    paradisePower: paradisePower || "",
+    paradisePowerValue: paradisePowerValue || "",
+    paradisePower: formattedParadisePower ? `시즌2 달성 최대 낙원력 : ${formattedParadisePower}` : "",
   };
 }
 
-function normalizeParadisePowerLine(line) {
+function extractParadisePowerValue(line) {
   const text = cleanTooltipLine(line);
   if (!/낙원력/.test(text)) return "";
 
   const normalizedText = text.replace(/\s*:\s*/g, " : ").replace(/\s+/g, " ").trim();
-  if (/시즌\s*\d+/.test(normalizedText) && /달성\s*최대\s*낙원력/.test(normalizedText)) {
-    return normalizedText;
-  }
+  const explicitMatch = normalizedText.match(/낙원력\s*[:：]\s*([\d,]+)/);
+  if (explicitMatch) return explicitMatch[1].replace(/,/g, "");
 
-  const value = normalizedText.match(/(\d{1,3}(?:,\d{3})+|\d+)/)?.[1] || "";
-  return value ? `시즌2 달성 최대 낙원력 : ${value}` : normalizedText;
+  // 설명 문장에 들어간 "시즌2" 숫자는 낙원력 값이 아니므로 값 라인이 아니면 무시합니다.
+  if (!/달성\s*최대\s*낙원력/.test(normalizedText)) return "";
+
+  const values = [...normalizedText.matchAll(/(\d{1,3}(?:,\d{3})+|\d+)/g)].map((match) => match[1]);
+  const lastValue = values.at(-1) || "";
+  return lastValue && lastValue !== "2" ? lastValue.replace(/,/g, "") : "";
 }
 
 function splitOptionCandidates(line) {

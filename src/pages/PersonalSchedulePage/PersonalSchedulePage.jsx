@@ -151,6 +151,9 @@ export default function PersonalSchedulePage() {
                 onCalendarClose={() => setIsFormCalendarOpen(false)}
                 locale="ko"
                 dateFormat="yyyy년 M월 d일 (eee)"
+                popperPlacement="bottom-start"
+                popperProps={{ strategy: "fixed" }}
+                portalId="root"
                 popperClassName={styles.datePickerPopper}
                 calendarClassName={styles.datePickerCalendar}
                 wrapperClassName={styles.datePickerControl}

@@ -210,6 +210,7 @@
   width: 100%;
   min-width: 0;
   overflow: visible;
+  isolation: isolate;
 }
 
 .panelControls .sortSelect {
@@ -284,6 +285,9 @@
 .datePickerControl {
   display: block;
   width: 100%;
+  height: 44px;
+  min-height: 44px;
+  line-height: 1;
 }
 
 .datePickerButton {
@@ -294,6 +298,7 @@
   max-width: 100%;
   min-width: 0;
   height: 44px;
+  min-height: 44px;
   padding: 0 13px;
   border: 1px solid rgba(104, 150, 255, 0.22);
   border-radius: 14px;
@@ -331,7 +336,13 @@
 }
 
 .datePickerPopper {
-  z-index: 30;
+  z-index: 10000;
+  position: fixed !important;
+}
+
+:global(#root .react-datepicker-popper),
+:global(.react-datepicker-popper) {
+  z-index: 10000;
 }
 
 .datePickerCalendar {

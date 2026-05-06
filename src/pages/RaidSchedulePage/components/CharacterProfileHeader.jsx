@@ -12,6 +12,7 @@ export default function CharacterProfileHeader({ profile, styles }) {
     ["전투 레벨", profile.characterLevel],
     ["아이템 레벨", profile.itemAvgLevel],
     ["전투력", profile.combatPower],
+    ["낙원력", profile.paradisePower],
     ["길드", profile.guildName],
     ["칭호", cleanTitleText(profile.title)],
   ];
