@@ -8,36 +8,8 @@ import {
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
-const RAID_CALENDAR_DEBUG =
-  typeof globalThis !== "undefined" ? globalThis.__RAID_CALENDAR_DEBUG__ ?? true : true;
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
-  if (RAID_CALENDAR_DEBUG) {
-    console.log("🔥 ACTIVE RAID PARSER FILE");
-    console.log("🔥 RAID CALENDAR ROWS", raidCalendarRows);
-    console.table(
-      raidCalendarRows.map((row, index) => {
-        const value = row?.[0];
-
-        return {
-          cell: `A${index + 1}`,
-          normalizedTime: normalizeTime(value),
-          rawValue: value,
-          rowNumber: index + 1,
-          stringValue: String(value ?? ""),
-          type:
-            value instanceof Date
-              ? "Date"
-              : value === null
-              ? "null"
-              : Array.isArray(value)
-              ? "array"
-              : typeof value,
-        };
-      }),
-    );
-  }
-
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
@@ -395,48 +367,6 @@ function normalizeTime(value) {
     return `${hh}:${mm}`;
   }
 
-  const match = text.match(/([01]?\d|2[0-3]):[0-5]\d/);
-  return match ? match[0].padStart(5, "0") : "";
-}
-
-function logRaidCalendarAColumnDebug(rows = []) {
-  const aColumnRows = rows.map((row, index) => {
-    const rawValue = row?.[0];
-
-    return {
-      cell: `A${index + 1}`,
-      normalizedTime: normalizeTimeDebug(rawValue),
-      rawValue,
-      rowNumber: index + 1,
-      stringValue: String(rawValue ?? ""),
-      type: rawValue === null ? "null" : Array.isArray(rawValue) ? "array" : typeof rawValue,
-    };
-  });
-
-  console.log("[A열 fetch range]", "레이드캘린더!A:A (fetched through current sheet rows)");
-  console.log("[RAID CALENDAR A COLUMN]");
-  console.table(aColumnRows);
-
-  const detectedTimes = aColumnRows.filter((item) => item.normalizedTime);
-  console.log("[A열 detected times]");
-  console.table(detectedTimes);
-}
-
-function normalizeTimeDebug(value) {
-  if (value == null || value === "") return "";
-
-  if (value instanceof Date) {
-    return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
-  }
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    const totalMinutes = Math.round(value * 24 * 60);
-    const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, "0");
-    const mm = String(totalMinutes % 60).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
-
-  const text = String(value).trim();
   const match = text.match(/([01]?\d|2[0-3]):[0-5]\d/);
   return match ? match[0].padStart(5, "0") : "";
 }

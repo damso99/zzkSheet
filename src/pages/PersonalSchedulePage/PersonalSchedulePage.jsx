@@ -7,6 +7,8 @@ import styles from "./PersonalSchedulePage.module.css";
 registerLocale("ko", ko);
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
+const SHEET_EPOCH_UTC = Date.UTC(1899, 11, 30);
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const SORT_OPTIONS = {
   latest: "최신순",
@@ -292,10 +294,7 @@ function sortPersonalSchedules(items, sortMode) {
 }
 
 function normalizeDate(value) {
-  if (!value) return "";
-  if (value instanceof Date) return formatLocalDate(value);
-
-  return String(value).trim();
+  return normalizePersonalDate(value);
 }
 
 function normalizeDateTime(value) {
@@ -312,12 +311,10 @@ function formatLocalDate(date) {
 }
 
 function parseLocalDate(value) {
-  if (!value) return new Date();
+  const parts = parsePersonalDateParts(value);
+  if (!parts) return new Date();
 
-  const [year, month, day] = String(value).split("-").map(Number);
-  if (!year || !month || !day) return new Date();
-
-  const date = new Date(year, month - 1, day);
+  const date = new Date(parts.year, parts.month - 1, parts.day);
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
@@ -333,30 +330,12 @@ function formatLocalDateTime(date) {
 }
 
 function parseLocalDateString(dateString) {
-  if (!dateString) return null;
-
-  const normalized = String(dateString).trim();
-
-  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(normalized)) {
-    const [year, month, day] = normalized.split("-").map(Number);
-    return { year, month, day };
-  }
-
-  if (/^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?$/.test(normalized)) {
-    const parts = normalized.replace(/\.$/, "").split(".").map((part) => part.trim());
-    return {
-      year: Number(parts[0]),
-      month: Number(parts[1]),
-      day: Number(parts[2]),
-    };
-  }
-
-  return null;
+  return parsePersonalDateParts(dateString);
 }
 
 function formatScheduleDateLabel(dateString) {
-  const parsed = parseLocalDateString(dateString);
-  if (!parsed) return dateString || "";
+  const parsed = parsePersonalDateParts(dateString);
+  if (!parsed) return String(dateString || "날짜 확인 필요");
 
   const { year, month, day } = parsed;
   const localDate = new Date(year, month - 1, day);
@@ -366,17 +345,116 @@ function formatScheduleDateLabel(dateString) {
 }
 
 function formatScheduleDateTimeValue(dateString) {
-  const parsed = parseLocalDateString(dateString);
-  if (!parsed) return String(dateString || "");
+  const parsed = parsePersonalDateParts(dateString);
+  if (!parsed) return "";
 
   const { year, month, day } = parsed;
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 function getLocalDateTime(dateString) {
-  const parsed = parseLocalDateString(dateString);
+  const parsed = parsePersonalDateParts(dateString);
   if (!parsed) return 0;
   return new Date(parsed.year, parsed.month - 1, parsed.day).getTime();
+}
+
+function normalizePersonalDate(value) {
+  if (value == null || value === "") return "";
+
+  const parsed = parsePersonalDateParts(value);
+  if (parsed) return formatDateParts(parsed.year, parsed.month, parsed.day);
+
+  return String(value).trim();
+}
+
+function parsePersonalDateParts(value) {
+  if (value == null || value === "") return null;
+
+  if (value instanceof Date) {
+    return getValidDateParts(value.getFullYear(), value.getMonth() + 1, value.getDate());
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value > 2000 ? serialDateToParts(value) : null;
+  }
+
+  const text = String(value).trim();
+  if (!text) return null;
+
+  const gvizMatch = text.match(
+    /^Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,\d{1,2},\d{1,2},\d{1,2})?\)$/,
+  );
+  if (gvizMatch) {
+    return getValidDateParts(Number(gvizMatch[1]), Number(gvizMatch[2]) + 1, Number(gvizMatch[3]));
+  }
+
+  const isoTimestampMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T/);
+  if (isoTimestampMatch) {
+    return getValidDateParts(
+      Number(isoTimestampMatch[1]),
+      Number(isoTimestampMatch[2]),
+      Number(isoTimestampMatch[3]),
+    );
+  }
+
+  const yearFirstMatch = text.match(/^(\d{4})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})\.?$/);
+  if (yearFirstMatch) {
+    return getValidDateParts(
+      Number(yearFirstMatch[1]),
+      Number(yearFirstMatch[2]),
+      Number(yearFirstMatch[3]),
+    );
+  }
+
+  const koreanDateMatch = text.match(/^(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?$/);
+  if (koreanDateMatch) {
+    return getValidDateParts(
+      Number(koreanDateMatch[1]),
+      Number(koreanDateMatch[2]),
+      Number(koreanDateMatch[3]),
+    );
+  }
+
+  const usDateMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (usDateMatch) {
+    return getValidDateParts(
+      Number(usDateMatch[3]),
+      Number(usDateMatch[1]),
+      Number(usDateMatch[2]),
+    );
+  }
+
+  const numericValue = Number(text);
+  if (Number.isFinite(numericValue) && numericValue > 2000) {
+    return serialDateToParts(numericValue);
+  }
+
+  return null;
+}
+
+function serialDateToParts(serialNumber) {
+  const utcDate = new Date(SHEET_EPOCH_UTC + Math.floor(serialNumber) * DAY_IN_MS);
+  return getValidDateParts(utcDate.getUTCFullYear(), utcDate.getUTCMonth() + 1, utcDate.getUTCDate());
+}
+
+function getValidDateParts(year, month, day) {
+  if (!year || !month || !day) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() + 1 !== month ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function formatDateParts(year, month, day) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen, placeholder }, ref) {
