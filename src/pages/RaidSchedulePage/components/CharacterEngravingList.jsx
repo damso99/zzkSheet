@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { displayValue } from "../utils/characterParser.js";
+import { displayValue, normalizeEngravingName } from "../utils/characterParser.js";
 
 const ENGRAVING_ICON_MAP = Object.freeze({
   "\uC6D0\uD55C": "https://cdn-lostark.game.onstove.com/efui_iconatlas/use/use_7_15.png",
@@ -27,25 +27,38 @@ const DEFAULT_ENGRAVING_ICON_SRC = `data:image/svg+xml;charset=UTF-8,${encodeURI
   </svg>`,
 )}`;
 
-export default function CharacterEngravingList({ engravings = [], styles }) {
+export default function CharacterEngravingList({ engravings = [], engravingImageMap = new Map(), styles }) {
+  const sharedApiIconUrl = getSharedApiIconUrl(engravings);
+
   useEffect(() => {
     if (!isDevMode()) return;
 
     const fallbackItems = [];
     const rows = engravings.map((engraving) => {
       const engravingName = getEngravingName(engraving);
-      const appliedSrc = getResolvedEngravingIconUrl(engravingName);
-      const finalSrc = appliedSrc || DEFAULT_ENGRAVING_ICON_SRC;
-      const source = appliedSrc ? "ENGRAVING_ICON_MAP" : "fallback";
+      const apiIconUrl = getDirectApiIconUrl(engraving);
+      const mapIconUrl = getMappedIconUrl(engravingName, engravingImageMap);
+      const hardcodedIconUrl = getHardcodedIconUrl(engravingName);
+      const finalIconUrl = resolveEngravingIconUrl(engraving, engravingImageMap, sharedApiIconUrl);
 
-      if (!appliedSrc) {
+      console.log("[lostark engravings] engraving object", engraving);
+
+      if (!finalIconUrl) {
         fallbackItems.push(engravingName || "(empty)");
       }
 
       return {
         name: engravingName || "(empty)",
-        appliedSrc: finalSrc,
-        source,
+        apiIconUrl: apiIconUrl || "",
+        mapIconUrl: mapIconUrl || "",
+        hardcodedIconUrl: hardcodedIconUrl || "",
+        finalIconUrl: finalIconUrl || DEFAULT_ENGRAVING_ICON_SRC,
+        source: getIconSourceLabel({
+          apiIconUrl,
+          mapIconUrl,
+          hardcodedIconUrl,
+          sharedApiIconUrl,
+        }),
       };
     });
 
@@ -55,7 +68,7 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
     if (fallbackItems.length) {
       console.warn("[lostark engravings] fallback engravings", fallbackItems);
     }
-  }, [engravings]);
+  }, [engravings, engravingImageMap, sharedApiIconUrl]);
 
   if (!engravings.length) {
     return <p className={styles.modalEmpty}>0</p>;
@@ -65,7 +78,7 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
     <div className={styles.engravingList}>
       {engravings.map((engraving, index) => {
         const engravingName = getEngravingName(engraving);
-        const iconUrl = getResolvedEngravingIconUrl(engravingName) || DEFAULT_ENGRAVING_ICON_SRC;
+        const iconUrl = resolveEngravingIconUrl(engraving, engravingImageMap, sharedApiIconUrl) || DEFAULT_ENGRAVING_ICON_SRC;
         const level = formatEngravingLevel(engraving.Level ?? engraving.level);
 
         return (
@@ -90,8 +103,83 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
   );
 }
 
-function getResolvedEngravingIconUrl(engravingName) {
+function resolveEngravingIconUrl(engraving, engravingImageMap, sharedApiIconUrl) {
+  const engravingName = getEngravingName(engraving);
+  const apiIconUrl = getDirectApiIconUrl(engraving);
+
+  if (isUsableIconUrl(apiIconUrl) && apiIconUrl !== sharedApiIconUrl) {
+    return apiIconUrl;
+  }
+
+  const mapIconUrl = getMappedIconUrl(engravingName, engravingImageMap);
+  if (isUsableIconUrl(mapIconUrl)) {
+    return mapIconUrl;
+  }
+
+  const hardcodedIconUrl = getHardcodedIconUrl(engravingName);
+  if (isUsableIconUrl(hardcodedIconUrl)) {
+    return hardcodedIconUrl;
+  }
+
+  return "";
+}
+
+function getIconSourceLabel({ apiIconUrl, mapIconUrl, hardcodedIconUrl, sharedApiIconUrl }) {
+  if (isUsableIconUrl(apiIconUrl) && apiIconUrl !== sharedApiIconUrl) return "api";
+  if (isUsableIconUrl(mapIconUrl)) return "api-map";
+  if (isUsableIconUrl(hardcodedIconUrl)) return "fallback-map";
+  return "default";
+}
+
+function getDirectApiIconUrl(engraving) {
+  return (
+    engraving?.apiIconUrl ||
+    engraving?.Icon ||
+    engraving?.icon ||
+    engraving?.IconUrl ||
+    engraving?.iconUrl ||
+    engraving?.Image ||
+    engraving?.image ||
+    engraving?.ImageUrl ||
+    engraving?.imageUrl ||
+    engraving?.Effect?.Icon ||
+    engraving?.effect?.icon ||
+    engraving?.Effect?.icon ||
+    engraving?.effect?.Icon ||
+    ""
+  );
+}
+
+function getMappedIconUrl(engravingName, engravingImageMap) {
+  if (!engravingImageMap) return "";
+
+  return (
+    engravingImageMap.get(engravingName) ||
+    engravingImageMap.get(normalizeEngravingName(engravingName)) ||
+    ""
+  );
+}
+
+function getHardcodedIconUrl(engravingName) {
   return ENGRAVING_ICON_MAP[String(engravingName || "").trim()] || "";
+}
+
+function getSharedApiIconUrl(engravings = []) {
+  const icons = engravings.map((engraving) => getDirectApiIconUrl(engraving)).filter(Boolean);
+  if (icons.length <= 1) return "";
+
+  const uniqueIcons = [...new Set(icons)];
+  return uniqueIcons.length === 1 ? uniqueIcons[0] : "";
+}
+
+function isUsableIconUrl(value) {
+  const icon = String(value || "").trim();
+  if (!icon) return false;
+
+  const lower = icon.toLowerCase();
+  if (lower.startsWith("data:image")) return false;
+  if (lower.includes("profile") || lower.includes("default") || lower.includes("placeholder")) return false;
+  return true;
 }
 
 function handleEngravingIconError(event) {

@@ -8,13 +8,20 @@ export function normalizeCharacterDetail(payload = {}) {
   const equipment = normalizeEquipment(armory.equipment || summary.ArmoryEquipment);
   const skills = normalizeSkills(armory.combatSkills || summary.ArmorySkills);
   const engravingsSource = armory.engravings || summary.ArmoryEngraving;
-  const engravingImageMap = buildEngravingImageMap(engravingsSource);
+  const engravings = normalizeEngravings(engravingsSource, armory);
+  const engravingImageMap = buildEngravingImageMap(engravingsSource, engravings);
+
+  logEngravingSourceDebug({
+    payload: engravingsSource,
+    items: engravings,
+    imageMap: engravingImageMap,
+  });
 
   return {
     profile: normalizeProfile(profileSource, payload.characterName, { equipment, armory }),
     equipment,
     gems: normalizeGems(armory.gems || summary.ArmoryGem, skills),
-    engravings: normalizeEngravings(engravingsSource, armory),
+    engravings,
     engravingImageMap,
     cards: normalizeCards(armory.cards || summary.ArmoryCard),
     skills,
@@ -142,17 +149,38 @@ function normalizeEngravings(engravingsPayload, armory = {}) {
   );
 }
 
-function buildEngravingImageMap(engravingsPayload = {}) {
+function buildEngravingImageMap(engravingsPayload = {}, normalizedItems = []) {
   const map = new Map();
   const candidates = [
     ...asArray(engravingsPayload?.Effects),
     ...asArray(engravingsPayload?.Engravings),
     ...asArray(engravingsPayload?.ArkPassiveEffects),
+    ...normalizedItems.map((item) => ({
+      Name: item.Name || item.name || "",
+      Icon: item.apiIconUrl || item.Icon || item.icon || item.IconUrl || item.iconUrl || item.Image || item.image || "",
+      Grade: item.Grade || item.grade || "",
+    })),
   ]
-    .map((item) => ({
-      name: normalizeEngravingName(item?.Name || item?.name || item?.EngravingName || item?.Title || ""),
-      icon: normalizeOptionalIconUrl(getRawEngravingIconCandidate(item)),
-    }))
+    .map((item) => {
+      const name = displayValue(stripHtml(item?.Name || item?.name || item?.EngravingName || item?.Title || ""));
+      const normalizedName = normalizeEngravingName(name);
+      const icon = normalizeOptionalIconUrl(
+        item?.apiIconUrl ||
+          item?.Icon ||
+          item?.icon ||
+          item?.Effect?.Icon ||
+          item?.effect?.icon ||
+          item?.Image ||
+          item?.image ||
+          item?.IconUrl ||
+          item?.iconUrl ||
+          item?.ImageUrl ||
+          item?.imageUrl ||
+          getRawEngravingIconCandidate(item),
+      );
+
+      return { name, normalizedName, icon };
+    })
     .filter((item) => item.name && item.icon && !isCommonEngravingIcon(item.icon));
 
   const uniqueIcons = new Set(candidates.map((item) => item.icon));
@@ -163,6 +191,9 @@ function buildEngravingImageMap(engravingsPayload = {}) {
   for (const item of candidates) {
     if (!map.has(item.name)) {
       map.set(item.name, item.icon);
+    }
+    if (!map.has(item.normalizedName)) {
+      map.set(item.normalizedName, item.icon);
     }
   }
 
@@ -258,14 +289,15 @@ function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Ma
     Description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
     description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
     Tooltip: tooltip,
-    tooltip,
-    Effect: engraving.Effect || engraving.effect || null,
-    effect: engraving.effect || engraving.Effect || null,
-    Icon: normalizeOptionalIconUrl(engraving.Icon),
-    icon: directIcon,
-    IconUrl: normalizeOptionalIconUrl(engraving.IconUrl || engraving.iconUrl),
-    iconUrl: normalizeOptionalIconUrl(engraving.iconUrl || engraving.IconUrl),
-    Image: normalizeOptionalIconUrl(engraving.Image || engraving.image),
+      tooltip,
+      Effect: engraving.Effect || engraving.effect || null,
+      effect: engraving.effect || engraving.Effect || null,
+      apiIconUrl: directIcon,
+      Icon: normalizeOptionalIconUrl(engraving.Icon),
+      icon: directIcon,
+      IconUrl: normalizeOptionalIconUrl(engraving.IconUrl || engraving.iconUrl),
+      iconUrl: normalizeOptionalIconUrl(engraving.iconUrl || engraving.IconUrl),
+      Image: normalizeOptionalIconUrl(engraving.Image || engraving.image),
     image: normalizeOptionalIconUrl(engraving.image || engraving.Image),
     ImageUrl: normalizeOptionalIconUrl(engraving.ImageUrl || engraving.imageUrl),
     imageUrl: normalizeOptionalIconUrl(engraving.imageUrl || engraving.ImageUrl),
@@ -472,16 +504,18 @@ function logEngravingSourceDebug({ payload, items, imageMap }) {
     name: item?.Name || item?.name || item?.EngravingName || item?.Title || "",
     level: item?.Level ?? item?.level ?? "",
     grade: item?.Grade ?? item?.grade ?? "",
-    icon:
-      item?.Icon ??
-      item?.icon ??
-      item?.IconUrl ??
-      item?.iconUrl ??
-      item?.Image ??
-      item?.image ??
-      item?.ImageUrl ??
-      item?.imageUrl ??
-      "",
+    apiIconUrl: item?.apiIconUrl ?? "",
+    iconFields: {
+      Icon: item?.Icon ?? "",
+      icon: item?.icon ?? "",
+      IconUrl: item?.IconUrl ?? "",
+      iconUrl: item?.iconUrl ?? "",
+      Image: item?.Image ?? "",
+      image: item?.image ?? "",
+      ImageUrl: item?.ImageUrl ?? "",
+      imageUrl: item?.imageUrl ?? "",
+      EffectIcon: item?.Effect?.Icon ?? item?.effect?.icon ?? "",
+    },
     tooltipKeys: typeof item?.Tooltip === "string" ? ["Tooltip"] : [],
   }));
 
