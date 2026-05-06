@@ -1,3 +1,5 @@
+import { formatLocalDateTime } from "./dateUtils.js";
+
 export const DEFAULT_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/1pn-86CBr_9TzKI1zncCXpo3Ge0rKjg8zA99v6twX_gA/edit?gid=57930127#gid=57930127";
 
@@ -16,8 +18,14 @@ export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, target
     fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.setting }),
   ]);
 
+  console.log("[SHEET SOURCES]", {
+    calrenderUsed: false,
+    raidCalendarUsed: true,
+    settingUsed: true,
+  });
+
   return {
-    fetchedAt: new Date().toISOString(),
+    fetchedAt: formatLocalDateTime(new Date()),
     raidCalendarRows: raidCalendarSheet.rows || [],
     settingRows: settingSheet.rows || [],
     sourceUrl: targetSheetUrl,

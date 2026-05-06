@@ -1,66 +1,60 @@
 const SHEET_EPOCH_UTC = Date.UTC(1899, 11, 30);
 const HALF_HOUR_IN_DAYS = 30 / (24 * 60);
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function parseSheetDate(value) {
-  if (value == null || value === "") return "";
+  const normalized = normalizeSheetDateValue(value);
+  if (!normalized) return "";
 
-  const gvizDate = parseGvizDateParts(value);
-  if (gvizDate) {
-    return `${gvizDate.year}-${padNumber(gvizDate.month)}-${padNumber(gvizDate.day)}`;
-  }
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    if (value > 2000) {
-      return serialToIsoDate(value);
-    }
-    return "";
-  }
-
-  const numericValue = Number(String(value).trim());
-  if (Number.isFinite(numericValue) && numericValue > 2000) {
-    return serialToIsoDate(numericValue);
-  }
-
-  const text = String(value).trim();
-  const dateMatch = text.match(/^(\d{4})[./-]\s?(\d{1,2})[./-]\s?(\d{1,2})$/);
-  if (!dateMatch) return "";
-
-  const [, year, month, day] = dateMatch;
-  return `${year}-${padNumber(month)}-${padNumber(day)}`;
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : "";
 }
 
-export function formatDateLabel(isoDate) {
-  if (!isoDate) return "-";
-  const date = new Date(`${isoDate}T00:00:00`);
-  return `${date.getMonth() + 1}월 ${date.getDate()}일 (${DAY_NAMES[date.getDay()]})`;
+export function formatDateLabel(dateValue) {
+  const normalized = normalizeSheetDateValue(dateValue);
+  if (!normalized) return "-";
+
+  const parts = parseLocalDateParts(normalized);
+  if (!parts) return "-";
+
+  const localDate = new Date(parts.year, parts.month - 1, parts.day);
+  return `${parts.month}월 ${parts.day}일 (${DAY_NAMES[localDate.getDay()]})`;
 }
 
-export function getCurrentWeekRange(isoDate) {
-  const targetDate = new Date(`${isoDate}T00:00:00`);
-  const start = new Date(targetDate);
+export function getCurrentWeekRange(dateValue) {
+  const normalized = normalizeSheetDateValue(dateValue);
+  if (!normalized) return { end: "", start: "" };
+
+  const parts = parseLocalDateParts(normalized);
+  if (!parts) return { end: "", start: "" };
+
+  const start = new Date(parts.year, parts.month - 1, parts.day);
   const day = start.getDay();
   const daysSinceWednesday = (day + 4) % 7;
 
   start.setDate(start.getDate() - daysSinceWednesday);
+
   const end = new Date(start);
   end.setDate(end.getDate() + 6);
 
   return {
-    end: toIsoDate(end),
-    start: toIsoDate(start),
+    end: formatLocalDate(end),
+    start: formatLocalDate(start),
   };
 }
 
 export function getWeekDates(range) {
+  const startParts = parseLocalDateParts(range?.start);
+  const endParts = parseLocalDateParts(range?.end);
+
+  if (!startParts || !endParts) return [];
+
   const dates = [];
-  let cursor = new Date(`${range.start}T00:00:00`);
-  const end = new Date(`${range.end}T00:00:00`);
+  let cursor = new Date(startParts.year, startParts.month - 1, startParts.day);
+  const end = new Date(endParts.year, endParts.month - 1, endParts.day);
 
   while (cursor <= end) {
-    dates.push(toIsoDate(cursor));
+    dates.push(formatLocalDate(cursor));
     cursor = new Date(cursor.getTime() + DAY_IN_MS);
   }
 
@@ -68,20 +62,28 @@ export function getWeekDates(range) {
 }
 
 export function getTodayIsoDate() {
-  return toIsoDate(new Date());
+  return formatLocalDate(new Date());
 }
 
-export function isDateInRange(isoDate, range) {
-  return Boolean(isoDate) && isoDate >= range.start && isoDate <= range.end;
+export function isDateInRange(dateValue, range) {
+  const normalized = normalizeSheetDateValue(dateValue);
+  return Boolean(normalized) && normalized >= range.start && normalized <= range.end;
 }
 
-export function shiftIsoDate(isoDate, days) {
-  const date = new Date(`${isoDate}T00:00:00`);
+export function shiftIsoDate(dateValue, days) {
+  const parts = parseLocalDateParts(normalizeSheetDateValue(dateValue));
+  if (!parts) return "";
+
+  const date = new Date(parts.year, parts.month - 1, parts.day);
   date.setDate(date.getDate() + days);
-  return toIsoDate(date);
+  return formatLocalDate(date);
 }
 
 export function parseSheetTime(value) {
+  if (value instanceof Date) {
+    return formatLocalTime(value);
+  }
+
   if (typeof value === "number" && Number.isFinite(value)) {
     return toTimeStringFromSerial(value);
   }
@@ -113,9 +115,75 @@ export function addHalfHoursToSerial(serialNumber, steps) {
   return serialNumber + HALF_HOUR_IN_DAYS * steps;
 }
 
-function serialToIsoDate(serialNumber) {
-  const utcDate = new Date(SHEET_EPOCH_UTC + Math.floor(serialNumber) * DAY_IN_MS);
-  return toIsoDate(utcDate);
+export function formatLocalDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function formatLocalDateTime(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+export function normalizeSheetDateValue(value) {
+  if (value == null || value === "") return "";
+
+  if (value instanceof Date) {
+    return formatLocalDate(value);
+  }
+
+  const gvizDate = parseGvizDateParts(value);
+  if (gvizDate) {
+    return formatLocalDateParts(gvizDate.year, gvizDate.month, gvizDate.day);
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    if (value > 2000) {
+      return serialToIsoDate(value);
+    }
+    return "";
+  }
+
+  const text = String(value).trim();
+  if (!text) return "";
+
+  const normalizedIsoMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (normalizedIsoMatch) {
+    return formatLocalDateParts(
+      Number(normalizedIsoMatch[1]),
+      Number(normalizedIsoMatch[2]),
+      Number(normalizedIsoMatch[3]),
+    );
+  }
+
+  const isoTimestampMatch = text.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (isoTimestampMatch) {
+    return isoTimestampMatch[1];
+  }
+
+  const textDateMatch = text.match(/^(\d{4})[./-]\s?(\d{1,2})[./-]\s?(\d{1,2})$/);
+  if (textDateMatch) {
+    return formatLocalDateParts(Number(textDateMatch[1]), Number(textDateMatch[2]), Number(textDateMatch[3]));
+  }
+
+  const numericValue = Number(text);
+  if (Number.isFinite(numericValue) && numericValue > 2000) {
+    return serialToIsoDate(numericValue);
+  }
+
+  return text;
 }
 
 function parseGvizDateParts(value) {
@@ -123,6 +191,7 @@ function parseGvizDateParts(value) {
   const match = text.match(
     /^Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,(\d{1,2}),(\d{1,2}),(\d{1,2}))?\)$/,
   );
+
   if (!match) return null;
 
   return {
@@ -135,8 +204,33 @@ function parseGvizDateParts(value) {
   };
 }
 
-function toIsoDate(date) {
-  return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`;
+function serialToIsoDate(serialNumber) {
+  const utcDate = new Date(SHEET_EPOCH_UTC + Math.floor(serialNumber) * DAY_IN_MS);
+  return formatLocalDate(utcDate);
+}
+
+function parseLocalDateParts(dateValue) {
+  const normalized = normalizeSheetDateValue(dateValue);
+  if (!normalized) return null;
+
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  return {
+    day: Number(match[3]),
+    month: Number(match[2]),
+    year: Number(match[1]),
+  };
+}
+
+function formatLocalDateParts(year, month, day) {
+  return `${year}-${padNumber(month)}-${padNumber(day)}`;
+}
+
+function formatLocalTime(date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 function padNumber(value) {

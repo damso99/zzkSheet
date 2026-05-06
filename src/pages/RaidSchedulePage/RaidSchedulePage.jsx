@@ -3,7 +3,7 @@ import styles from "./RaidSchedulePage.module.css";
 import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import RaidCard from "./components/RaidCard.jsx";
 import RaidSearch from "./components/RaidSearch.jsx";
-import { formatDateLabel, getTodayIsoDate } from "./utils/dateUtils.js";
+import { formatDateLabel, formatLocalDateTime, getTodayIsoDate } from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
 
@@ -56,7 +56,7 @@ export default function RaidSchedulePage() {
 
         setRaids(buildFallbackRaidSchedule(todayIsoDate));
         setSourceMeta({
-          fetchedAt: new Date().toISOString(),
+          fetchedAt: formatLocalDateTime(new Date()),
           isFallback: true,
           sourceUrl: DEFAULT_SHEET_URL,
         });
@@ -413,15 +413,5 @@ function formatGroupTime(group) {
 
 function formatFetchedAt(value) {
   if (!value) return "-";
-
-  try {
-    return new Date(value).toLocaleString("ko-KR", {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return value;
-  }
+  return String(value);
 }

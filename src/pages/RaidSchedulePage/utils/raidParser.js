@@ -1,102 +1,114 @@
-import { formatDateLabel, parseSheetDate, parseSheetTime } from "./dateUtils.js";
+import {
+  formatDateLabel,
+  normalizeSheetDateValue,
+  parseSheetDate,
+  parseSheetTime,
+} from "./dateUtils.js";
 
 const DEFAULT_FALLBACK_TIME = "";
-const DEFAULT_OWNER_NAME = "미지정";
+const DEFAULT_OWNER_NAME = "unknown";
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [] } = {}) {
+  console.log("[ACTIVE RAID PARSER]", "buildRaidSchedule");
+
   const settingLookup = parseSettingRows(settingRows);
-  const raidBlocks = parseRaidCalendarRows(raidCalendarRows);
+  const parsedRaids = parseRaidCalendarRows(raidCalendarRows);
 
-  return raidBlocks
-    .flatMap((block, blockIndex) =>
-      block.raids.map((raid, raidIndex) => {
-        const participants = raid.characterNames.map((characterName) =>
-          decorateParticipant(characterName, settingLookup),
-        );
+  console.table(
+    parsedRaids.map((raid) => ({
+      date: raid.date,
+      endCol: raid.endCol,
+      memberCount: raid.members.length,
+      members: raid.members.join(", "),
+      raidName: raid.raidName,
+      startCol: raid.startCol,
+      time: raid.time,
+    })),
+  );
 
-        return {
-          date: block.date,
-          dayLabel: block.dayLabel,
-          id: `${block.date || "unscheduled"}-${raid.time || "time"}-${slugify(raid.raidName)}-${blockIndex}-${raidIndex}`,
-          participantCount: participants.length,
-          participants,
-          raidName: raid.raidName,
-          time: raid.time || DEFAULT_FALLBACK_TIME,
-        };
-      }),
-    )
+  return parsedRaids
+    .map((raid, raidIndex) => {
+      const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
+      const item = {
+        date: raid.date,
+        dayLabel: formatDateLabel(raid.date),
+        id: `${raid.date || "unscheduled"}-${raid.time || "time"}-${slugify(raid.raidName)}-${raidIndex}`,
+        participantCount: participants.length,
+        participants,
+        raidName: raid.raidName,
+        startCol: raid.startCol,
+        endCol: raid.endCol,
+        time: raid.time || DEFAULT_FALLBACK_TIME,
+      };
+
+      console.log("[RAW RAID ITEM]", item);
+      return item;
+    })
     .sort(compareRaidTime);
 }
 
 export function buildFallbackRaidSchedule(todayIsoDate) {
+  const normalizedDate = normalizeSheetDateValue(todayIsoDate);
+
   return [
     {
-      date: todayIsoDate,
-      dayLabel: formatDateLabel(todayIsoDate),
-      id: `${todayIsoDate}-fallback-raid`,
+      date: normalizedDate,
+      dayLabel: formatDateLabel(normalizedDate),
+      id: `${normalizedDate || todayIsoDate || "fallback"}-fallback-raid`,
       participantCount: 1,
       participants: [
         {
-          characterName: "미지정",
+          characterName: "info missing",
           ownerName: DEFAULT_OWNER_NAME,
           level: "-",
           power: "-",
         },
       ],
-      raidName: "일정 없음",
+      raidName: "no schedule",
       time: DEFAULT_FALLBACK_TIME,
     },
   ];
 }
 
-function parseRaidCalendarRows(rows) {
+function parseRaidCalendarRows(rows = []) {
   const dateRows = findDateRows(rows);
+  const raids = [];
 
-  return dateRows
-    .map((dateRow, blockIndex) => {
-      const nextDateRowIndex = dateRows[blockIndex + 1]?.index ?? rows.length;
-      const dateRowData = rows[dateRow.index] || [];
-      const partyBlocks = collectPartyBlocks(dateRowData);
+  dateRows.forEach((dateRow, dateRowIndex) => {
+    const nextDateRowIndex = dateRows[dateRowIndex + 1]?.index ?? rows.length;
+    const titleRowIndex = findLastNonEmptyRowIndex(rows, dateRow.index, nextDateRowIndex - 1);
 
-      const raids = partyBlocks
-        .map(({ title, startCol, endCol }) => {
-          const members = collectPartyMembers({
-            rows,
-            startIndex: dateRow.index + 1,
-            endIndex: nextDateRowIndex - 1,
-            startCol,
-            endCol,
-            title,
-          });
+    if (titleRowIndex < dateRow.index) return;
 
-          console.log({
-            title,
-            startCol,
-            endCol,
-            members,
-          });
+    const titleRow = rows[titleRowIndex] || [];
+    const partyBlocks = collectPartyBlocksFromTitleRow(titleRow);
 
-          if (!members.length) return null;
+    partyBlocks.forEach(({ raidName, startCol, endCol }) => {
+      const members = collectRaidMembers({
+        endIndex: titleRowIndex - 1,
+        endCol,
+        raidName,
+        rows,
+        startCol,
+        startIndex: dateRow.index,
+      });
 
-          return {
-            columnIndex: startCol,
-            startCol,
-            endCol,
-            raidName: title,
-            characterNames: members,
-            time: findBlockTime(rows, dateRow.index + 1, nextDateRowIndex - 1, startCol, endCol),
-          };
-        })
-        .filter(Boolean);
+      if (!raidName || !members.length) return;
 
-      return {
-        date: dateRow.date,
-        dayLabel: formatDateLabel(dateRow.date),
-        index: dateRow.index,
-        raids,
-      };
-    })
-    .filter((block) => block.raids.length > 0);
+      const time = findBlockTime(rows, dateRow.index, titleRowIndex - 1, startCol, endCol);
+
+      raids.push({
+        date: normalizeSheetDateValue(dateRow.date),
+        endCol,
+        members,
+        raidName,
+        startCol,
+        time,
+      });
+    });
+  });
+
+  return raids;
 }
 
 function findDateRows(rows) {
@@ -117,54 +129,62 @@ function findDateInRow(row) {
   return "";
 }
 
-function collectPartyBlocks(row) {
+function findLastNonEmptyRowIndex(rows, startIndex, endIndex) {
+  for (let rowIndex = endIndex; rowIndex >= startIndex; rowIndex -= 1) {
+    const row = rows[rowIndex] || [];
+    if (row.some((cell) => isMeaningfulText(cell))) {
+      return rowIndex;
+    }
+  }
+
+  return startIndex;
+}
+
+function collectPartyBlocksFromTitleRow(row) {
   const titleColumns = (row || [])
     .map((cell, index) => ({ cell: cleanText(cell), index }))
     .filter(({ cell, index }) => {
-      if (index <= 0) return false;
       if (!cell) return false;
-      if (parseSheetDate(cell)) return false;
-      if (parseSheetTime(cell)) return false;
-      if (isColorCode(cell)) return false;
-      if (isNoiseCell(cell)) return false;
+      if (index < 0) return false;
+      if (isNoiseCell(cell) || isColorCode(cell)) return false;
+      if (parseSheetDate(cell) || parseSheetTime(cell)) return false;
       return true;
     })
-    .map(({ index }) => index)
-    .sort((left, right) => left - right);
+    .map(({ index, cell }) => ({ index, raidName: normalizeRaidName(cell) }))
+    .filter(({ raidName }) => Boolean(raidName));
 
   return titleColumns
-    .map((startCol, index) => {
-      const endCol = Math.min(startCol + 1, (row?.length || 1) - 1);
-      const title = normalizeRaidName(row[startCol]);
-      if (!title || title === "-") return null;
+    .map(({ index, raidName }, titleIndex) => {
+      const nextIndex = titleColumns[titleIndex + 1]?.index;
 
       return {
-        title,
-        startCol,
-        endCol: Math.max(startCol, endCol),
+        endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
+        raidName,
+        startCol: index,
       };
     })
-    .filter(Boolean);
+    .sort((left, right) => left.startCol - right.startCol);
 }
 
-function collectPartyMembers({ rows, startIndex, endIndex, startCol, endCol, title }) {
+function collectRaidMembers({ rows, startIndex, endIndex, startCol, endCol, raidName }) {
   const members = [];
   const seen = new Set();
-  const titleKey = normalizeKey(title);
+  const raidNameKey = normalizeKey(raidName);
 
   for (let rowIndex = startIndex; rowIndex <= endIndex; rowIndex += 1) {
     const row = rows[rowIndex] || [];
-    const value = cleanText(row[startCol]);
+    for (let columnIndex = startCol; columnIndex <= endCol && columnIndex < row.length; columnIndex += 1) {
+      const value = cleanText(row[columnIndex]);
+      if (!value) continue;
+      if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
 
-    if (!value) continue;
-    if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
-    if (normalizeKey(value) === titleKey) continue;
+      const normalizedValue = normalizeKey(value);
+      if (normalizedValue === raidNameKey) continue;
+      if (seen.has(normalizedValue)) continue;
 
-    const normalizedValue = normalizeKey(value);
-    if (seen.has(normalizedValue)) continue;
-
-    seen.add(normalizedValue);
-    members.push(value);
+      seen.add(normalizedValue);
+      members.push(value);
+    }
   }
 
   return members;
@@ -174,7 +194,7 @@ function findBlockTime(rows, startIndex, endIndex, startCol, endCol) {
   for (let rowIndex = startIndex; rowIndex <= endIndex; rowIndex += 1) {
     const row = rows[rowIndex] || [];
 
-    for (let columnIndex = startCol; columnIndex <= endCol; columnIndex += 1) {
+    for (let columnIndex = startCol; columnIndex <= endCol && columnIndex < row.length; columnIndex += 1) {
       const time = extractTimeLabel(row[columnIndex]);
       if (time) return time;
     }
@@ -268,8 +288,13 @@ function normalizeTimeLabel(value) {
 function slugify(value) {
   return cleanText(value)
     .replace(/\s+/g, "-")
-    .replace(/[^0-9a-zA-Z가-힣_-]/g, "")
+    .replace(/[^0-9a-zA-Z가-힣-]/g, "")
     .toLowerCase();
+}
+
+function isMeaningfulText(value) {
+  const text = cleanText(value);
+  return Boolean(text) && !isNoiseCell(text) && !isColorCode(text);
 }
 
 function isNoiseCell(value) {
