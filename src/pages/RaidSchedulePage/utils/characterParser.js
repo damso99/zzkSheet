@@ -132,24 +132,21 @@ function normalizeEngravings(engravingsPayload, armory = {}) {
     armory.summary?.ArmoryEngraving,
     armory.summary?.ArkPassive,
   );
-  const abilityEngravings = asArray(engravingsPayload?.Engravings).map((engraving) =>
-    normalizeEngravingItem(engraving, "활성 각인", iconMap),
-  );
-  const normalEffects = asArray(engravingsPayload?.Effects).map((effect) => ({
-    name: displayValue(stripHtml(effect.Name)),
-    level: normalizeEngravingLevel(effect.Level || extractLevel(effect.Name || effect.Description)),
-    description: stripHtml(effect.Description),
-    icon: resolveEngravingIcon(effect, iconMap),
-  }));
+  const rawItems = [
+    ...asArray(engravingsPayload?.Engravings),
+    ...asArray(engravingsPayload?.Effects),
+    ...asArray(engravingsPayload?.ArkPassiveEffects),
+  ];
 
-  const arkPassiveEffects = asArray(engravingsPayload?.ArkPassiveEffects).map((effect) => ({
-    name: displayValue(stripHtml(effect.Name)),
-    level: normalizeEngravingLevel(effect.Level || extractLevel(effect.Name || effect.Description)),
-    description: stripHtml(effect.Description || "아크 패시브 각인 효과"),
-    icon: resolveEngravingIcon(effect, iconMap),
-  }));
+  logEngravingSourceDebug({
+    payload: engravingsPayload,
+    items: rawItems,
+    imageMap: iconMap,
+  });
 
-  return [...abilityEngravings, ...normalEffects, ...arkPassiveEffects].filter(
+  const normalizedItems = rawItems.map((engraving) => normalizeEngravingItem(engraving, "활성 각인", iconMap));
+
+  return normalizedItems.filter(
     (engraving, index, list) =>
       list.findIndex((item) => normalizeEngravingName(item.name) === normalizeEngravingName(engraving.name)) === index,
   );
@@ -197,11 +194,16 @@ function normalizeSkills(skillsPayload) {
 }
 
 function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Map()) {
+  const name = displayValue(stripHtml(engraving.Name || engraving.name || engraving.EngravingName || engraving.Title));
+  const level = normalizeEngravingLevel(engraving.Level || engraving.level || extractLevel(engraving.Name || engraving.Description || engraving.description));
+  const grade = displayValue(engraving.Grade || engraving.grade);
+
   return {
-    name: displayValue(stripHtml(engraving.Name)),
-    level: normalizeEngravingLevel(engraving.Level || extractLevel(engraving.Name || engraving.Description)),
+    name,
+    level,
+    grade,
     description: stripHtml(engraving.Description || fallbackDescription),
-    icon: resolveEngravingIcon(engraving, iconMap),
+    icon: resolveEngravingIcon(engraving, iconMap, name, grade),
   };
 }
 
@@ -292,11 +294,16 @@ function createEngravingIconMap(...sources) {
   const iconMap = new Map();
 
   sources.flatMap((source) => collectNamedIconItems(source)).forEach((item) => {
-    const normalizedName = normalizeEngravingName(item.Name || item.name);
+    const normalizedName = normalizeEngravingName(item.Name || item.name || item.EngravingName || item.Title);
     const icon = getOptionalIconUrlFromItem(item);
+    const grade = normalizeEngravingGrade(item.Grade || item.grade);
 
     if (normalizedName && icon && !iconMap.has(normalizedName)) {
-      iconMap.set(normalizedName, icon);
+      iconMap.set(normalizedName, [{ icon, grade }]);
+    } else if (normalizedName && icon) {
+      const currentItems = iconMap.get(normalizedName) || [];
+      currentItems.push({ icon, grade });
+      iconMap.set(normalizedName, currentItems);
     }
   });
 
@@ -317,21 +324,42 @@ function collectNamedIconItems(value, visited = new Set()) {
   return [...currentItem, ...nestedItems];
 }
 
-function resolveEngravingIcon(item, iconMap = new Map()) {
+function resolveEngravingIcon(item, iconMap = new Map(), engravingName = "", engravingGrade = "") {
   const directIcon = getOptionalIconUrlFromItem(item);
   if (directIcon) return directIcon;
 
-  const normalizedName = normalizeEngravingName(item?.Name || item?.name);
-  return iconMap.get(normalizedName) || CHARACTER_PLACEHOLDER_IMAGE;
+  const normalizedName = normalizeEngravingName(engravingName || item?.Name || item?.name || item?.EngravingName || item?.Title);
+  const normalizedGrade = normalizeEngravingGrade(engravingGrade || item?.Grade || item?.grade);
+  const candidates = iconMap.get(normalizedName) || [];
+  const matchedIcon =
+    candidates.find((candidate) => candidate.grade && normalizedGrade && candidate.grade === normalizedGrade)?.icon ||
+    candidates[0]?.icon ||
+    "";
+
+  if (matchedIcon) return matchedIcon;
+
+  logEngravingMatchFailure({
+    originalName: engravingName || item?.Name || item?.name || item?.EngravingName || item?.Title || "",
+    normalizedName,
+    normalizedGrade,
+    imageMapKeys: [...iconMap.keys()],
+    item,
+  });
+
+  return CHARACTER_PLACEHOLDER_IMAGE;
 }
 
 function getOptionalIconUrlFromItem(item) {
   const rawIcon =
     item?.Icon ||
     item?.icon ||
+    item?.IconUrl ||
+    item?.iconUrl ||
     item?.IconPath ||
     item?.Image ||
+    item?.image ||
     item?.ImageUrl ||
+    item?.imageUrl ||
     extractIconFromTooltip(item?.Tooltip || item?.ToolTip || item?.Description || item?.description);
 
   return normalizeOptionalIconUrl(rawIcon);
@@ -344,12 +372,58 @@ function normalizeOptionalIconUrl(value) {
 
 function normalizeEngravingName(value) {
   return stripHtml(value)
-    .replace(/Lv\.?\s*\d+/gi, "")
+    .replace(/(?:Lv\.?|레벨)\s*\d+/gi, "")
     .replace(/\[[^\]]*]/g, "")
     .replace(/\([^)]*\)/g, "")
     .replace(/\s*(활성|각인|효과)\s*/g, "")
     .replace(/[^가-힣a-zA-Z0-9]/g, "")
     .toLowerCase();
+}
+
+function normalizeEngravingGrade(value) {
+  return stripHtml(value).replace(/\s+/g, "").toLowerCase();
+}
+
+function logEngravingSourceDebug({ payload, items, imageMap }) {
+  if (!isDevMode()) return;
+
+  const sampleItems = items.slice(0, 3).map((item) => ({
+    keys: Object.keys(item || {}),
+    name: item?.Name || item?.name || item?.EngravingName || item?.Title || "",
+    level: item?.Level ?? item?.level ?? "",
+    grade: item?.Grade ?? item?.grade ?? "",
+    icon:
+      item?.Icon ??
+      item?.icon ??
+      item?.IconUrl ??
+      item?.iconUrl ??
+      item?.Image ??
+      item?.image ??
+      item?.ImageUrl ??
+      item?.imageUrl ??
+      "",
+    tooltipKeys: typeof item?.Tooltip === "string" ? ["Tooltip"] : [],
+  }));
+
+  console.debug("[lostark engravings] payload keys", Object.keys(payload || {}));
+  console.debug("[lostark engravings] sample items", sampleItems);
+  console.debug("[lostark engravings] image map keys", [...imageMap.keys()].slice(0, 20));
+}
+
+function logEngravingMatchFailure({ originalName, normalizedName, imageMapKeys = [], item }) {
+  if (!isDevMode()) return;
+
+  console.warn("[lostark engravings] image match failed", {
+    originalName,
+    normalizedName,
+    normalizedGrade: normalizeEngravingGrade(item?.Grade || item?.grade),
+    itemKeys: Object.keys(item || {}),
+    imageMapKeysSample: imageMapKeys.slice(0, 20),
+  });
+}
+
+function isDevMode() {
+  return Boolean(import.meta?.env?.DEV);
 }
 
 export function cleanTitleText(value) {
