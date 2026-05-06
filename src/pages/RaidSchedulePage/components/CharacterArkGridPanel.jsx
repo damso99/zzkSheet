@@ -1,16 +1,17 @@
 import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
 
-const SECTION_ORDER = ["진화", "깨달음", "도약"];
+const SECTION_ORDER = ["질서", "혼돈"];
 
 export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
   const sections = Array.isArray(arkGrid.sections) ? arkGrid.sections : [];
   const effects = Array.isArray(arkGrid.effects) ? arkGrid.effects : [];
 
   if (!sections.length && !effects.length) {
-    return <p className={styles.modalEmpty}>0</p>;
+    return <p className={styles.modalEmpty}>정보 없음</p>;
   }
 
-  const totalPoint = formatTotalPoint(sections.flatMap((section) => section.items));
+  const sectionMap = new Map(sections.map((section) => [normalizeSectionName(section.name), section]));
+  const totalPoint = sections.reduce((sum, section) => sum + formatTotalPoint(section.items), 0);
 
   return (
     <div className={styles.arkTabLayout}>
@@ -22,71 +23,61 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
         <span className={styles.arkGridHeaderBadge}>{totalPoint}P</span>
       </header>
 
-      {sections.length ? (
-        <div className={styles.arkHeaderBadges}>
-          {sortSections(sections).map((section) => (
-            <span key={section.key} className={styles.arkSummaryBadge}>
-              <strong>{displayValue(section.name)}</strong>
-              <em>{formatTotalPoint(section.items)}P</em>
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      <div className={styles.arkGridSectionStack}>
-        {sortSections(sections).map((section) => (
-          <article key={section.key} className={styles.arkSectionCard}>
-            <header className={styles.arkSectionHeader}>
-              <div className={styles.arkSectionTitleBlock}>
-                <h4>{displayValue(section.name)}</h4>
-                <span>{section.items.length}개 아이템</span>
+      <div className={styles.arkGridCardGrid}>
+        {SECTION_ORDER.map((sectionName) => {
+          const section = sectionMap.get(normalizeSectionName(sectionName));
+          const representativeItem = section?.items?.[0];
+          return (
+            <article key={sectionName} className={styles.arkGridCard}>
+              <div className={styles.arkGridCardTopRow}>
+                <span className={styles.arkGridCardSectionName}>{sectionName}</span>
+                <span className={styles.arkPointBadge}>{formatTotalPoint(section?.items)}P</span>
               </div>
-              <span className={styles.arkPointBadge}>{formatTotalPoint(section.items)}P</span>
-            </header>
 
-            <div className={styles.arkGridSlotList}>
-              {section.items.map((slot, index) => (
-                <article key={`${slot.name}-${index}`} className={styles.arkGridSlotRow}>
+              {representativeItem ? (
+                <div className={styles.arkGridCardBody}>
                   <img
-                    className={styles.arkGridSlotIcon}
-                    src={slot.icon || CHARACTER_PLACEHOLDER_IMAGE}
+                    className={styles.arkGridCardIcon}
+                    src={representativeItem.icon || CHARACTER_PLACEHOLDER_IMAGE}
                     alt=""
-                    onError={handleImageError}
+                    onError={replaceWithPlaceholder}
                   />
-
-                  <div className={styles.arkGridSlotBody}>
-                    <div className={styles.arkGridSlotTopRow}>
-                      <strong title={displayValue(slot.name)}>{displayValue(slot.name)}</strong>
-                      <span className={styles.arkGridSlotPoint}>{normalizeNumber(slot.point)}P</span>
-                    </div>
-
-                    <div className={styles.arkGridSlotBadges}>
-                      {slot.grade ? <span>{displayValue(slot.grade)}</span> : null}
+                  <div className={styles.arkGridCardInfo}>
+                    <strong className={styles.arkGridCardName}>{displayValue(representativeItem.name)}</strong>
+                    <div className={styles.arkGridCardBadges}>
+                      {representativeItem.grade ? <span>{displayValue(representativeItem.grade)}</span> : null}
+                      <span>{section?.items?.length || 0}개</span>
                     </div>
                   </div>
-                </article>
-              ))}
-            </div>
-          </article>
-        ))}
+                </div>
+              ) : (
+                <p className={styles.arkGridEmpty}>정보 없음</p>
+              )}
+            </article>
+          );
+        })}
       </div>
 
       {effects.length ? (
-        <section className={styles.arkEffectCard}>
+        <section className={styles.arkGridEffectCard}>
           <header className={styles.arkSectionHeader}>
             <div className={styles.arkSectionTitleBlock}>
-              <h4>아크 효과 목록</h4>
+              <h4>효과 목록</h4>
               <span>{effects.length}개 효과</span>
             </div>
           </header>
 
-          <div className={styles.arkEffectStatList}>
+          <div className={styles.arkGridEffectList}>
             {effects.map((effect, index) => (
-              <article key={`${effect.name}-${index}`} className={styles.arkEffectStatRow} title={effect.tooltip || ""}>
-                <div className={styles.arkEffectStatName}>
+              <article key={`${effect.name}-${index}`} className={styles.arkGridEffectRow} title={effect.tooltip || ""}>
+                <div className={styles.arkGridEffectMain}>
                   <strong>{displayValue(effect.name)}</strong>
+                  <span>{displayValue(effect.tooltip || effect.value || "설명 없음")}</span>
                 </div>
-                <span className={styles.arkEffectLevelBadge}>Lv.{normalizeNumber(effect.level)}</span>
+                <div className={styles.arkGridEffectMeta}>
+                  <span className={styles.arkEffectLevelBadge}>Lv.{normalizeNumber(effect.level)}</span>
+                  <span className={styles.arkGridEffectValue}>{displayValue(effect.value || "0")}</span>
+                </div>
               </article>
             ))}
           </div>
@@ -96,20 +87,8 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
   );
 }
 
-function sortSections(sections) {
-  const orderMap = new Map(SECTION_ORDER.map((name, index) => [normalizeSectionName(name), index]));
-
-  return [...sections].sort((left, right) => {
-    const leftIndex = orderMap.has(normalizeSectionName(left.name)) ? orderMap.get(normalizeSectionName(left.name)) : 999;
-    const rightIndex = orderMap.has(normalizeSectionName(right.name)) ? orderMap.get(normalizeSectionName(right.name)) : 999;
-
-    if (leftIndex !== rightIndex) return leftIndex - rightIndex;
-    return String(left.name).localeCompare(String(right.name), "ko-KR");
-  });
-}
-
 function formatTotalPoint(items) {
-  return String((Array.isArray(items) ? items : []).reduce((sum, item) => sum + parseNumber(item.point), 0));
+  return (Array.isArray(items) ? items : []).reduce((sum, item) => sum + parseNumber(item.point), 0);
 }
 
 function parseNumber(value) {
@@ -127,7 +106,7 @@ function normalizeSectionName(value) {
   return String(value ?? "").replace(/\s+/g, "").trim();
 }
 
-function handleImageError(event) {
+function replaceWithPlaceholder(event) {
   event.currentTarget.onerror = null;
   event.currentTarget.src = CHARACTER_PLACEHOLDER_IMAGE;
 }

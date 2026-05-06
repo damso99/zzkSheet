@@ -1428,6 +1428,242 @@
   font-weight: 800;
 }
 
+.equipmentEngravingSection {
+  padding: 14px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(24, 35, 70, 0.62), rgba(6, 11, 25, 0.72)),
+    rgba(8, 14, 30, 0.72);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.arkPassiveCardGrid,
+.arkGridCardGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.arkPassiveCardGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.arkGridCardGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.arkPassiveCard,
+.arkGridCard,
+.arkGridEffectCard {
+  padding: 12px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(24, 35, 70, 0.7), rgba(6, 11, 25, 0.78)),
+    rgba(8, 14, 30, 0.72);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.arkPassiveCardHeader,
+.arkGridCardTopRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.arkPassiveCardHeader h4,
+.arkGridCardSectionName {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.96rem;
+  font-weight: 950;
+}
+
+.arkPassiveCardHeader span {
+  color: var(--gold);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.arkPassiveRowList,
+.arkGridEffectList {
+  display: grid;
+  gap: 6px;
+}
+
+.arkPassiveRow,
+.arkGridEffectRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(104, 150, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(2, 7, 18, 0.24);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.arkPassiveRow:hover,
+.arkGridEffectRow:hover {
+  transform: translateY(-1px);
+  border-color: rgba(105, 230, 255, 0.34);
+  background: rgba(9, 17, 36, 0.42);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
+}
+
+.arkPassiveRowIcon,
+.arkGridCardIcon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 216, 138, 0.22);
+  border-radius: 10px;
+  object-fit: cover;
+  background: rgba(2, 7, 18, 0.72);
+}
+
+.arkPassiveRowTier {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #d8f2ff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  background: rgba(85, 167, 255, 0.14);
+}
+
+.arkPassiveRowName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arkPassiveRowLevel {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fff4df;
+  font-size: 0.74rem;
+  font-weight: 950;
+  background: rgba(255, 173, 92, 0.12);
+}
+
+.arkPassiveEmpty,
+.arkGridEmpty {
+  margin: 0;
+  padding: 10px 2px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.arkGridCardBody {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.arkGridCardIcon {
+  width: 48px;
+  height: 48px;
+}
+
+.arkGridCardInfo {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.arkGridCardName {
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arkGridCardBadges,
+.arkGridEffectMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.arkGridCardBadges span {
+  display: inline-flex;
+  padding: 4px 8px;
+  border: 1px solid rgba(105, 230, 255, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(85, 167, 255, 0.08);
+}
+
+.arkGridEffectMain {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.arkGridEffectMain strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arkGridEffectMain span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arkGridEffectMeta {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.arkGridEffectValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fff4df;
+  font-size: 0.75rem;
+  font-weight: 950;
+  background: rgba(255, 173, 92, 0.12);
+}
+
 .compactEngravingList,
 .skillList {
   display: grid;
@@ -1542,6 +1778,12 @@
   min-width: 0;
 }
 
+.arkSectionTitleBlock {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
 .arkTabHeader {
   display: flex;
   justify-content: space-between;
@@ -1626,6 +1868,11 @@
   padding: 6px 10px;
   color: #ffffff;
   background: rgba(104, 150, 255, 0.18);
+}
+
+.equipmentStack {
+  display: grid;
+  gap: 12px;
 }
 
 .arkSectionStack,
@@ -1838,6 +2085,34 @@
   }
 
   .arkSummaryBadge {
+    width: 100%;
+  }
+
+  .arkPassiveCardGrid,
+  .arkGridCardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .arkPassiveRow,
+  .arkGridEffectRow,
+  .arkGridCardBody {
+    align-items: flex-start;
+  }
+
+  .arkPassiveRow {
+    flex-wrap: wrap;
+  }
+
+  .arkGridCardBody {
+    width: 100%;
+  }
+
+  .arkGridEffectMeta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .arkGridCardBadges {
     width: 100%;
   }
 }

@@ -2,21 +2,19 @@ import { useEffect, useState } from "react";
 import CharacterArkGridPanel from "./CharacterArkGridPanel.jsx";
 import CharacterArkPassivePanel from "./CharacterArkPassivePanel.jsx";
 import CharacterCardSet from "./CharacterCardSet.jsx";
-import CharacterEngravingList from "./CharacterEngravingList.jsx";
 import CharacterEquipmentGrid from "./CharacterEquipmentGrid.jsx";
 import CharacterGemGrid from "./CharacterGemGrid.jsx";
 import CharacterProfileHeader from "./CharacterProfileHeader.jsx";
 import CharacterSkillList from "./CharacterSkillList.jsx";
 import { normalizeCharacterDetail } from "../utils/characterParser.js";
 
-const CHARACTER_DETAIL_CACHE_VERSION = "compact-ark-tabs-v10";
+const CHARACTER_DETAIL_CACHE_VERSION = "compact-ark-tabs-v11";
 const characterDetailCache = new Map();
 
 const DETAIL_TABS = [
   { key: "profile", label: "프로필" },
   { key: "equipment", label: "장비" },
   { key: "gems", label: "보석" },
-  { key: "engravings", label: "각인" },
   { key: "arkPassive", label: "아크 패시브" },
   { key: "arkGrid", label: "아크 그리드" },
   { key: "cards", label: "카드" },
@@ -111,7 +109,7 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
       <section className={styles.modalShell} role="dialog" aria-modal="true" aria-labelledby="character-detail-title">
         <header className={styles.modalHeader}>
           <div className={styles.modalTitleBlock}>
-            <span>Lostark OpenAPI</span>
+            <span>LostArk OpenAPI</span>
             <h2 id="character-detail-title">{modalTitle}</h2>
           </div>
           <button type="button" className={styles.modalCloseButton} onClick={onClose} aria-label="닫기">
@@ -152,7 +150,7 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
             </div>
           </>
         ) : (
-          <div className={styles.modalEmpty}>0</div>
+          <div className={styles.modalEmpty}>정보 없음</div>
         )}
       </section>
     </div>
@@ -165,15 +163,11 @@ function renderTabPanel(activeTab, detail, styles) {
   }
 
   if (activeTab === "equipment") {
-    return <CharacterEquipmentGrid equipment={detail.equipment} styles={styles} />;
+    return <CharacterEquipmentGrid equipment={detail.equipment} engravings={detail.engravings} styles={styles} />;
   }
 
   if (activeTab === "gems") {
     return <CharacterGemGrid gems={detail.gems} styles={styles} />;
-  }
-
-  if (activeTab === "engravings") {
-    return <CharacterEngravingList engravings={detail.engravings} styles={styles} />;
   }
 
   if (activeTab === "arkPassive") {
