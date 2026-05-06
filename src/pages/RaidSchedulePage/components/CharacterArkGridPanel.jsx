@@ -43,10 +43,11 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
                         onError={replaceWithPlaceholder}
                       />
                       <div className={styles.arkGridCardInfo}>
-                        <span className={styles.arkGridCoreType}>{row.coreName}</span>
-                        <strong className={styles.arkGridCardName}>{displayValue(row.item.name)}</strong>
-                        <div className={styles.arkGridCardBadges}>
-                          {row.item.grade ? <span>{displayValue(row.item.grade)}</span> : null}
+                        <div className={styles.arkGridCoreTitleRow}>
+                          <strong className={styles.arkGridCardName}>{displayValue(row.item.name)}</strong>
+                          <div className={styles.arkGridCardBadges}>
+                            {row.item.grade ? <span>{displayValue(row.item.grade)}</span> : null}
+                          </div>
                         </div>
                       </div>
                       <strong className={styles.arkGridCorePoint}>{row.point}P</strong>

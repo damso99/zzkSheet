@@ -1667,9 +1667,8 @@
 }
 
 .arkGridCoreRow {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 9px;
+  display: flex;
+  gap: 16px;
   align-items: center;
   min-width: 0;
   padding: 8px 9px;
@@ -1678,18 +1677,20 @@
   background: rgba(2, 7, 18, 0.24);
 }
 
-.arkGridCoreType {
-  color: var(--gold);
-  font-size: 0.72rem;
-  font-weight: 950;
-}
-
 .arkGridCorePoint {
-  justify-self: end;
+  flex: 0 0 auto;
+  margin-left: auto;
   color: #fff4df;
   font-size: 0.82rem;
   font-weight: 950;
   white-space: nowrap;
+}
+
+.arkGridCoreTitleRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
 }
 
 .arkGridEffectMain {
@@ -2190,7 +2191,12 @@
   }
 
   .arkGridCoreRow {
-    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .arkGridCoreTitleRow {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
