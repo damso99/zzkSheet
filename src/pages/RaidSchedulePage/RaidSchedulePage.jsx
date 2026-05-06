@@ -205,6 +205,7 @@ export default function RaidSchedulePage() {
                       onCharacterClick={setSelectedCharacterName}
                       collapsible
                       isHighlighted={isHighlighted}
+                      selectedOwnerName={selectedOwnerName}
                     />
                   );
                 })}

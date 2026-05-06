@@ -1,7 +1,14 @@
 import { useState } from "react";
 import RaidParticipantTable from "./RaidParticipantTable.jsx";
 
-export default function RaidCard({ raid, styles, onCharacterClick, collapsible = false, isHighlighted = false }) {
+export default function RaidCard({
+  raid,
+  styles,
+  onCharacterClick,
+  collapsible = false,
+  isHighlighted = false,
+  selectedOwnerName = "",
+}) {
   const [isOpen, setIsOpen] = useState(!collapsible);
 
   function toggleOpen() {
@@ -50,7 +57,12 @@ export default function RaidCard({ raid, styles, onCharacterClick, collapsible =
       <p className={styles.participantSummary}>참여 인원 {raid.participants.length}명</p>
       {isOpen ? (
         <div onClick={(event) => event.stopPropagation()}>
-          <RaidParticipantTable participants={raid.participants} styles={styles} onCharacterClick={onCharacterClick} />
+          <RaidParticipantTable
+            participants={raid.participants}
+            styles={styles}
+            onCharacterClick={onCharacterClick}
+            selectedOwnerName={selectedOwnerName}
+          />
         </div>
       ) : null}
     </article>

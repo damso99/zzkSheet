@@ -1,4 +1,4 @@
-export default function RaidParticipantTable({ participants, styles, onCharacterClick }) {
+export default function RaidParticipantTable({ participants, styles, onCharacterClick, selectedOwnerName = "" }) {
   if (!participants.length) {
     return <p className={styles.emptyParticipants}>참여자 정보가 없습니다.</p>;
   }
@@ -17,47 +17,62 @@ export default function RaidParticipantTable({ participants, styles, onCharacter
             </tr>
           </thead>
           <tbody>
-            {participants.map((participant, index) => (
-              <tr key={`${participant.characterName}-${participant.ownerName}-${index}`}>
-                <td>{index + 1}</td>
-                <td>
-                  {renderCharacterName({
-                    characterName: participant.characterName,
-                    onCharacterClick,
-                    styles,
-                  })}
-                </td>
-                <td>{participant.ownerName}</td>
-                <td>{participant.level}</td>
-                <td>{participant.power}</td>
-              </tr>
-            ))}
+            {participants.map((participant, index) => {
+              const isSelected = isSelectedOwner(participant, selectedOwnerName);
+
+              return (
+                <tr
+                  key={`${participant.characterName}-${participant.ownerName}-${index}`}
+                  className={isSelected ? styles.participantHighlight : ""}
+                >
+                  <td>{index + 1}</td>
+                  <td>
+                    {renderCharacterName({
+                      characterName: participant.characterName,
+                      onCharacterClick,
+                      styles,
+                    })}
+                  </td>
+                  <td>{participant.ownerName}</td>
+                  <td>{participant.level}</td>
+                  <td>{participant.power}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       <div className={styles.mobileParticipantList}>
-        {participants.map((participant, index) => (
-          <article
-            key={`${participant.characterName}-${participant.ownerName}-${index}-mobile`}
-            className={styles.mobileParticipantCard}
-          >
-            {renderCharacterName({
-              characterName: participant.characterName,
-              onCharacterClick,
-              styles,
-              className: styles.mobileCharacterNameButton,
-            })}
-            <p>
-              <span>{participant.ownerName}</span>
-              <span>Lv.{participant.level}</span>
-              <span>전투력 {participant.power}</span>
-            </p>
-          </article>
-        ))}
+        {participants.map((participant, index) => {
+          const isSelected = isSelectedOwner(participant, selectedOwnerName);
+
+          return (
+            <article
+              key={`${participant.characterName}-${participant.ownerName}-${index}-mobile`}
+              className={`${styles.mobileParticipantCard} ${isSelected ? styles.participantHighlight : ""}`}
+            >
+              {renderCharacterName({
+                characterName: participant.characterName,
+                onCharacterClick,
+                styles,
+                className: styles.mobileCharacterNameButton,
+              })}
+              <p>
+                <span>{participant.ownerName}</span>
+                <span>Lv.{participant.level}</span>
+                <span>전투력 {participant.power}</span>
+              </p>
+            </article>
+          );
+        })}
       </div>
     </>
   );
+}
+
+function isSelectedOwner(participant, selectedOwnerName) {
+  return Boolean(selectedOwnerName) && participant.ownerName === selectedOwnerName;
 }
 
 function renderCharacterName({ characterName, onCharacterClick, styles, className = styles.characterNameButton }) {
