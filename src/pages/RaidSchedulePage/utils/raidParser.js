@@ -8,7 +8,6 @@ import {
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
-const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
   const settingLookup = parseSettingRows(settingRows);
@@ -78,7 +77,7 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
   dateRows.forEach((dateRow, dateRowIndex) => {
     const nextDateRow = dateRows[dateRowIndex + 1];
     const blockStartRow = dateRow.index;
-    const blockTime = findBlockTime(rows, dateRow.index, nextDateRow?.index, 0);
+    const blockTime = findBlockTimeFromColumnA(rows, dateRow.index, nextDateRow?.index);
     const blockEndRow = (nextDateRow?.index ?? rows.length) - 1;
 
     raidBlocks.forEach((block) => {
@@ -192,18 +191,15 @@ function findDateInRow(row) {
   return "";
 }
 
-function findBlockTime(rows, dateRow, nextDateRow, dateCol = 0) {
+function findBlockTimeFromColumnA(rows, dateRow, nextDateRow) {
+  const startRow = dateRow + 1;
   const endRow = nextDateRow ? nextDateRow - 1 : rows.length - 1;
 
-  for (let rowIndex = endRow; rowIndex > dateRow; rowIndex -= 1) {
-    const value = rows[rowIndex]?.[dateCol];
-    const text = String(value || "").trim();
-    if (!text && value == null) continue;
-
-    const parsedTime = parseSheetTime(value);
-    if (parsedTime && parsedTime !== "00:00") return parsedTime;
-
-    if (TIME_RE.test(text)) return text;
+  for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
+    const time = normalizeTime(rows[rowIndex]?.[0]);
+    if (time) {
+      return time;
+    }
   }
 
   return "";
@@ -343,6 +339,28 @@ function compareRaidOrder(left, right) {
   }
 
   return (left.startRow ?? 0) - (right.startRow ?? 0);
+}
+
+function normalizeTime(value) {
+  if (value == null || value === "") return "";
+
+  if (value instanceof Date) {
+    const hh = String(value.getHours()).padStart(2, "0");
+    const mm = String(value.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const fraction = ((value % 1) + 1) % 1;
+    const totalMinutes = Math.round(fraction * 24 * 60);
+    const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, "0");
+    const mm = String(totalMinutes % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  const text = String(value).trim();
+  const match = text.match(/([01]?\d|2[0-3]):[0-5]\d/);
+  return match ? match[0].padStart(5, "0") : "";
 }
 
 function normalizeRaidName(value) {
