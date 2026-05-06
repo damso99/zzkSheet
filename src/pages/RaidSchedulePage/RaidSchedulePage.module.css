@@ -1492,6 +1492,7 @@
 
 .arkGridCardGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .arkPassiveCard,
@@ -1627,7 +1628,7 @@
 
 .arkGridCardInfo {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -1658,6 +1659,37 @@
   font-size: 0.72rem;
   font-weight: 800;
   background: rgba(85, 167, 255, 0.08);
+}
+
+.arkGridCoreList {
+  display: grid;
+  gap: 8px;
+}
+
+.arkGridCoreRow {
+  display: grid;
+  grid-template-columns: 40px 34px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(104, 150, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(2, 7, 18, 0.24);
+}
+
+.arkGridCoreType {
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.arkGridCorePoint {
+  justify-self: end;
+  color: #fff4df;
+  font-size: 0.82rem;
+  font-weight: 950;
+  white-space: nowrap;
 }
 
 .arkGridEffectMain {
@@ -2135,7 +2167,8 @@
 
   .arkPassiveRow,
   .arkGridEffectRow,
-  .arkGridCardBody {
+  .arkGridCardBody,
+  .arkGridCoreRow {
     align-items: flex-start;
   }
 
@@ -2154,6 +2187,10 @@
 
   .arkGridCardBadges {
     width: 100%;
+  }
+
+  .arkGridCoreRow {
+    grid-template-columns: 38px 30px minmax(0, 1fr) auto;
   }
 }
 

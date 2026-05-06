@@ -1,6 +1,7 @@
 import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
 
-const SECTION_ORDER = ["질서의 해", "질서의 달", "질서의 별", "혼돈의 해", "혼돈의 달", "혼돈의 별"];
+const GROUP_ORDER = ["질서", "혼돈"];
+const CORE_ORDER = ["해", "달", "별"];
 
 export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
   const sections = Array.isArray(arkGrid.sections) ? arkGrid.sections : [];
@@ -10,7 +11,7 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
     return <p className={styles.modalEmpty}>정보 없음</p>;
   }
 
-  const displaySections = orderArkGridSections(sections);
+  const groupedSections = groupArkGridSections(sections);
   const totalPoint = sections.reduce((sum, section) => sum + formatTotalPoint(section.items), 0);
 
   return (
@@ -24,31 +25,35 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
       </header>
 
       <div className={styles.arkGridCardGrid}>
-        {displaySections.map((section) => {
-          const representativeItem = section?.items?.[0] || null;
-          const point = formatTotalPoint(section?.items);
+        {groupedSections.map((group) => {
+          const point = group.rows.reduce((sum, row) => sum + row.point, 0);
           return (
-            <article key={section.key || section.name} className={styles.arkGridCard}>
+            <article key={group.name} className={styles.arkGridCard}>
               <div className={styles.arkGridCardTopRow}>
-                <span className={styles.arkGridCardSectionName}>{displayValue(section.name)}</span>
+                <span className={styles.arkGridCardSectionName}>{group.name}</span>
                 <span className={styles.arkPointBadge}>{point}P</span>
               </div>
 
-              {representativeItem ? (
-                <div className={styles.arkGridCardBody}>
-                  <img
-                    className={styles.arkGridCardIcon}
-                    src={representativeItem.icon || CHARACTER_PLACEHOLDER_IMAGE}
-                    alt=""
-                    onError={replaceWithPlaceholder}
-                  />
-                  <div className={styles.arkGridCardInfo}>
-                    <strong className={styles.arkGridCardName}>{displayValue(representativeItem.name)}</strong>
-                    <div className={styles.arkGridCardBadges}>
-                      {representativeItem.grade ? <span>{displayValue(representativeItem.grade)}</span> : null}
-                      <span>활성 {point}P</span>
+              {group.rows.length ? (
+                <div className={styles.arkGridCoreList}>
+                  {group.rows.map((row) => (
+                    <div key={`${group.name}-${row.coreName}`} className={styles.arkGridCoreRow}>
+                      <img
+                        className={styles.arkGridCardIcon}
+                        src={row.item.icon || CHARACTER_PLACEHOLDER_IMAGE}
+                        alt=""
+                        onError={replaceWithPlaceholder}
+                      />
+                      <span className={styles.arkGridCoreType}>{row.coreName}</span>
+                      <div className={styles.arkGridCardInfo}>
+                        <strong className={styles.arkGridCardName}>{displayValue(row.item.name)}</strong>
+                        <div className={styles.arkGridCardBadges}>
+                          {row.item.grade ? <span>{displayValue(row.item.grade)}</span> : null}
+                        </div>
+                      </div>
+                      <strong className={styles.arkGridCorePoint}>{row.point}P</strong>
                     </div>
-                  </div>
+                  ))}
                 </div>
               ) : (
                 <p className={styles.arkGridEmpty}>정보 없음</p>
@@ -102,17 +107,37 @@ function normalizeNumber(value) {
   return "0";
 }
 
-function normalizeSectionName(value) {
-  return String(value ?? "").replace(/\s+/g, "").trim();
+function groupArkGridSections(sections) {
+  return GROUP_ORDER.map((groupName) => {
+    const groupSections = sections.filter((section) => getGroupName(section.name) === groupName);
+    const rows = CORE_ORDER.map((coreName) => {
+      const section = groupSections.find((item) => getCoreName(item.name) === coreName);
+      if (!section?.items?.length) return null;
+
+      return {
+        coreName,
+        item: section.items[0],
+        point: formatTotalPoint(section.items),
+      };
+    }).filter(Boolean);
+
+    return { name: groupName, rows };
+  }).filter((group) => group.rows.length > 0);
 }
 
-function orderArkGridSections(sections) {
-  const sectionMap = new Map(sections.map((section) => [normalizeSectionName(section.name), section]));
-  const orderedSections = SECTION_ORDER.map((name) => sectionMap.get(normalizeSectionName(name))).filter(Boolean);
-  const orderedKeys = new Set(orderedSections.map((section) => normalizeSectionName(section.name)));
-  const extraSections = sections.filter((section) => !orderedKeys.has(normalizeSectionName(section.name)));
+function getGroupName(value) {
+  const text = String(value ?? "");
+  if (text.includes("질서")) return "질서";
+  if (text.includes("혼돈")) return "혼돈";
+  return "기타";
+}
 
-  return [...orderedSections, ...extraSections];
+function getCoreName(value) {
+  const text = String(value ?? "");
+  if (text.includes("해")) return "해";
+  if (text.includes("달")) return "달";
+  if (text.includes("별")) return "별";
+  return "";
 }
 
 function replaceWithPlaceholder(event) {

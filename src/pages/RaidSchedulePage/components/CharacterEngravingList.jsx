@@ -49,7 +49,10 @@ function hasDisplayValue(value) {
 
 function hasPositiveDisplayValue(value) {
   if (!hasDisplayValue(value)) return false;
-  const numeric = Number(String(value).trim());
+  const text = String(value).trim();
+  if (text === "정보없음" || text === "정보 없음") return false;
+
+  const numeric = Number(text);
   if (Number.isFinite(numeric)) return numeric !== 0;
   return true;
 }
