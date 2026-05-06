@@ -9,14 +9,15 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
     <div className={styles.compactEngravingList}>
       {engravings.map((engraving, index) => {
         const name = displayValue(engraving.name || engraving.Name || engraving.EngravingName || engraving.Title);
-        const level = normalizeLevel(engraving.level ?? engraving.Level);
-        const activationValue = engraving.abilityStoneLevel ?? engraving.AbilityStoneLevel;
-        const activation = activationValue == null || activationValue === "" ? "" : normalizeLevel(activationValue);
-        const isActive = Number(level) > 0 || Number(activation) > 0;
+        const relicValue = engraving.level ?? engraving.Level;
+        const abilityStoneValue = engraving.abilityStoneLevel ?? engraving.AbilityStoneLevel;
+        const relicLevel = hasDisplayValue(relicValue) ? normalizeLevel(relicValue) : "";
+        const abilityStoneLevel = hasPositiveDisplayValue(abilityStoneValue) ? normalizeLevel(abilityStoneValue) : "";
+        const isActive = Number(relicLevel) > 0 || Number(abilityStoneLevel) > 0;
 
         return (
           <article
-            key={`${name}-${level}-${index}`}
+            key={`${name}-${relicLevel}-${abilityStoneLevel}-${index}`}
             className={`${styles.compactEngravingRow} ${isActive ? styles.compactEngravingRowActive : styles.compactEngravingRowInactive}`}
             title={displayValue(engraving.description || engraving.Description || "")}
           >
@@ -25,8 +26,10 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
             </div>
 
             <div className={styles.compactEngravingBadges}>
-              <span className={styles.compactEngravingLevelBadge}>Lv.{level}</span>
-              {activation !== "" ? <span className={styles.compactEngravingActivationBadge}>x{activation}</span> : null}
+              {abilityStoneLevel !== "" ? (
+                <span className={styles.compactEngravingActivationBadge}>x{abilityStoneLevel}</span>
+              ) : null}
+              {relicLevel !== "" ? <span className={styles.compactEngravingLevelBadge}>Lv.{relicLevel}</span> : null}
             </div>
           </article>
         );
@@ -38,4 +41,15 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
 function normalizeLevel(value) {
   if (value == null || value === "") return "0";
   return String(value);
+}
+
+function hasDisplayValue(value) {
+  return value !== null && value !== undefined && String(value).trim() !== "";
+}
+
+function hasPositiveDisplayValue(value) {
+  if (!hasDisplayValue(value)) return false;
+  const numeric = Number(String(value).trim());
+  if (Number.isFinite(numeric)) return numeric !== 0;
+  return true;
 }

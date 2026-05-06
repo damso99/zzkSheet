@@ -17,20 +17,19 @@ export default function CharacterEquipmentGrid({ equipment = [], engravings = []
         <div className={styles.equipmentSideColumn}>
           <EquipmentSection title="악세서리" items={accessoryItems} styles={styles} emptyMessage="악세서리 정보 없음" />
           <EquipmentSection title="팔찌" items={braceletItems} styles={styles} emptyMessage="팔찌 정보 없음" />
+          {engravings.length ? (
+            <section className={styles.equipmentEngravingSection}>
+              <header className={styles.equipmentSectionHeader}>
+                <div>
+                  <h3>각인</h3>
+                  <span>{engravings.length}개</span>
+                </div>
+              </header>
+              <CharacterEngravingList engravings={engravings} styles={styles} />
+            </section>
+          ) : null}
         </div>
       </div>
-
-      {engravings.length ? (
-        <section className={styles.equipmentEngravingSection}>
-          <header className={styles.equipmentSectionHeader}>
-            <div>
-              <h3>각인</h3>
-              <span>{engravings.length}개</span>
-            </div>
-          </header>
-          <CharacterEngravingList engravings={engravings} styles={styles} />
-        </section>
-      ) : null}
     </div>
   );
 }

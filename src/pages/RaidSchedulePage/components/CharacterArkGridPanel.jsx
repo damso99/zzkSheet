@@ -25,13 +25,14 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
 
       <div className={styles.arkGridCardGrid}>
         {SECTION_ORDER.map((sectionName) => {
-          const section = sectionMap.get(normalizeSectionName(sectionName));
-          const representativeItem = section?.items?.[0];
+          const section = findSectionByName(sectionMap, sectionName);
+          const representativeItem = section?.items?.[0] || null;
+          const point = formatTotalPoint(section?.items);
           return (
             <article key={sectionName} className={styles.arkGridCard}>
               <div className={styles.arkGridCardTopRow}>
                 <span className={styles.arkGridCardSectionName}>{sectionName}</span>
-                <span className={styles.arkPointBadge}>{formatTotalPoint(section?.items)}P</span>
+                <span className={styles.arkPointBadge}>{point}P</span>
               </div>
 
               {representativeItem ? (
@@ -46,7 +47,7 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
                     <strong className={styles.arkGridCardName}>{displayValue(representativeItem.name)}</strong>
                     <div className={styles.arkGridCardBadges}>
                       {representativeItem.grade ? <span>{displayValue(representativeItem.grade)}</span> : null}
-                      <span>{section?.items?.length || 0}개</span>
+                      <span>활성 {point}P</span>
                     </div>
                   </div>
                 </div>
@@ -104,6 +105,15 @@ function normalizeNumber(value) {
 
 function normalizeSectionName(value) {
   return String(value ?? "").replace(/\s+/g, "").trim();
+}
+
+function findSectionByName(sectionMap, sectionName) {
+  const normalizedName = normalizeSectionName(sectionName);
+  return (
+    sectionMap.get(normalizedName) ||
+    [...sectionMap.entries()].find(([key]) => key.includes(normalizedName) || normalizedName.includes(key))?.[1] ||
+    null
+  );
 }
 
 function replaceWithPlaceholder(event) {
