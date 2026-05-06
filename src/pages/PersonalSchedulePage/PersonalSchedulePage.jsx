@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import DatePicker, { registerLocale } from "react-datepicker";
 import { ko } from "date-fns/locale";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/style.css";
+import "react-datepicker/dist/react-datepicker.css";
 import styles from "./PersonalSchedulePage.module.css";
+
+registerLocale("ko", ko);
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
 
@@ -215,25 +217,18 @@ export default function PersonalSchedulePage() {
             <div className={styles.panelControls}>
               <label className={styles.datePickerField} ref={filterDatePickerRef}>
                 <span>조회 날짜</span>
-                <button
-                  type="button"
-                  className={styles.datePickerButton}
-                  onClick={() => setIsCalendarOpen((current) => !current)}
-                  aria-expanded={isCalendarOpen}
-                >
-                  <CalendarIcon />
-                  <strong>{formatDateButtonLabel(selectedFilterDate)}</strong>
-                </button>
-                {isCalendarOpen ? (
-                  <div className={styles.calendarPopover}>
-                    <DayPicker
-                      mode="single"
-                      selected={selectedFilterDate}
-                      onSelect={handleFilterDateSelect}
-                      locale={ko}
-                    />
-                  </div>
-                ) : null}
+                <DatePicker
+                  selected={selectedFilterDate}
+                  onChange={handleFilterDateSelect}
+                  onCalendarOpen={() => setIsCalendarOpen(true)}
+                  onCalendarClose={() => setIsCalendarOpen(false)}
+                  locale="ko"
+                  dateFormat="yyyy년 M월 d일 (eee)"
+                  popperClassName={styles.datePickerPopper}
+                  calendarClassName={styles.datePickerCalendar}
+                  wrapperClassName={styles.datePickerControl}
+                  customInput={<DatePickerButton isOpen={isCalendarOpen} />}
+                />
               </label>
               <label className={styles.sortSelect}>
                 <span>정렬</span>
@@ -340,6 +335,21 @@ function formatDateButtonLabel(date) {
     weekday: "short",
   });
 }
+
+const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen }, ref) {
+  return (
+    <button
+      type="button"
+      className={styles.datePickerButton}
+      onClick={onClick}
+      ref={ref}
+      aria-expanded={isOpen}
+    >
+      <CalendarIcon />
+      <strong>{value}</strong>
+    </button>
+  );
+});
 
 function formatDateLabel(value) {
   if (!value) return "날짜 없음";

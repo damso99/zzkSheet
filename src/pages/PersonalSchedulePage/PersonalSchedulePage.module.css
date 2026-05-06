@@ -148,8 +148,11 @@
 
 .panelControls {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
   align-items: end;
+  max-width: 100%;
 }
 
 .form {
@@ -216,8 +219,19 @@
   position: relative;
   display: grid;
   gap: 7px;
+  flex: 0 1 270px;
   min-width: min(260px, 100%);
   overflow: visible;
+}
+
+.panelControls .sortSelect {
+  flex: 0 0 118px;
+  width: 118px;
+}
+
+.datePickerControl {
+  display: block;
+  width: 100%;
 }
 
 .datePickerButton {
@@ -262,6 +276,69 @@
   width: 19px;
   height: 19px;
   color: #e5e7eb;
+}
+
+.datePickerPopper {
+  z-index: 30;
+}
+
+.datePickerCalendar {
+  border: 1px solid rgba(104, 150, 255, 0.32);
+  border-radius: 18px;
+  color: #eef5ff;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(85, 167, 255, 0.16), transparent 48%),
+    rgba(5, 11, 27, 0.98);
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.42),
+    0 0 28px rgba(85, 167, 255, 0.18);
+}
+
+.datePickerCalendar :global(.react-datepicker__header) {
+  border-color: rgba(104, 150, 255, 0.18);
+  background: rgba(11, 20, 42, 0.94);
+}
+
+.datePickerCalendar :global(.react-datepicker__current-month),
+.datePickerCalendar :global(.react-datepicker-time__header),
+.datePickerCalendar :global(.react-datepicker-year-header) {
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.datePickerCalendar :global(.react-datepicker__day-name),
+.datePickerCalendar :global(.react-datepicker__day),
+.datePickerCalendar :global(.react-datepicker__time-name) {
+  color: #dbe7ff;
+}
+
+.datePickerCalendar :global(.react-datepicker__day:hover) {
+  color: #ffffff;
+  border-radius: 12px;
+  background: rgba(85, 167, 255, 0.18);
+}
+
+.datePickerCalendar :global(.react-datepicker__day--keyboard-selected),
+.datePickerCalendar :global(.react-datepicker__day--selected) {
+  color: #ffffff;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8b5cf6, #55a7ff);
+  box-shadow: 0 0 22px rgba(85, 167, 255, 0.26);
+}
+
+.datePickerCalendar :global(.react-datepicker__day--today) {
+  border-radius: 12px;
+  outline: 1px solid rgba(255, 216, 138, 0.58);
+  font-weight: 950;
+}
+
+.datePickerCalendar :global(.react-datepicker__day--outside-month) {
+  color: rgba(154, 168, 197, 0.42);
+}
+
+.datePickerCalendar :global(.react-datepicker__navigation-icon::before) {
+  border-color: #e5e7eb;
 }
 
 .calendarPopover {
