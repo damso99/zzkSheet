@@ -1,5 +1,4 @@
 const SHEET_EPOCH_UTC = Date.UTC(1899, 11, 30);
-const HALF_HOUR_IN_DAYS = 30 / (24 * 60);
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -21,62 +20,8 @@ export function formatDateLabel(dateValue) {
   return `${parts.month}월 ${parts.day}일 (${DAY_NAMES[localDate.getDay()]})`;
 }
 
-export function getCurrentWeekRange(dateValue) {
-  const normalized = normalizeSheetDateValue(dateValue);
-  if (!normalized) return { end: "", start: "" };
-
-  const parts = parseLocalDateParts(normalized);
-  if (!parts) return { end: "", start: "" };
-
-  const start = new Date(parts.year, parts.month - 1, parts.day);
-  const day = start.getDay();
-  const daysSinceWednesday = (day + 4) % 7;
-
-  start.setDate(start.getDate() - daysSinceWednesday);
-
-  const end = new Date(start);
-  end.setDate(end.getDate() + 6);
-
-  return {
-    end: formatLocalDate(end),
-    start: formatLocalDate(start),
-  };
-}
-
-export function getWeekDates(range) {
-  const startParts = parseLocalDateParts(range?.start);
-  const endParts = parseLocalDateParts(range?.end);
-
-  if (!startParts || !endParts) return [];
-
-  const dates = [];
-  let cursor = new Date(startParts.year, startParts.month - 1, startParts.day);
-  const end = new Date(endParts.year, endParts.month - 1, endParts.day);
-
-  while (cursor <= end) {
-    dates.push(formatLocalDate(cursor));
-    cursor = new Date(cursor.getTime() + DAY_IN_MS);
-  }
-
-  return dates;
-}
-
 export function getTodayIsoDate() {
   return formatLocalDate(new Date());
-}
-
-export function isDateInRange(dateValue, range) {
-  const normalized = normalizeSheetDateValue(dateValue);
-  return Boolean(normalized) && normalized >= range.start && normalized <= range.end;
-}
-
-export function shiftIsoDate(dateValue, days) {
-  const parts = parseLocalDateParts(normalizeSheetDateValue(dateValue));
-  if (!parts) return "";
-
-  const date = new Date(parts.year, parts.month - 1, parts.day);
-  date.setDate(date.getDate() + days);
-  return formatLocalDate(date);
 }
 
 export function parseSheetTime(value) {
@@ -109,10 +54,6 @@ export function toTimeStringFromSerial(serialNumber) {
   const hours = Math.floor(totalMinutes / 60) % 24;
   const minutes = totalMinutes % 60;
   return `${padNumber(hours)}:${padNumber(minutes)}`;
-}
-
-export function addHalfHoursToSerial(serialNumber, steps) {
-  return serialNumber + HALF_HOUR_IN_DAYS * steps;
 }
 
 export function formatLocalDate(date) {

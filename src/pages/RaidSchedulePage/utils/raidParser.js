@@ -11,8 +11,6 @@ const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
 const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
-  console.log("[ACTIVE RAID PARSER]", "buildRaidSchedule");
-
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
@@ -22,21 +20,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     rows: raidCalendarRows,
     settingLookup,
   });
-
-  console.table(
-    parsedRaids.map((raid) => ({
-      blockTime: raid.blockTime,
-      date: raid.date,
-      endCol: raid.endCol,
-      endRow: raid.endRow,
-      memberCount: raid.members.length,
-      members: raid.members.join(", "),
-      raidName: raid.raidName,
-      startCol: raid.startCol,
-      startRow: raid.startRow,
-      time: raid.time,
-    })),
-  );
 
   return parsedRaids
     .map((raid, raidIndex) => {
@@ -55,8 +38,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         startRow: raid.startRow,
         time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
       };
-
-      console.log("[RAW RAID ITEM]", item);
       return item;
     })
     .sort(compareRaidOrder);

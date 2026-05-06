@@ -100,19 +100,6 @@ export default function RaidSchedulePage() {
     [todayGroup, todayRaids],
   );
 
-  useEffect(() => {
-    console.log("[today time]", {
-      todayGroup,
-      todayStartTime,
-      todayRaids: todayRaids.map((raid) => ({
-        blockTime: raid.blockTime,
-        date: raid.date,
-        raidName: raid.raidName,
-        time: raid.time,
-      })),
-    });
-  }, [todayGroup, todayRaids, todayStartTime]);
-
   const searchResults = useMemo(() => {
     if (!deferredSearchQuery) return [];
 

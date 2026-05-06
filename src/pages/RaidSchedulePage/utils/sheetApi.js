@@ -18,12 +18,6 @@ export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, target
     fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.setting }),
   ]);
 
-  console.log("[SHEET SOURCES]", {
-    calrenderUsed: false,
-    raidCalendarUsed: true,
-    settingUsed: true,
-  });
-
   return {
     fetchedAt: formatLocalDateTime(new Date()),
     raidCalendarCols: raidCalendarSheet.cols || [],
