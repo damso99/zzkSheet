@@ -8,13 +8,17 @@ export function normalizeCharacterDetail(payload = {}) {
   const equipment = normalizeEquipment(armory.equipment || summary.ArmoryEquipment);
   const skills = normalizeSkills(armory.combatSkills || summary.ArmorySkills);
   const engravingsSource = armory.engravings || summary.ArmoryEngraving;
+  const arkPassiveSource = armory.arkPassive || armory.arkpassive || summary.ArmoryArkPassive;
+  const arkGridSource = armory.arkGrid || armory.arkgrid || summary.ArmoryArkGrid;
   const engravings = normalizeEngravings(engravingsSource, armory);
-  const engravingImageMap = buildEngravingImageMap(engravingsSource, engravings);
+  const engravingImageMap = buildEngravingImageMap(engravingsSource, engravings, arkPassiveSource, arkGridSource);
 
   logEngravingSourceDebug({
     payload: engravingsSource,
     items: engravings,
     imageMap: engravingImageMap,
+    arkPassiveSource,
+    arkGridSource,
   });
 
   return {
@@ -149,12 +153,17 @@ function normalizeEngravings(engravingsPayload, armory = {}) {
   );
 }
 
-function buildEngravingImageMap(engravingsPayload = {}, normalizedItems = []) {
+function buildEngravingImageMap(
+  engravingsPayload = {},
+  normalizedItems = [],
+  arkPassivePayload = null,
+  arkGridPayload = null,
+) {
   const map = new Map();
-  const candidates = [
-    ...asArray(engravingsPayload?.Effects),
-    ...asArray(engravingsPayload?.Engravings),
-    ...asArray(engravingsPayload?.ArkPassiveEffects),
+  const candidates = collectEngravingEffectCandidates(
+    engravingsPayload,
+    arkPassivePayload,
+    arkGridPayload,
     ...normalizedItems.map((item) => ({
       Name: item.Name || item.name || "",
       Icon:
@@ -171,13 +180,13 @@ function buildEngravingImageMap(engravingsPayload = {}, normalizedItems = []) {
         "",
       Grade: item.Grade || item.grade || "",
     })),
-  ]
+  )
     .map((item) => {
       const name = displayValue(stripHtml(item?.Name || item?.name || item?.EngravingName || item?.Title || ""));
       const normalizedName = normalizeEngravingName(name);
       const icon = normalizeOptionalIconUrl(
         item?.realApiIconUrl ||
-        item?.apiIconUrl ||
+          item?.apiIconUrl ||
           item?.tooltipIconUrl ||
           item?.effectIconUrl ||
           item?.Icon ||
@@ -212,6 +221,43 @@ function buildEngravingImageMap(engravingsPayload = {}, normalizedItems = []) {
   }
 
   return map;
+}
+
+function collectEngravingEffectCandidates(...sources) {
+  const collected = [];
+
+  for (const source of sources) {
+    if (!source) continue;
+
+    if (Array.isArray(source)) {
+      collected.push(...source.filter(Boolean));
+      continue;
+    }
+
+    if (typeof source !== "object") continue;
+
+    const nestedLists = [
+      source.Effects,
+      source.ArkPassiveEffects,
+      source.Slots,
+      source.Engravings,
+      source.EngravingEffects,
+      source.ArkPassivePoints,
+      source.Points,
+    ];
+
+    for (const list of nestedLists) {
+      if (Array.isArray(list)) {
+        collected.push(...list.filter(Boolean));
+      }
+    }
+
+    if (source.Name || source.name || source.EngravingName || source.Title) {
+      collected.push(source);
+    }
+  }
+
+  return collected;
 }
 
 function getRawEngravingIconCandidate(item) {
@@ -520,7 +566,7 @@ function normalizeEngravingGrade(value) {
   return stripHtml(value).replace(/\s+/g, "").toLowerCase();
 }
 
-function logEngravingSourceDebug({ payload, items, imageMap }) {
+function logEngravingSourceDebug({ payload, items, imageMap, arkPassiveSource, arkGridSource }) {
   if (!isDevMode()) return;
 
   const sampleItems = items.slice(0, 3).map((item) => ({
@@ -549,6 +595,31 @@ function logEngravingSourceDebug({ payload, items, imageMap }) {
   console.debug("[lostark engravings] payload keys", Object.keys(payload || {}));
   console.debug("[lostark engravings] sample items", sampleItems);
   console.debug("[lostark engravings] image map keys", [...imageMap.keys()].slice(0, 20));
+  console.debug("[lostark engravings] image map size", imageMap.size);
+  console.debug("[lostark engravings] arkPassive keys", Object.keys(arkPassiveSource || {}));
+  console.debug("[lostark engravings] arkPassive sample", {
+    effects: asArray(arkPassiveSource?.Effects).slice(0, 3),
+    arkPassiveEffects: asArray(arkPassiveSource?.ArkPassiveEffects).slice(0, 3),
+    engravings: asArray(arkPassiveSource?.Engravings).slice(0, 3),
+    engravingEffects: asArray(arkPassiveSource?.EngravingEffects).slice(0, 3),
+  });
+  console.debug("[lostark engravings] arkGrid keys", Object.keys(arkGridSource || {}));
+  console.debug("[lostark engravings] arkGrid sample", {
+    slots: asArray(arkGridSource?.Slots).slice(0, 3),
+    effects: asArray(arkGridSource?.Effects).slice(0, 3),
+  });
+  console.debug(
+    "[lostark engravings] arkPassive effect icon urls",
+    asArray(arkPassiveSource?.Effects).map((item) => getOptionalIconUrlFromItem(item)).filter(Boolean),
+  );
+  console.debug(
+    "[lostark engravings] arkGrid effect icon urls",
+    asArray(arkGridSource?.Effects).map((item) => getOptionalIconUrlFromItem(item)).filter(Boolean),
+  );
+  console.debug(
+    "[lostark engravings] arkGrid slot icon urls",
+    asArray(arkGridSource?.Slots).map((item) => getOptionalIconUrlFromItem(item)).filter(Boolean),
+  );
 }
 
 function logEngravingMatchFailure({ originalName, normalizedName, imageMapKeys = [], item }) {

@@ -9,6 +9,8 @@ const CHARACTER_ENDPOINTS = {
   avatars: "avatars",
   combatSkills: "combat-skills",
   engravings: "engravings",
+  arkPassive: "arkpassive",
+  arkGrid: "arkgrid",
   cards: "cards",
   gems: "gems",
 };
