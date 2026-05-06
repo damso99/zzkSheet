@@ -26,6 +26,7 @@ export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, target
 
   return {
     fetchedAt: formatLocalDateTime(new Date()),
+    raidCalendarCols: raidCalendarSheet.cols || [],
     raidCalendarRows: raidCalendarSheet.rows || [],
     settingRows: settingSheet.rows || [],
     sourceUrl: targetSheetUrl,
