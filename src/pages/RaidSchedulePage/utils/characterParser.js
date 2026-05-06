@@ -11,6 +11,8 @@ export function normalizeCharacterDetail(payload = {}) {
   const arkPassiveSource = armory.arkPassive || armory.arkpassive || summary.ArmoryArkPassive;
   const arkGridSource = armory.arkGrid || armory.arkgrid || summary.ArmoryArkGrid;
   const engravings = normalizeEngravings(engravingsSource, armory);
+  const arkPassive = normalizeArkPassive(arkPassiveSource);
+  const arkGrid = normalizeArkGrid(arkGridSource);
   const engravingImageMap = buildEngravingImageMap(engravingsSource, engravings, arkPassiveSource, arkGridSource);
 
   logEngravingSourceDebug({
@@ -26,6 +28,8 @@ export function normalizeCharacterDetail(payload = {}) {
     equipment,
     gems: normalizeGems(armory.gems || summary.ArmoryGem, skills),
     engravings,
+    arkPassive,
+    arkGrid,
     engravingImageMap,
     cards: normalizeCards(armory.cards || summary.ArmoryCard),
     skills,
@@ -151,6 +155,181 @@ function normalizeEngravings(engravingsPayload, armory = {}) {
         (item) => item.name === engraving.name && String(item.level) === String(engraving.level),
       ) === index,
   );
+}
+
+function normalizeArkPassive(arkPassivePayload) {
+  const points = asArray(arkPassivePayload?.Points).map((point) => normalizeArkPassivePoint(point));
+  const effects = asArray(arkPassivePayload?.Effects).map((effect) => normalizeArkPassiveEffect(effect));
+  const sections = buildArkPassiveSections(points, effects);
+
+  return {
+    title: displayValue(arkPassivePayload?.Title),
+    isArkPassive: Boolean(arkPassivePayload?.IsArkPassive),
+    points,
+    effects,
+    sections,
+  };
+}
+
+function normalizeArkPassivePoint(point) {
+  const name = displayValue(point?.Name || point?.name);
+  const value = formatNumberText(point?.Value ?? point?.value) || displayValue(point?.Value ?? point?.value);
+  const description = stripHtml(point?.Description || point?.description || "");
+  const tooltip = toPlainTooltip(point?.Tooltip || point?.tooltip || "");
+  const icon = normalizeIconUrl(point?.Icon || point?.icon);
+
+  return {
+    name,
+    value,
+    description,
+    tooltip,
+    icon,
+  };
+}
+
+function normalizeArkPassiveEffect(effect) {
+  const name = displayValue(effect?.Name || effect?.name);
+  const description = stripHtml(effect?.Description || effect?.description || "");
+  const parsed = parseArkPassiveEffectDescription(description);
+
+  return {
+    raw: effect,
+    name: displayValue(parsed.effectName || name),
+    sectionName: displayValue(parsed.sectionName || name),
+    tier: displayValue(parsed.tier || ""),
+    level: displayValue(parsed.level || effect?.Level || effect?.level),
+    description,
+    icon: normalizeIconUrl(effect?.Icon || effect?.icon),
+  };
+}
+
+function buildArkPassiveSections(points, effects) {
+  const order = ["진화", "깨달음", "도약"];
+  const pointMap = new Map(points.map((point) => [normalizeArkSectionName(point.name), point]));
+  const effectGroups = new Map();
+
+  for (const effect of effects) {
+    const key = normalizeArkSectionName(effect.sectionName || effect.name);
+    if (!effectGroups.has(key)) effectGroups.set(key, []);
+    effectGroups.get(key).push(effect);
+  }
+
+  const keys = [...new Set([...order, ...pointMap.keys(), ...effectGroups.keys()])];
+
+  return keys
+    .map((key) => {
+      const point = pointMap.get(key) || null;
+      const items = effectGroups.get(key) || [];
+
+      if (!point && !items.length) return null;
+
+      return {
+        key,
+        name: point?.name || key,
+        value: point?.value || "",
+        description: point?.description || "",
+        tooltip: point?.tooltip || "",
+        icon: point?.icon || "",
+        items,
+      };
+    })
+    .filter(Boolean);
+}
+
+function parseArkPassiveEffectDescription(description) {
+  const text = stripHtml(description);
+  if (!text) return {};
+
+  const matches =
+    text.match(/^(진화|깨달음|도약)\s*(\d)\s*티어\s*(.+?)\s*Lv\.?\s*(\d+)/i) ||
+    text.match(/^(진화|깨달음|도약)\s*(\d)\s*티어\s*(.+?)(?:\s*Lv\.?\s*(\d+))?$/i);
+
+  if (!matches) return {};
+
+  return {
+    sectionName: matches[1] || "",
+    tier: matches[2] || "",
+    effectName: cleanOptionName(matches[3] || ""),
+    level: matches[4] || "",
+  };
+}
+
+function normalizeArkSectionName(value) {
+  return stripHtml(value).replace(/\s+/g, "").trim();
+}
+
+function normalizeArkGrid(arkGridPayload) {
+  const slots = asArray(arkGridPayload?.Slots).map((slot) => normalizeArkGridSlot(slot));
+  const effects = asArray(arkGridPayload?.Effects).map((effect) => normalizeArkGridEffect(effect));
+  const sections = buildArkGridSections(slots);
+
+  return {
+    slots,
+    effects,
+    sections,
+  };
+}
+
+function normalizeArkGridSlot(slot) {
+  const name = displayValue(slot?.Name || slot?.name);
+  const sectionName = detectArkGridSectionName(name);
+
+  return {
+    raw: slot,
+    name,
+    sectionName,
+    point: displayValue(slot?.Point ?? slot?.point ?? ""),
+    grade: displayValue(slot?.Grade || slot?.grade),
+    icon: normalizeIconUrl(slot?.Icon || slot?.icon),
+    tooltip: stripHtml(slot?.Tooltip || slot?.tooltip || ""),
+  };
+}
+
+function normalizeArkGridEffect(effect) {
+  const name = displayValue(effect?.Name || effect?.name);
+  const level = displayValue(effect?.Level ?? effect?.level ?? "");
+  const tooltip = stripHtml(effect?.Tooltip || effect?.tooltip || "");
+
+  return {
+    raw: effect,
+    name,
+    level,
+    tooltip,
+    value: extractNumericText(tooltip),
+  };
+}
+
+function buildArkGridSections(slots) {
+  const sectionMap = new Map();
+
+  for (const slot of slots) {
+    const key = normalizeArkSectionName(slot.sectionName || "기타");
+    if (!sectionMap.has(key)) sectionMap.set(key, []);
+    sectionMap.get(key).push(slot);
+  }
+
+  const order = ["질서의", "혼돈의", "기타"];
+  const keys = [...new Set([...order, ...sectionMap.keys()])];
+
+  return keys
+    .map((key) => {
+      const items = sectionMap.get(key) || [];
+      if (!items.length) return null;
+      return { key, name: key, items };
+    })
+    .filter(Boolean);
+}
+
+function detectArkGridSectionName(name) {
+  if (/질서의/.test(name)) return "질서의";
+  if (/혼돈의/.test(name)) return "혼돈의";
+  return "기타";
+}
+
+function extractNumericText(value) {
+  const text = stripHtml(value).replace(/,/g, "");
+  const match = text.match(/[+-]?\d+(?:\.\d+)?/g);
+  return match ? match[match.length - 1] : "";
 }
 
 function buildEngravingImageMap(
@@ -334,6 +513,7 @@ function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Ma
   const level = normalizeEngravingLevel(
     engraving.Level || engraving.level || extractLevel(engraving.Name || engraving.Description || engraving.description),
   );
+  const abilityStoneLevel = displayValue(engraving.AbilityStoneLevel ?? engraving.abilityStoneLevel ?? "");
   const grade = displayValue(engraving.Grade || engraving.grade);
   const directIcon = getDirectEngravingIcon(engraving);
   const tooltipIconUrl = normalizeOptionalIconUrl(
@@ -351,6 +531,7 @@ function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Ma
     name,
     Level: displayValue(engraving.Level || engraving.level || level),
     level,
+    abilityStoneLevel,
     Grade: displayValue(engraving.Grade || engraving.grade),
     grade,
     Description: stripHtml(engraving.Description || engraving.description || fallbackDescription),

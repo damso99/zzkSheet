@@ -15,6 +15,7 @@ const SORT_OPTIONS = {
 
 export default function PersonalSchedulePage() {
   const [form, setForm] = useState(createInitialForm);
+  const [selectedDate, setSelectedDate] = useState(() => parseLocalDate(createInitialForm().date));
   const [items, setItems] = useState([]);
   const [sortMode, setSortMode] = useState("latest");
   const [isFormCalendarOpen, setIsFormCalendarOpen] = useState(false);
@@ -93,9 +94,11 @@ export default function PersonalSchedulePage() {
       }
 
       setMessage("등록 완료");
-      setForm(createInitialForm());
+      const nextForm = createInitialForm();
+      setForm(nextForm);
+      setSelectedDate(parseLocalDate(nextForm.date));
       setItems((currentItems) => [
-        normalizePersonalScheduleItem({ ...payload, createdAt: new Date().toISOString() }, currentItems.length),
+        normalizePersonalScheduleItem({ ...payload, createdAt: formatLocalDateTime(new Date()) }, currentItems.length),
         ...currentItems,
       ]);
       await loadPersonalSchedules({ silent: true });
@@ -116,7 +119,8 @@ export default function PersonalSchedulePage() {
 
   function handleFormDateSelect(date) {
     if (!date) return;
-    updateField("date", formatDateForInput(date));
+    setSelectedDate(date);
+    updateField("date", formatLocalDate(date));
     setIsFormCalendarOpen(false);
   }
 
@@ -145,7 +149,7 @@ export default function PersonalSchedulePage() {
             <label className={styles.datePickerField}>
               <span>날짜</span>
               <DatePicker
-                selected={parseDateForPicker(form.date)}
+                selected={selectedDate}
                 onChange={handleFormDateSelect}
                 onCalendarOpen={() => setIsFormCalendarOpen(true)}
                 onCalendarClose={() => setIsFormCalendarOpen(false)}
@@ -269,7 +273,7 @@ function normalizePersonalScheduleItem(item, index) {
 
 function createInitialForm() {
   return {
-    date: formatDateForInput(new Date()),
+    date: formatLocalDate(new Date()),
     name: "",
     reason: "",
   };
@@ -301,17 +305,31 @@ function normalizeDateTime(value) {
   return date.toISOString();
 }
 
-function formatDateForInput(date) {
+function formatLocalDate(date) {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function parseDateForPicker(value) {
+function parseLocalDate(value) {
   if (!value) return new Date();
-  const date = new Date(`${value}T00:00:00`);
+  const [year, month, day] = String(value).split("-").map(Number);
+  if (!year || !month || !day) return new Date();
+
+  const date = new Date(year, month - 1, day);
   return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function formatLocalDateTime(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  const sec = String(date.getSeconds()).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
 }
 
 const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen, placeholder }, ref) {

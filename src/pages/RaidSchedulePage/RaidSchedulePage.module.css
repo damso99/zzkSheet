@@ -1428,10 +1428,360 @@
   font-weight: 800;
 }
 
-.engravingList,
+.compactEngravingList,
 .skillList {
   display: grid;
   gap: 12px;
+}
+
+.compactEngravingRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(24, 35, 70, 0.7), rgba(6, 11, 25, 0.78)),
+    rgba(8, 14, 30, 0.72);
+  box-shadow:
+    0 16px 42px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.compactEngravingRow:hover {
+  transform: translateY(-1px);
+  border-color: rgba(105, 230, 255, 0.36);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.34),
+    0 0 24px rgba(85, 167, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.compactEngravingRowActive {
+  border-color: rgba(105, 230, 255, 0.3);
+}
+
+.compactEngravingRowInactive {
+  opacity: 0.78;
+}
+
+.compactEngravingTitle {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.compactEngravingName {
+  min-width: 0;
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactEngravingMeta {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.compactEngravingBadges {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.compactEngravingLevelBadge,
+.compactEngravingActivationBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.compactEngravingLevelBadge {
+  color: #d8f2ff;
+  border: 1px solid rgba(105, 230, 255, 0.28);
+  background: rgba(85, 167, 255, 0.12);
+}
+
+.compactEngravingActivationBadge {
+  color: #fff4df;
+  border: 1px solid rgba(255, 173, 92, 0.36);
+  background: rgba(255, 173, 92, 0.14);
+}
+
+.arkTabLayout {
+  display: grid;
+  gap: 16px;
+}
+
+.arkTabHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 20px;
+  background: rgba(8, 14, 30, 0.72);
+}
+
+.arkTabHeader h3 {
+  margin: 6px 0 0;
+  color: #ffffff;
+  font-size: 1.22rem;
+  font-weight: 950;
+}
+
+.arkStateBadge,
+.arkStateBadgeMuted,
+.arkGridHeaderBadge,
+.arkPointBadge,
+.arkTierBadge,
+.arkEffectLevel,
+.arkEffectLevelBadge,
+.arkGridSlotPoint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.arkStateBadge,
+.arkGridHeaderBadge,
+.arkPointBadge {
+  padding: 6px 10px;
+  color: #06101f;
+  background: linear-gradient(135deg, var(--gold), rgba(105, 230, 255, 0.95));
+}
+
+.arkStateBadgeMuted {
+  padding: 6px 10px;
+  color: #ffffff;
+  background: rgba(104, 150, 255, 0.18);
+}
+
+.arkSectionStack,
+.arkGridSectionStack {
+  display: grid;
+  gap: 14px;
+}
+
+.arkSectionCard,
+.arkEffectCard {
+  padding: 16px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(24, 35, 70, 0.7), rgba(6, 11, 25, 0.78)),
+    rgba(8, 14, 30, 0.72);
+  box-shadow:
+    0 16px 42px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.arkSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.arkSectionHeader h4 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.arkSectionHeader p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.arkEffectList,
+.arkGridSlotList,
+.arkEffectStatList {
+  display: grid;
+  gap: 8px;
+}
+
+.arkEffectRow,
+.arkEffectStatRow,
+.arkGridSlotRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(104, 150, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(2, 7, 18, 0.24);
+}
+
+.arkEffectRow strong,
+.arkEffectStatRow strong,
+.arkGridSlotTopRow strong {
+  min-width: 0;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arkTierBadge {
+  padding: 5px 8px;
+  color: #d8f2ff;
+  border: 1px solid rgba(105, 230, 255, 0.26);
+  background: rgba(85, 167, 255, 0.14);
+}
+
+.arkEffectLevel,
+.arkEffectLevelBadge,
+.arkGridSlotPoint {
+  padding: 5px 9px;
+  color: #fff4df;
+  border: 1px solid rgba(255, 173, 92, 0.28);
+  background: rgba(255, 173, 92, 0.12);
+}
+
+.arkEffectRow strong {
+  flex: 1 1 auto;
+}
+
+.arkEffectStatRow {
+  align-items: flex-start;
+}
+
+.arkEffectStatRow > div {
+  min-width: 0;
+}
+
+.arkEffectStatRow p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.arkGridSlotRow {
+  align-items: center;
+}
+
+.arkGridSlotIcon {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 216, 138, 0.24);
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(2, 7, 18, 0.72);
+}
+
+.arkGridSlotBody {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.arkGridSlotTopRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.arkGridSlotBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.arkGridSlotBadges span {
+  display: inline-flex;
+  padding: 4px 8px;
+  border: 1px solid rgba(105, 230, 255, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(85, 167, 255, 0.08);
+}
+
+.arkGridSlotPoint {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+  .compactEngravingRow,
+  .arkEffectRow,
+  .arkEffectStatRow,
+  .arkGridSlotRow,
+  .arkSectionHeader,
+  .arkTabHeader {
+    align-items: flex-start;
+  }
+
+  .compactEngravingRow {
+    gap: 10px;
+  }
+
+  .compactEngravingTitle,
+  .compactEngravingBadges,
+  .arkGridSlotBody,
+  .arkSectionHeader > div,
+  .arkEffectStatRow > div {
+    width: 100%;
+  }
+
+  .compactEngravingBadges {
+    justify-content: flex-start;
+  }
+
+  .arkEffectRow strong,
+  .arkEffectStatRow strong,
+  .arkGridSlotTopRow strong {
+    white-space: normal;
+  }
+
+  .arkGridSlotTopRow {
+    align-items: flex-start;
+  }
 }
 
 .cardSetLayout {
