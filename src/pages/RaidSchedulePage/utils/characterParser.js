@@ -214,6 +214,8 @@ function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Ma
     description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
     Tooltip: tooltip,
     tooltip,
+    Effect: engraving.Effect || engraving.effect || null,
+    effect: engraving.effect || engraving.Effect || null,
     Icon: normalizeOptionalIconUrl(engraving.Icon),
     icon: directIcon,
     IconUrl: normalizeOptionalIconUrl(engraving.IconUrl || engraving.iconUrl),
