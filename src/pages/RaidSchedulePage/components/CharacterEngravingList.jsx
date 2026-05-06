@@ -66,6 +66,9 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
     const defaultCount = rows.filter((row) => row.source === "default").length;
 
     console.table(rows);
+    console.log("[engraving-image-url] final urls", rows.map((row) => row.finalIcon));
+    console.log("[engraving-image-url] api urls", rows.map((row) => row.apiIcon));
+    console.log("[engraving-image-url] fallback urls", rows.map((row) => row.fallbackIcon));
     console.log("[lostark engravings] ENGRAVING_ICON_MAP keys", Object.keys(ENGRAVING_ICON_MAP));
     console.log("[lostark engravings] source ratio", {
       api: apiCount,
@@ -82,8 +85,26 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
     <div className={styles.engravingList}>
       {engravings.map((engraving, index) => {
         const engravingName = getEngravingName(engraving);
+        const apiIcon = getRealApiIconUrl(engraving);
+        const fallbackIcon = getHardcodedIconUrl(engravingName);
+        const mapIcon = getMappedIconUrl(engravingName, engravingImageMap);
         const iconUrl = getFinalIconUrl(engraving, engravingImageMap, sharedApiIconUrl) || DEFAULT_ENGRAVING_ICON_SRC;
         const level = formatEngravingLevel(engraving.Level ?? engraving.level);
+        const source = getIconSource(iconUrl, {
+          apiIcon,
+          mapIcon,
+          fallbackIcon,
+          sharedApiIconUrl,
+        });
+
+        console.log("[engraving-image-url]", {
+          name: engravingName || "(empty)",
+          apiIcon,
+          mapIcon,
+          fallbackIcon,
+          finalIcon: iconUrl,
+          source,
+        });
 
         return (
           <article key={`${engravingName || "engraving"}-${index}`} className={styles.engravingCard}>
