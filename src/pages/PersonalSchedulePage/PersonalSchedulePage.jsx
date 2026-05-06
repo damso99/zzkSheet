@@ -93,8 +93,7 @@ export default function PersonalSchedulePage() {
       }
 
       setMessage("등록 완료");
-      const nextForm = createInitialForm();
-      setForm(nextForm);
+      setForm(createInitialForm());
       setItems((currentItems) => [
         normalizePersonalScheduleItem({ ...payload, createdAt: formatLocalDateTime(new Date()) }, currentItems.length),
         ...currentItems,
@@ -127,18 +126,18 @@ export default function PersonalSchedulePage() {
       <div className={styles.content}>
         <header className={styles.hero}>
           <a className={styles.backLink} href="/">
-            레이드 일정으로 돌아가기
+            레이드 일정표로 돌아가기
           </a>
           <p className={styles.eyebrow}>Personal Schedule</p>
           <h1>개인 일정</h1>
-          <p>레이드 참여가 어려운 날짜와 사유를 Google Sheet 개인일정 탭에 기록합니다.</p>
+          <p>개인 참여가 필요한 날짜와 사유를 Google Sheet 개인일정 탭에 기록합니다.</p>
         </header>
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <div>
               <h2>개인일정 등록</h2>
-              <p>날짜, 이름, 사유는 모두 필수입니다.</p>
+              <p>날짜, 이름, 사유를 모두 입력해 주세요.</p>
             </div>
           </div>
 
@@ -151,7 +150,7 @@ export default function PersonalSchedulePage() {
                 onCalendarOpen={() => setIsFormCalendarOpen(true)}
                 onCalendarClose={() => setIsFormCalendarOpen(false)}
                 locale="ko"
-                dateFormat="yyyy년 M월 d일 (eee)"
+                dateFormat="yyyy-MM-dd (eee)"
                 popperPlacement="bottom-start"
                 popperProps={{ strategy: "fixed" }}
                 portalId="root"
@@ -167,7 +166,7 @@ export default function PersonalSchedulePage() {
                 type="text"
                 value={form.name}
                 required
-                placeholder="예: 태경"
+                placeholder="이름을 입력해 주세요"
                 onChange={(event) => updateField("name", event.target.value)}
               />
             </label>
@@ -177,7 +176,7 @@ export default function PersonalSchedulePage() {
                 type="text"
                 value={form.reason}
                 required
-                placeholder="예: 야근, 약속, 휴가"
+                placeholder="예) 회식, 출장, 병원"
                 onChange={(event) => updateField("reason", event.target.value)}
               />
             </label>
@@ -198,7 +197,7 @@ export default function PersonalSchedulePage() {
           <div className={styles.panelHeader}>
             <div>
               <h2>개인일정 목록</h2>
-              <p>Google Sheet 개인일정 탭에서 읽어온 목록입니다.</p>
+              <p>Google Sheet 개인일정 탭에서 불러온 목록입니다.</p>
             </div>
             <div className={styles.panelControls}>
               <label className={styles.sortSelect}>
@@ -223,7 +222,7 @@ export default function PersonalSchedulePage() {
             <div className={styles.scheduleList}>
               {sortedItems.map((item) => (
                 <article key={item.id} className={styles.scheduleCard}>
-                  <time dateTime={item.date}>{formatDateLabel(item.date)}</time>
+                  <time dateTime={formatScheduleDateTimeValue(item.date)}>{formatScheduleDateLabel(item.date)}</time>
                   <strong>{item.name || "이름 없음"}</strong>
                   <p>{item.reason || "사유 없음"}</p>
                 </article>
@@ -279,10 +278,16 @@ function createInitialForm() {
 function sortPersonalSchedules(items, sortMode) {
   return items.slice().sort((left, right) => {
     if (sortMode === "date") {
-      return `${left.date} ${left.createdAt}`.localeCompare(`${right.date} ${right.createdAt}`);
+      const leftTime = getLocalDateTime(left.date);
+      const rightTime = getLocalDateTime(right.date);
+      if (leftTime !== rightTime) return leftTime - rightTime;
+
+      return `${left.createdAt || ""} ${left.name || ""}`.localeCompare(
+        `${right.createdAt || ""} ${right.name || ""}`,
+      );
     }
 
-    return `${right.createdAt || right.date}`.localeCompare(`${left.createdAt || left.date}`);
+    return `${right.createdAt || right.date || ""}`.localeCompare(`${left.createdAt || left.date || ""}`);
   });
 }
 
@@ -290,10 +295,7 @@ function normalizeDate(value) {
   if (!value) return "";
   if (value instanceof Date) return formatLocalDate(value);
 
-  const text = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
-
-  return text.slice(0, 10);
+  return String(value).trim();
 }
 
 function normalizeDateTime(value) {
@@ -311,6 +313,7 @@ function formatLocalDate(date) {
 
 function parseLocalDate(value) {
   if (!value) return new Date();
+
   const [year, month, day] = String(value).split("-").map(Number);
   if (!year || !month || !day) return new Date();
 
@@ -327,6 +330,53 @@ function formatLocalDateTime(date) {
   const sec = String(date.getSeconds()).padStart(2, "0");
 
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
+}
+
+function parseLocalDateString(dateString) {
+  if (!dateString) return null;
+
+  const normalized = String(dateString).trim();
+
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(normalized)) {
+    const [year, month, day] = normalized.split("-").map(Number);
+    return { year, month, day };
+  }
+
+  if (/^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?$/.test(normalized)) {
+    const parts = normalized.replace(/\.$/, "").split(".").map((part) => part.trim());
+    return {
+      year: Number(parts[0]),
+      month: Number(parts[1]),
+      day: Number(parts[2]),
+    };
+  }
+
+  return null;
+}
+
+function formatScheduleDateLabel(dateString) {
+  const parsed = parseLocalDateString(dateString);
+  if (!parsed) return dateString || "";
+
+  const { year, month, day } = parsed;
+  const localDate = new Date(year, month - 1, day);
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+
+  return `${month}월 ${day}일 (${weekdays[localDate.getDay()]})`;
+}
+
+function formatScheduleDateTimeValue(dateString) {
+  const parsed = parseLocalDateString(dateString);
+  if (!parsed) return String(dateString || "");
+
+  const { year, month, day } = parsed;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getLocalDateTime(dateString) {
+  const parsed = parseLocalDateString(dateString);
+  if (!parsed) return 0;
+  return new Date(parsed.year, parsed.month - 1, parsed.day).getTime();
 }
 
 const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen, placeholder }, ref) {
@@ -357,20 +407,6 @@ function SelectArrow() {
       />
     </svg>
   );
-}
-
-function formatDateLabel(value) {
-  if (!value) return "날짜 없음";
-
-  try {
-    return new Date(`${value}T00:00:00`).toLocaleDateString("ko-KR", {
-      month: "long",
-      day: "numeric",
-      weekday: "short",
-    });
-  } catch {
-    return value;
-  }
 }
 
 function CalendarIcon() {

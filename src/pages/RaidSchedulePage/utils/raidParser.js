@@ -56,31 +56,35 @@ function parseRaidCalendarRows(rows) {
     .map((dateRow, blockIndex) => {
       const nextDateRowIndex = dateRows[blockIndex + 1]?.index ?? rows.length;
       const dateRowData = rows[dateRow.index] || [];
-      const blockEndIndex = Math.max(dateRow.index, nextDateRowIndex - 1);
-      const blockRows = rows.slice(dateRow.index, nextDateRowIndex);
-      const blockTime = findBlockTime(blockRows);
-      const raidColumns = collectRaidColumns(dateRowData);
+      const partyBlocks = collectPartyBlocks(dateRowData);
 
-      const raids = raidColumns
-        .map((columnIndex) => {
-          const raidName = normalizeRaidName(dateRowData[columnIndex]);
-          if (!raidName) return null;
-
-          const characterNames = collectParticipants({
+      const raids = partyBlocks
+        .map(({ title, startCol, endCol }) => {
+          const members = collectPartyMembers({
             rows,
             startIndex: dateRow.index + 1,
-            endIndex: blockEndIndex,
-            columnIndex,
-            raidName,
+            endIndex: nextDateRowIndex - 1,
+            startCol,
+            endCol,
+            title,
           });
 
-          if (!characterNames.length) return null;
+          console.log({
+            title,
+            startCol,
+            endCol,
+            members,
+          });
+
+          if (!members.length) return null;
 
           return {
-            columnIndex,
-            raidName,
-            characterNames,
-            time: blockTime,
+            columnIndex: startCol,
+            startCol,
+            endCol,
+            raidName: title,
+            characterNames: members,
+            time: findBlockTime(rows, dateRow.index + 1, nextDateRowIndex - 1, startCol, endCol),
           };
         })
         .filter(Boolean);
@@ -113,8 +117,8 @@ function findDateInRow(row) {
   return "";
 }
 
-function collectRaidColumns(row) {
-  return (row || [])
+function collectPartyBlocks(row) {
+  const titleColumns = (row || [])
     .map((cell, index) => ({ cell: cleanText(cell), index }))
     .filter(({ cell, index }) => {
       if (index <= 0) return false;
@@ -125,35 +129,53 @@ function collectRaidColumns(row) {
       if (isNoiseCell(cell)) return false;
       return true;
     })
-    .map(({ index }) => index);
+    .map(({ index }) => index)
+    .sort((left, right) => left - right);
+
+  return titleColumns
+    .map((startCol, index) => {
+      const endCol = Math.min(startCol + 1, (row?.length || 1) - 1);
+      const title = normalizeRaidName(row[startCol]);
+      if (!title || title === "-") return null;
+
+      return {
+        title,
+        startCol,
+        endCol: Math.max(startCol, endCol),
+      };
+    })
+    .filter(Boolean);
 }
 
-function collectParticipants({ rows, startIndex, endIndex, columnIndex, raidName }) {
-  const participants = [];
+function collectPartyMembers({ rows, startIndex, endIndex, startCol, endCol, title }) {
+  const members = [];
   const seen = new Set();
+  const titleKey = normalizeKey(title);
 
   for (let rowIndex = startIndex; rowIndex <= endIndex; rowIndex += 1) {
     const row = rows[rowIndex] || [];
-    const value = cleanText(row[columnIndex]);
+    const value = cleanText(row[startCol]);
 
     if (!value) continue;
     if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
-    if (normalizeKey(value) === normalizeKey(raidName)) continue;
+    if (normalizeKey(value) === titleKey) continue;
 
     const normalizedValue = normalizeKey(value);
     if (seen.has(normalizedValue)) continue;
 
     seen.add(normalizedValue);
-    participants.push(value);
+    members.push(value);
   }
 
-  return participants;
+  return members;
 }
 
-function findBlockTime(rows) {
-  for (const row of rows || []) {
-    for (const cell of row || []) {
-      const time = extractTimeLabel(cell);
+function findBlockTime(rows, startIndex, endIndex, startCol, endCol) {
+  for (let rowIndex = startIndex; rowIndex <= endIndex; rowIndex += 1) {
+    const row = rows[rowIndex] || [];
+
+    for (let columnIndex = startCol; columnIndex <= endCol; columnIndex += 1) {
+      const time = extractTimeLabel(row[columnIndex]);
       if (time) return time;
     }
   }
