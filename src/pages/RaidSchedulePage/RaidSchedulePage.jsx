@@ -90,7 +90,8 @@ export default function RaidSchedulePage() {
     return [...new Set(ownerNames)];
   }, [todayRaids]);
 
-  const groupedRaids = useMemo(() => groupItemsByDateAndTime(raids), [raids]);
+  const todayStartTime = useMemo(() => resolveGroupTime(todayRaids), [todayRaids]);
+  const groupedRaids = useMemo(() => groupItemsByDate(raids), [raids]);
 
   const searchResults = useMemo(() => {
     if (!deferredSearchQuery) return [];
@@ -110,17 +111,16 @@ export default function RaidSchedulePage() {
           ownerName: participant.ownerName,
           raidName: raid.raidName,
           characterName: participant.characterName,
+          startCol: raid.startCol,
+          startRow: raid.startRow,
           time: raid.time,
         })),
     );
   }, [deferredSearchQuery, raids]);
 
-  const searchGroups = useMemo(() => groupItemsByDateAndTime(searchResults), [searchResults]);
+  const searchGroups = useMemo(() => groupItemsByDate(searchResults), [searchResults]);
 
-  const sortedTodayRaids = useMemo(
-    () => [...todayRaids].sort(compareRaidTime),
-    [todayRaids],
-  );
+  const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
 
   return (
     <div className={styles.page}>
@@ -128,7 +128,7 @@ export default function RaidSchedulePage() {
       <div className={styles.content}>
         <header className={styles.hero}>
           <div>
-            <p className={styles.eyebrow}>Lostark Weekly Planner</p>
+            <p className={styles.eyebrow}>Lost Ark Weekly Planner</p>
             <h1>레이드 일정표</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
@@ -186,6 +186,7 @@ export default function RaidSchedulePage() {
               styles={styles}
               title={TAB_LABELS.today}
               subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
+              meta={todayRaids.length ? todayStartTime || "시간 미정" : ""}
             />
             <TodayParticipantList
               ownerNames={todayOwnerNames}
@@ -221,7 +222,7 @@ export default function RaidSchedulePage() {
 
         {!isLoading && activeTab === "week" ? (
           <section className={styles.section}>
-            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="주간 레이드 일정" />
+            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="요일별 레이드 일정" />
             <div className={styles.weekSearchBox}>
               <RaidSearch value={searchQuery} onChange={setSearchQuery} styles={styles} />
             </div>
@@ -289,7 +290,6 @@ export default function RaidSchedulePage() {
                           raid={raid}
                           styles={styles}
                           onCharacterClick={setSelectedCharacterName}
-                          showTimeLabel={false}
                         />
                       ))}
                     </div>
@@ -341,13 +341,14 @@ function TodayParticipantList({ ownerNames, selectedOwnerName, onSelectOwnerName
   );
 }
 
-function SectionHeading({ styles, title, subtitle }) {
+function SectionHeading({ styles, title, subtitle, meta = "" }) {
   return (
     <header className={styles.sectionHeading}>
-      <div>
+      <div className={styles.sectionHeadingTopRow}>
         <h2>{title}</h2>
-        <p>{subtitle}</p>
+        {meta ? <span className={styles.sectionHeadingMeta}>{meta}</span> : null}
       </div>
+      <p className={styles.sectionHeadingDescription}>{subtitle}</p>
     </header>
   );
 }
@@ -360,33 +361,45 @@ function StatePanel({ styles, message }) {
   );
 }
 
-function groupItemsByDateAndTime(items) {
+function groupItemsByDate(items) {
   const groups = new Map();
 
   items
     .slice()
-    .sort(compareRaidTime)
+    .sort(compareRaidOrder)
     .forEach((item) => {
       const dateKey = item.date || "unscheduled";
-      const timeKey = item.time || "";
-      const key = `${dateKey}|${timeKey}`;
 
-      if (!groups.has(key)) {
-        groups.set(key, {
+      if (!groups.has(dateKey)) {
+        groups.set(dateKey, {
           date: dateKey,
-          id: key,
-          label: item.date ? formatDateLabel(item.date) : "미지정",
-          time: timeKey,
+          id: dateKey,
+          label: item.date ? formatDateLabel(item.date) : "날짜 미정",
+          time: "",
           items: [],
         });
       }
 
-      groups.get(key).items.push(item);
+      groups.get(dateKey).items.push(item);
     });
 
-  return Array.from(groups.values()).sort((left, right) =>
-    `${left.date} ${left.time || "99:99"}`.localeCompare(`${right.date} ${right.time || "99:99"}`),
-  );
+  const grouped = Array.from(groups.values());
+  grouped.forEach((group) => {
+    group.time = resolveGroupTime(group.items);
+  });
+
+  return grouped.sort((left, right) => `${left.date}`.localeCompare(`${right.date}`));
+}
+
+function resolveGroupTime(items = []) {
+  const times = items
+    .map((item) => item.time || item.blockTime || "")
+    .map((value) => String(value || "").trim())
+    .filter((value) => Boolean(value) && value !== "시간 미정");
+
+  if (!times.length) return "";
+
+  return [...new Set(times)].sort((left, right) => left.localeCompare(right))[0] || "";
 }
 
 function countUniqueCharacters(raids) {
@@ -401,10 +414,19 @@ function countUniqueCharacters(raids) {
   return names.size;
 }
 
-function compareRaidTime(left, right) {
-  return `${left.date || "9999-12-31"} ${left.time || "99:99"} ${left.raidName || ""}`.localeCompare(
-    `${right.date || "9999-12-31"} ${right.time || "99:99"} ${right.raidName || ""}`,
-  );
+function compareRaidOrder(left, right) {
+  const leftDate = left.date || "9999-12-31";
+  const rightDate = right.date || "9999-12-31";
+
+  if (leftDate !== rightDate) {
+    return leftDate.localeCompare(rightDate);
+  }
+
+  if ((left.startCol ?? 0) !== (right.startCol ?? 0)) {
+    return (left.startCol ?? 0) - (right.startCol ?? 0);
+  }
+
+  return (left.startRow ?? 0) - (right.startRow ?? 0);
 }
 
 function formatGroupTime(group) {

@@ -12,7 +12,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   console.log("[ACTIVE RAID PARSER]", "buildRaidSchedule");
 
   const settingLookup = parseSettingRows(settingRows);
-  const raidBlocks = collectRaidColumnBlocks(raidCalendarCols);
+  const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
   const parsedRaids = parseRaidCalendarRows({
     raidBlocks,
@@ -23,6 +23,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
 
   console.table(
     parsedRaids.map((raid) => ({
+      blockTime: raid.time,
       date: raid.date,
       endCol: raid.endCol,
       endRow: raid.endRow,
@@ -31,7 +32,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       raidName: raid.raidName,
       startCol: raid.startCol,
       startRow: raid.startRow,
-      time: raid.time,
     })),
   );
 
@@ -55,7 +55,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       console.log("[RAW RAID ITEM]", item);
       return item;
     })
-    .sort(compareRaidTime);
+    .sort(compareRaidOrder);
 }
 
 export function buildFallbackRaidSchedule(todayIsoDate) {
@@ -93,33 +93,45 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
     const nextDateRowIndex = dateRows[dateRowIndex + 1]?.index ?? rows.length;
     const blockStartRow = dateRow.index;
     const blockEndRow = nextDateRowIndex - 1;
+    const blockTime = findDateBlockTime(rows, blockStartRow + 1, blockEndRow);
 
     raidBlocks.forEach((block) => {
-      const blockRaids = collectRaidsForBlock({
-        block,
-        blockEndRow,
-        blockStartRow,
-        date: dateRow.date,
-        raidNameLookup,
-        rows,
-        settingLookup,
-      });
-
-      raids.push(...blockRaids);
+      raids.push(
+        ...collectRaidsForBlock({
+          block,
+          blockEndRow,
+          blockStartRow,
+          blockTime,
+          date: dateRow.date,
+          raidNameLookup,
+          rows,
+          settingLookup,
+        }),
+      );
     });
   });
 
   return raids;
 }
 
-function collectRaidsForBlock({ rows, block, blockStartRow, blockEndRow, date, raidNameLookup, settingLookup }) {
+function collectRaidsForBlock({
+  rows,
+  block,
+  blockStartRow,
+  blockEndRow,
+  blockTime,
+  date,
+  raidNameLookup,
+  settingLookup,
+}) {
   const raids = [];
   let currentParty = createParty({
-    endCol: block.endCol,
     date,
+    endCol: block.endCol,
     raidName: block.raidName,
     startCol: block.startCol,
     startRow: blockStartRow,
+    time: blockTime,
   });
   let seenMembers = new Set();
 
@@ -134,19 +146,15 @@ function collectRaidsForBlock({ rows, block, blockStartRow, blockEndRow, date, r
       }
 
       currentParty = createParty({
-        endCol: block.endCol,
         date,
+        endCol: block.endCol,
         raidName: header,
         startCol: block.startCol,
         startRow: rowIndex,
+        time: blockTime,
       });
       seenMembers = new Set();
       continue;
-    }
-
-    const time = extractTimeFromRow(row, block.startCol, block.endCol);
-    if (time && !currentParty.time) {
-      currentParty.time = time;
     }
 
     const members = extractMembersFromRow(row, block.startCol, block.endCol, settingLookup);
@@ -166,7 +174,7 @@ function collectRaidsForBlock({ rows, block, blockStartRow, blockEndRow, date, r
   return raids;
 }
 
-function createParty({ date, raidName, startCol, endCol, startRow }) {
+function createParty({ date, raidName, startCol, endCol, startRow, time = "" }) {
   return {
     date: normalizeSheetDateValue(date),
     endCol,
@@ -175,7 +183,7 @@ function createParty({ date, raidName, startCol, endCol, startRow }) {
     raidName,
     startCol,
     startRow,
-    time: "",
+    time: time || "",
   };
 }
 
@@ -197,7 +205,7 @@ function findDateInRow(row) {
   return "";
 }
 
-function collectRaidColumnBlocks(cols = []) {
+function collectRaidColumnBlocks(cols = [], rows = []) {
   const labeledColumns = cols
     .map((col, index) => ({
       index,
@@ -205,16 +213,31 @@ function collectRaidColumnBlocks(cols = []) {
     }))
     .filter(({ label }) => Boolean(label));
 
-  if (labeledColumns.length === 0) {
-    return [];
+  if (labeledColumns.length > 0) {
+    return labeledColumns
+      .map(({ index, label }, currentIndex) => {
+        const nextIndex = labeledColumns[currentIndex + 1]?.index;
+        return {
+          endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
+          raidName: normalizeRaidName(label),
+          startCol: index,
+        };
+      })
+      .sort((left, right) => left.startCol - right.startCol);
   }
 
-  return labeledColumns
-    .map(({ index, label }, currentIndex) => {
-      const nextIndex = labeledColumns[currentIndex + 1]?.index;
+  const anchorRow = rows.find((row) => row.some((cell) => isMeaningfulText(cell))) || [];
+  const fallbackColumns = anchorRow
+    .map((cell, index) => ({ cell: cleanText(cell), index }))
+    .filter(({ cell }) => Boolean(cell) && !isNoiseCell(cell) && !isColorCode(cell))
+    .map(({ cell, index }) => ({ index, raidName: normalizeRaidName(cell) }));
+
+  return fallbackColumns
+    .map(({ index, raidName }, currentIndex) => {
+      const nextIndex = fallbackColumns[currentIndex + 1]?.index;
       return {
         endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
-        raidName: normalizeRaidName(label),
+        raidName,
         startCol: index,
       };
     })
@@ -223,6 +246,24 @@ function collectRaidColumnBlocks(cols = []) {
 
 function buildRaidNameLookup(raidBlocks) {
   return new Set(raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean));
+}
+
+function findDateBlockTime(rows, startIndex, endIndex) {
+  const times = [];
+
+  for (let rowIndex = startIndex; rowIndex <= endIndex; rowIndex += 1) {
+    const row = rows[rowIndex] || [];
+
+    for (const cell of row) {
+      const time = extractTimeLabel(cell);
+      if (time) {
+        times.push(time);
+      }
+    }
+  }
+
+  if (!times.length) return "";
+  return [...new Set(times)].sort((left, right) => left.localeCompare(right))[0] || "";
 }
 
 function findRaidHeaderInBlock(row, block, raidNameLookup) {
@@ -253,15 +294,6 @@ function extractMembersFromRow(row, startCol, endCol, settingLookup) {
   }
 
   return members;
-}
-
-function extractTimeFromRow(row, startCol, endCol) {
-  for (let columnIndex = startCol; columnIndex <= endCol && columnIndex < row.length; columnIndex += 1) {
-    const time = extractTimeLabel(row[columnIndex]);
-    if (time) return time;
-  }
-
-  return "";
 }
 
 function extractTimeLabel(value) {
@@ -327,19 +359,15 @@ function decorateParticipant(characterName, settingLookup) {
   };
 }
 
-function compareRaidTime(left, right) {
+function compareRaidOrder(left, right) {
   const leftDate = left.date || "9999-12-31";
   const rightDate = right.date || "9999-12-31";
-  const leftTime = left.time || "99:99";
-  const rightTime = right.time || "99:99";
   const leftStartCol = String(left.startCol ?? 9999).padStart(4, "0");
   const rightStartCol = String(right.startCol ?? 9999).padStart(4, "0");
   const leftStartRow = String(left.startRow ?? 9999).padStart(4, "0");
   const rightStartRow = String(right.startRow ?? 9999).padStart(4, "0");
 
-  return `${leftDate} ${leftTime} ${leftStartCol} ${leftStartRow} ${left.raidName || ""}`.localeCompare(
-    `${rightDate} ${rightTime} ${rightStartCol} ${rightStartRow} ${right.raidName || ""}`,
-  );
+  return `${leftDate} ${leftStartCol} ${leftStartRow}`.localeCompare(`${rightDate} ${rightStartCol} ${rightStartRow}`);
 }
 
 function normalizeRaidName(value) {
@@ -361,6 +389,11 @@ function slugify(value) {
     .replace(/\s+/g, "-")
     .replace(/[^0-9a-zA-Z가-힣-]/g, "")
     .toLowerCase();
+}
+
+function isMeaningfulText(value) {
+  const text = cleanText(value);
+  return Boolean(text) && !isNoiseCell(text) && !isColorCode(text);
 }
 
 function isNoiseCell(value) {
