@@ -18,6 +18,7 @@ export default function CharacterEngravingList({ engravings = [], styles }) {
           <article
             key={`${name}-${level}-${index}`}
             className={`${styles.compactEngravingRow} ${isActive ? styles.compactEngravingRowActive : styles.compactEngravingRowInactive}`}
+            title={displayValue(engraving.description || engraving.Description || "")}
           >
             <div className={styles.compactEngravingTitle}>
               <strong className={styles.compactEngravingName}>{name}</strong>

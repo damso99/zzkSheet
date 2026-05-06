@@ -13,15 +13,6 @@ export function normalizeCharacterDetail(payload = {}) {
   const engravings = normalizeEngravings(engravingsSource, armory);
   const arkPassive = normalizeArkPassive(arkPassiveSource);
   const arkGrid = normalizeArkGrid(arkGridSource);
-  const engravingImageMap = buildEngravingImageMap(engravingsSource, engravings, arkPassiveSource, arkGridSource);
-
-  logEngravingSourceDebug({
-    payload: engravingsSource,
-    items: engravings,
-    imageMap: engravingImageMap,
-    arkPassiveSource,
-    arkGridSource,
-  });
 
   return {
     profile: normalizeProfile(profileSource, payload.characterName, { equipment, armory }),
@@ -30,7 +21,6 @@ export function normalizeCharacterDetail(payload = {}) {
     engravings,
     arkPassive,
     arkGrid,
-    engravingImageMap,
     cards: normalizeCards(armory.cards || summary.ArmoryCard),
     skills,
     warnings: Object.keys(payload.errors || {}),

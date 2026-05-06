@@ -15,7 +15,6 @@ const SORT_OPTIONS = {
 
 export default function PersonalSchedulePage() {
   const [form, setForm] = useState(createInitialForm);
-  const [selectedDate, setSelectedDate] = useState(() => parseLocalDate(createInitialForm().date));
   const [items, setItems] = useState([]);
   const [sortMode, setSortMode] = useState("latest");
   const [isFormCalendarOpen, setIsFormCalendarOpen] = useState(false);
@@ -96,7 +95,6 @@ export default function PersonalSchedulePage() {
       setMessage("등록 완료");
       const nextForm = createInitialForm();
       setForm(nextForm);
-      setSelectedDate(parseLocalDate(nextForm.date));
       setItems((currentItems) => [
         normalizePersonalScheduleItem({ ...payload, createdAt: formatLocalDateTime(new Date()) }, currentItems.length),
         ...currentItems,
@@ -119,7 +117,6 @@ export default function PersonalSchedulePage() {
 
   function handleFormDateSelect(date) {
     if (!date) return;
-    setSelectedDate(date);
     updateField("date", formatLocalDate(date));
     setIsFormCalendarOpen(false);
   }
@@ -149,7 +146,7 @@ export default function PersonalSchedulePage() {
             <label className={styles.datePickerField}>
               <span>날짜</span>
               <DatePicker
-                selected={selectedDate}
+                selected={form.date ? parseLocalDate(form.date) : new Date()}
                 onChange={handleFormDateSelect}
                 onCalendarOpen={() => setIsFormCalendarOpen(true)}
                 onCalendarClose={() => setIsFormCalendarOpen(false)}
@@ -291,18 +288,18 @@ function sortPersonalSchedules(items, sortMode) {
 
 function normalizeDate(value) {
   if (!value) return "";
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  if (value instanceof Date) return formatLocalDate(value);
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-  return date.toISOString().slice(0, 10);
+  const text = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
+
+  return text.slice(0, 10);
 }
 
 function normalizeDateTime(value) {
   if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toISOString();
+  if (value instanceof Date) return formatLocalDateTime(value);
+  return String(value).trim();
 }
 
 function formatLocalDate(date) {

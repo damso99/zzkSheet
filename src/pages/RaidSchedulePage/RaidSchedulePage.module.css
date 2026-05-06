@@ -1437,13 +1437,13 @@
 .compactEngravingRow {
   display: flex;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 9px 12px;
   border: 1px solid rgba(104, 150, 255, 0.18);
-  border-radius: 20px;
+  border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(24, 35, 70, 0.7), rgba(6, 11, 25, 0.78)),
     rgba(8, 14, 30, 0.72);
@@ -1487,7 +1487,7 @@
   min-width: 0;
   overflow: hidden;
   color: #ffffff;
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   font-weight: 950;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1503,7 +1503,7 @@
 .compactEngravingBadges {
   display: flex;
   flex: 0 0 auto;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -1513,10 +1513,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 46px;
-  padding: 5px 10px;
+  min-width: 40px;
+  padding: 4px 8px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 950;
   white-space: nowrap;
 }
@@ -1538,14 +1538,18 @@
   gap: 16px;
 }
 
+.arkTabTitleBlock {
+  min-width: 0;
+}
+
 .arkTabHeader {
   display: flex;
   justify-content: space-between;
   gap: 14px;
   align-items: center;
-  padding: 16px 18px;
+  padding: 12px 14px;
   border: 1px solid rgba(104, 150, 255, 0.18);
-  border-radius: 20px;
+  border-radius: 18px;
   background: rgba(8, 14, 30, 0.72);
 }
 
@@ -1553,6 +1557,43 @@
   margin: 6px 0 0;
   color: #ffffff;
   font-size: 1.22rem;
+  font-weight: 950;
+}
+
+.arkHeaderBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.arkSummaryBadge {
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(104, 150, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(8, 14, 30, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.arkSummaryBadge strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #dbe7ff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arkSummaryBadge em {
+  flex: 0 0 auto;
+  color: var(--gold);
+  font-style: normal;
+  font-size: 0.74rem;
   font-weight: 950;
 }
 
@@ -1590,19 +1631,19 @@
 .arkSectionStack,
 .arkGridSectionStack {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .arkSectionCard,
 .arkEffectCard {
-  padding: 16px;
+  padding: 12px 14px;
   border: 1px solid rgba(104, 150, 255, 0.18);
-  border-radius: 20px;
+  border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(24, 35, 70, 0.7), rgba(6, 11, 25, 0.78)),
     rgba(8, 14, 30, 0.72);
   box-shadow:
-    0 16px 42px rgba(0, 0, 0, 0.28),
+    0 12px 30px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
@@ -1611,7 +1652,7 @@
   justify-content: space-between;
   gap: 14px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .arkSectionHeader h4 {
@@ -1632,7 +1673,7 @@
 .arkGridSlotList,
 .arkEffectStatList {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .arkEffectRow,
@@ -1644,9 +1685,9 @@
   align-items: center;
   flex-wrap: wrap;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid rgba(104, 150, 255, 0.12);
-  border-radius: 16px;
+  border-radius: 14px;
   background: rgba(2, 7, 18, 0.24);
 }
 
@@ -1660,6 +1701,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.arkEffectStatName {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.arkEffectStatName strong {
+  display: block;
 }
 
 .arkTierBadge {
@@ -1702,18 +1752,18 @@
 }
 
 .arkGridSlotIcon {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
   border: 1px solid rgba(255, 216, 138, 0.24);
-  border-radius: 12px;
+  border-radius: 10px;
   object-fit: cover;
   background: rgba(2, 7, 18, 0.72);
 }
 
 .arkGridSlotBody {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -1734,11 +1784,11 @@
 
 .arkGridSlotBadges span {
   display: inline-flex;
-  padding: 4px 8px;
+  padding: 3px 7px;
   border: 1px solid rgba(105, 230, 255, 0.18);
   border-radius: 999px;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
   background: rgba(85, 167, 255, 0.08);
 }
@@ -1758,7 +1808,7 @@
   }
 
   .compactEngravingRow {
-    gap: 10px;
+    gap: 8px;
   }
 
   .compactEngravingTitle,
@@ -1781,6 +1831,14 @@
 
   .arkGridSlotTopRow {
     align-items: flex-start;
+  }
+
+  .arkHeaderBadges {
+    gap: 6px;
+  }
+
+  .arkSummaryBadge {
+    width: 100%;
   }
 }
 

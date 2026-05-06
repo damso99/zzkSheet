@@ -9,7 +9,7 @@ import CharacterProfileHeader from "./CharacterProfileHeader.jsx";
 import CharacterSkillList from "./CharacterSkillList.jsx";
 import { normalizeCharacterDetail } from "../utils/characterParser.js";
 
-const CHARACTER_DETAIL_CACHE_VERSION = "compact-ark-tabs-v9";
+const CHARACTER_DETAIL_CACHE_VERSION = "compact-ark-tabs-v10";
 const characterDetailCache = new Map();
 
 const DETAIL_TABS = [
