@@ -195,15 +195,33 @@ function normalizeSkills(skillsPayload) {
 
 function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Map()) {
   const name = displayValue(stripHtml(engraving.Name || engraving.name || engraving.EngravingName || engraving.Title));
-  const level = normalizeEngravingLevel(engraving.Level || engraving.level || extractLevel(engraving.Name || engraving.Description || engraving.description));
+  const level = normalizeEngravingLevel(
+    engraving.Level || engraving.level || extractLevel(engraving.Name || engraving.Description || engraving.description),
+  );
   const grade = displayValue(engraving.Grade || engraving.grade);
+  const directIcon = getDirectEngravingIcon(engraving);
+  const tooltip = String(engraving.Tooltip || engraving.tooltip || "");
 
   return {
+    raw: engraving,
+    Name: displayValue(stripHtml(engraving.Name || engraving.name || engraving.EngravingName || engraving.Title)),
     name,
+    Level: displayValue(engraving.Level || engraving.level || level),
     level,
+    Grade: displayValue(engraving.Grade || engraving.grade),
     grade,
-    description: stripHtml(engraving.Description || fallbackDescription),
-    icon: resolveEngravingIcon(engraving, iconMap, name, grade),
+    Description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
+    description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
+    Tooltip: tooltip,
+    tooltip,
+    Icon: normalizeOptionalIconUrl(engraving.Icon),
+    icon: directIcon,
+    IconUrl: normalizeOptionalIconUrl(engraving.IconUrl || engraving.iconUrl),
+    iconUrl: normalizeOptionalIconUrl(engraving.iconUrl || engraving.IconUrl),
+    Image: normalizeOptionalIconUrl(engraving.Image || engraving.image),
+    image: normalizeOptionalIconUrl(engraving.image || engraving.Image),
+    ImageUrl: normalizeOptionalIconUrl(engraving.ImageUrl || engraving.imageUrl),
+    imageUrl: normalizeOptionalIconUrl(engraving.imageUrl || engraving.ImageUrl),
   };
 }
 
@@ -310,6 +328,21 @@ function createEngravingIconMap(...sources) {
   return iconMap;
 }
 
+function getDirectEngravingIcon(item) {
+  const directIcon =
+    item?.Icon ||
+    item?.icon ||
+    item?.IconUrl ||
+    item?.iconUrl ||
+    item?.Image ||
+    item?.image ||
+    item?.ImageUrl ||
+    item?.imageUrl ||
+    "";
+
+  return normalizeOptionalIconUrl(directIcon);
+}
+
 function collectNamedIconItems(value, visited = new Set()) {
   if (!value || typeof value !== "object" || visited.has(value)) return [];
   visited.add(value);
@@ -370,7 +403,7 @@ function normalizeOptionalIconUrl(value) {
   return icon ? normalizeIconUrl(icon) : "";
 }
 
-function normalizeEngravingName(value) {
+export function normalizeEngravingName(value) {
   return stripHtml(value)
     .replace(/(?:Lv\.?|레벨)\s*\d+/gi, "")
     .replace(/\[[^\]]*]/g, "")
