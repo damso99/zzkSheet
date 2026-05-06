@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { ko } from "date-fns/locale";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,30 +13,17 @@ const SORT_OPTIONS = {
   date: "날짜순",
 };
 
-const INITIAL_FORM = {
-  date: "",
-  name: "",
-  reason: "",
-};
-
 export default function PersonalSchedulePage() {
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(createInitialForm);
   const [items, setItems] = useState([]);
   const [sortMode, setSortMode] = useState("latest");
-  const [selectedFilterDate, setSelectedFilterDate] = useState(() => new Date());
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isFormCalendarOpen, setIsFormCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const filterDatePickerRef = useRef(null);
 
   const sortedItems = useMemo(() => sortPersonalSchedules(items, sortMode), [items, sortMode]);
-  const selectedFilterDateIso = useMemo(() => formatDateForInput(selectedFilterDate), [selectedFilterDate]);
-  const filteredItems = useMemo(
-    () => sortedItems.filter((item) => item.date === selectedFilterDateIso),
-    [selectedFilterDateIso, sortedItems],
-  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -44,17 +31,6 @@ export default function PersonalSchedulePage() {
 
     return () => controller.abort();
   }, []);
-
-  useEffect(() => {
-    function handlePointerDown(event) {
-      if (!filterDatePickerRef.current?.contains(event.target)) {
-        setIsCalendarOpen(false);
-      }
-    }
-
-    if (isCalendarOpen) document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [isCalendarOpen]);
 
   async function loadPersonalSchedules({ signal, silent = false } = {}) {
     if (!silent) {
@@ -117,7 +93,7 @@ export default function PersonalSchedulePage() {
       }
 
       setMessage("등록 완료");
-      setForm(INITIAL_FORM);
+      setForm(createInitialForm());
       setItems((currentItems) => [
         normalizePersonalScheduleItem({ ...payload, createdAt: new Date().toISOString() }, currentItems.length),
         ...currentItems,
@@ -138,10 +114,10 @@ export default function PersonalSchedulePage() {
     }));
   }
 
-  function handleFilterDateSelect(date) {
+  function handleFormDateSelect(date) {
     if (!date) return;
-    setSelectedFilterDate(date);
-    setIsCalendarOpen(false);
+    updateField("date", formatDateForInput(date));
+    setIsFormCalendarOpen(false);
   }
 
   return (
@@ -166,13 +142,19 @@ export default function PersonalSchedulePage() {
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
-            <label>
+            <label className={styles.datePickerField}>
               <span>날짜</span>
-              <input
-                type="date"
-                value={form.date}
-                required
-                onChange={(event) => updateField("date", event.target.value)}
+              <DatePicker
+                selected={parseDateForPicker(form.date)}
+                onChange={handleFormDateSelect}
+                onCalendarOpen={() => setIsFormCalendarOpen(true)}
+                onCalendarClose={() => setIsFormCalendarOpen(false)}
+                locale="ko"
+                dateFormat="yyyy년 M월 d일 (eee)"
+                popperClassName={styles.datePickerPopper}
+                calendarClassName={styles.datePickerCalendar}
+                wrapperClassName={styles.datePickerControl}
+                customInput={<DatePickerButton isOpen={isFormCalendarOpen} placeholder="날짜 선택" />}
               />
             </label>
             <label>
@@ -212,42 +194,30 @@ export default function PersonalSchedulePage() {
           <div className={styles.panelHeader}>
             <div>
               <h2>개인일정 목록</h2>
-              <p>{formatDateLabel(selectedFilterDateIso)}에 등록된 개인일정입니다.</p>
+              <p>Google Sheet 개인일정 탭에서 읽어온 목록입니다.</p>
             </div>
             <div className={styles.panelControls}>
-              <label className={styles.datePickerField} ref={filterDatePickerRef}>
-                <span>조회 날짜</span>
-                <DatePicker
-                  selected={selectedFilterDate}
-                  onChange={handleFilterDateSelect}
-                  onCalendarOpen={() => setIsCalendarOpen(true)}
-                  onCalendarClose={() => setIsCalendarOpen(false)}
-                  locale="ko"
-                  dateFormat="yyyy년 M월 d일 (eee)"
-                  popperClassName={styles.datePickerPopper}
-                  calendarClassName={styles.datePickerCalendar}
-                  wrapperClassName={styles.datePickerControl}
-                  customInput={<DatePickerButton isOpen={isCalendarOpen} />}
-                />
-              </label>
               <label className={styles.sortSelect}>
                 <span>정렬</span>
-                <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
-                  {Object.entries(SORT_OPTIONS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <span className={styles.selectShell}>
+                  <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+                    {Object.entries(SORT_OPTIONS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <SelectArrow />
+                </span>
               </label>
             </div>
           </div>
 
           {isLoading ? (
             <div className={styles.emptyState}>개인일정을 불러오는 중입니다.</div>
-          ) : filteredItems.length ? (
+          ) : sortedItems.length ? (
             <div className={styles.scheduleList}>
-              {filteredItems.map((item) => (
+              {sortedItems.map((item) => (
                 <article key={item.id} className={styles.scheduleCard}>
                   <time dateTime={item.date}>{formatDateLabel(item.date)}</time>
                   <strong>{item.name || "이름 없음"}</strong>
@@ -256,7 +226,7 @@ export default function PersonalSchedulePage() {
               ))}
             </div>
           ) : (
-            <div className={styles.emptyState}>선택한 날짜의 개인일정이 없습니다.</div>
+            <div className={styles.emptyState}>개인일정이 없습니다.</div>
           )}
         </section>
       </div>
@@ -294,6 +264,14 @@ function normalizePersonalScheduleItem(item, index) {
   };
 }
 
+function createInitialForm() {
+  return {
+    date: formatDateForInput(new Date()),
+    name: "",
+    reason: "",
+  };
+}
+
 function sortPersonalSchedules(items, sortMode) {
   return items.slice().sort((left, right) => {
     if (sortMode === "date") {
@@ -327,16 +305,13 @@ function formatDateForInput(date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function formatDateButtonLabel(date) {
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  });
+function parseDateForPicker(value) {
+  if (!value) return new Date();
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
-const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen }, ref) {
+const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen, placeholder }, ref) {
   return (
     <button
       type="button"
@@ -346,10 +321,25 @@ const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, 
       aria-expanded={isOpen}
     >
       <CalendarIcon />
-      <strong>{value}</strong>
+      <strong>{value || placeholder}</strong>
     </button>
   );
 });
+
+function SelectArrow() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className={styles.selectArrow}>
+      <path
+        d="M5.5 7.5 10 12l4.5-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
 
 function formatDateLabel(value) {
   if (!value) return "날짜 없음";
