@@ -13,6 +13,11 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
+
+  if (import.meta?.env?.DEV) {
+    logRaidCalendarAColumnDebug(raidCalendarRows);
+  }
+
   const parsedRaids = parseRaidCalendarRows({
     raidBlocks,
     raidNameLookup,
@@ -353,6 +358,48 @@ function normalizeTime(value) {
   if (typeof value === "number" && Number.isFinite(value)) {
     const fraction = ((value % 1) + 1) % 1;
     const totalMinutes = Math.round(fraction * 24 * 60);
+    const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, "0");
+    const mm = String(totalMinutes % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  const text = String(value).trim();
+  const match = text.match(/([01]?\d|2[0-3]):[0-5]\d/);
+  return match ? match[0].padStart(5, "0") : "";
+}
+
+function logRaidCalendarAColumnDebug(rows = []) {
+  const aColumnRows = rows.map((row, index) => {
+    const rawValue = row?.[0];
+
+    return {
+      cell: `A${index + 1}`,
+      normalizedTime: normalizeTimeDebug(rawValue),
+      rawValue,
+      rowNumber: index + 1,
+      stringValue: String(rawValue ?? ""),
+      type: rawValue === null ? "null" : Array.isArray(rawValue) ? "array" : typeof rawValue,
+    };
+  });
+
+  console.log("[A열 fetch range]", "레이드캘린더!A:A (fetched through current sheet rows)");
+  console.log("[RAID CALENDAR A COLUMN]");
+  console.table(aColumnRows);
+
+  const detectedTimes = aColumnRows.filter((item) => item.normalizedTime);
+  console.log("[A열 detected times]");
+  console.table(detectedTimes);
+}
+
+function normalizeTimeDebug(value) {
+  if (value == null || value === "") return "";
+
+  if (value instanceof Date) {
+    return `${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const totalMinutes = Math.round(value * 24 * 60);
     const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, "0");
     const mm = String(totalMinutes % 60).padStart(2, "0");
     return `${hh}:${mm}`;
