@@ -26,12 +26,10 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
 
       <div className={styles.arkGridCardGrid}>
         {groupedSections.map((group) => {
-          const point = group.rows.reduce((sum, row) => sum + row.point, 0);
           return (
             <article key={group.name} className={styles.arkGridCard}>
               <div className={styles.arkGridCardTopRow}>
                 <span className={styles.arkGridCardSectionName}>{group.name}</span>
-                <span className={styles.arkPointBadge}>{point}P</span>
               </div>
 
               {group.rows.length ? (
@@ -44,8 +42,8 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
                         alt=""
                         onError={replaceWithPlaceholder}
                       />
-                      <span className={styles.arkGridCoreType}>{row.coreName}</span>
                       <div className={styles.arkGridCardInfo}>
+                        <span className={styles.arkGridCoreType}>{row.coreName}</span>
                         <strong className={styles.arkGridCardName}>{displayValue(row.item.name)}</strong>
                         <div className={styles.arkGridCardBadges}>
                           {row.item.grade ? <span>{displayValue(row.item.grade)}</span> : null}

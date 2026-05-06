@@ -1668,7 +1668,7 @@
 
 .arkGridCoreRow {
   display: grid;
-  grid-template-columns: 40px 34px minmax(0, 1fr) auto;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: center;
   min-width: 0;
@@ -1680,7 +1680,7 @@
 
 .arkGridCoreType {
   color: var(--gold);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 950;
 }
 
@@ -2190,7 +2190,7 @@
   }
 
   .arkGridCoreRow {
-    grid-template-columns: 38px 30px minmax(0, 1fr) auto;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
   }
 }
 
