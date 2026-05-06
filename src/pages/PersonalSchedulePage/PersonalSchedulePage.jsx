@@ -7,8 +7,6 @@ import styles from "./PersonalSchedulePage.module.css";
 registerLocale("ko", ko);
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
-const SHEET_EPOCH_UTC = Date.UTC(1899, 11, 30);
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const SORT_OPTIONS = {
   latest: "최신순",
@@ -334,14 +332,7 @@ function parseLocalDateString(dateString) {
 }
 
 function formatScheduleDateLabel(dateString) {
-  const parsed = parsePersonalDateParts(dateString);
-  if (!parsed) return String(dateString || "날짜 확인 필요");
-
-  const { year, month, day } = parsed;
-  const localDate = new Date(year, month - 1, day);
-  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-
-  return `${month}월 ${day}일 (${weekdays[localDate.getDay()]})`;
+  return normalizePersonalDate(dateString) || "날짜 확인 필요";
 }
 
 function formatScheduleDateTimeValue(dateString) {
@@ -388,13 +379,11 @@ function parsePersonalDateParts(value) {
     return getValidDateParts(Number(gvizMatch[1]), Number(gvizMatch[2]) + 1, Number(gvizMatch[3]));
   }
 
-  const isoTimestampMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T/);
+  const isoTimestampMatch = text.match(/^\d{4}-\d{1,2}-\d{1,2}T/);
   if (isoTimestampMatch) {
-    return getValidDateParts(
-      Number(isoTimestampMatch[1]),
-      Number(isoTimestampMatch[2]),
-      Number(isoTimestampMatch[3]),
-    );
+    const date = new Date(text);
+    if (Number.isNaN(date.getTime())) return null;
+    return getValidDateParts(date.getFullYear(), date.getMonth() + 1, date.getDate());
   }
 
   const yearFirstMatch = text.match(/^(\d{4})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})\.?$/);
@@ -433,8 +422,9 @@ function parsePersonalDateParts(value) {
 }
 
 function serialDateToParts(serialNumber) {
-  const utcDate = new Date(SHEET_EPOCH_UTC + Math.floor(serialNumber) * DAY_IN_MS);
-  return getValidDateParts(utcDate.getUTCFullYear(), utcDate.getUTCMonth() + 1, utcDate.getUTCDate());
+  const date = new Date(1899, 11, 30);
+  date.setDate(date.getDate() + Math.floor(serialNumber));
+  return getValidDateParts(date.getFullYear(), date.getMonth() + 1, date.getDate());
 }
 
 function getValidDateParts(year, month, day) {
