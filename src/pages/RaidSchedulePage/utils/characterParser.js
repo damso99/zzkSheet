@@ -49,6 +49,7 @@ function normalizeEquipment(equipment) {
       const icon = normalizeIconUrl(item.Icon);
       const category = getEquipmentCategory(type, name);
       const isStone = isAbilityStone(type, name);
+      const isOrbItem = isOrb(type, name);
       const abilityStoneLines = isStone ? getTooltipLines(item.Tooltip, { preserveBracketText: true }) : [];
 
       return {
@@ -63,6 +64,7 @@ function normalizeEquipment(equipment) {
         enhancement: extractEnhancement(item.Name),
         options: getEquipmentOptions({ category, name, type, tooltipLines }),
         abilityStone: isStone ? parseAbilityStoneDetail(abilityStoneLines, { name, icon }) : null,
+        orb: isOrbItem ? parseOrbDetail(tooltipLines, { name, icon }) : null,
       };
     });
 }
@@ -384,6 +386,38 @@ function cleanTooltipLine(value, { preserveBracketText = false } = {}) {
 
 function isAbilityStone(type, name) {
   return /어빌리티\s*스톤|스톤/.test(`${type} ${name}`);
+}
+
+function isOrb(type, name) {
+  return /보주/.test(`${type} ${name}`);
+}
+
+export function parseOrbDetail(tooltipLines, { name = "", icon = "" } = {}) {
+  const paradisePower = tooltipLines
+    .map(cleanTooltipLine)
+    .filter(Boolean)
+    .flatMap((line) => splitOptionCandidates(line))
+    .map(normalizeParadisePowerLine)
+    .find(Boolean);
+
+  return {
+    name,
+    icon,
+    paradisePower: paradisePower || "",
+  };
+}
+
+function normalizeParadisePowerLine(line) {
+  const text = cleanTooltipLine(line);
+  if (!/낙원력/.test(text)) return "";
+
+  const normalizedText = text.replace(/\s*:\s*/g, " : ").replace(/\s+/g, " ").trim();
+  if (/시즌\s*\d+/.test(normalizedText) && /달성\s*최대\s*낙원력/.test(normalizedText)) {
+    return normalizedText;
+  }
+
+  const value = normalizedText.match(/(\d{1,3}(?:,\d{3})+|\d+)/)?.[1] || "";
+  return value ? `시즌2 달성 최대 낙원력 : ${value}` : normalizedText;
 }
 
 function splitOptionCandidates(line) {

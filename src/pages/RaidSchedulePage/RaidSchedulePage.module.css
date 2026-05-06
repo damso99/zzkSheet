@@ -1256,6 +1256,34 @@
   box-shadow: 0 0 16px rgba(255, 94, 117, 0.14);
 }
 
+.orbCard {
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: center;
+  min-height: 78px;
+  border-color: rgba(255, 122, 48, 0.26);
+  background:
+    linear-gradient(135deg, rgba(205, 77, 18, 0.2), transparent 48%),
+    linear-gradient(180deg, rgba(22, 18, 14, 0.82), rgba(8, 9, 14, 0.88));
+}
+
+.orbCard h4 {
+  margin: 0 0 5px;
+  color: #ff6b2c;
+  font-size: 0.9rem;
+  font-weight: 950;
+  line-height: 1.25;
+  text-shadow: 0 0 12px rgba(255, 106, 44, 0.18);
+}
+
+.orbPowerLine {
+  margin: 0;
+  color: #d7d3cc;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .equipmentOptions {
   margin-top: 11px;
   padding-top: 10px;

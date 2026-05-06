@@ -45,6 +45,10 @@ function EquipmentCard({ item, styles }) {
     return <AbilityStoneCard item={item} styles={styles} />;
   }
 
+  if (isOrbItem(item)) {
+    return <OrbCard item={item} styles={styles} />;
+  }
+
   return <NormalEquipmentCard item={item} styles={styles} />;
 }
 
@@ -162,8 +166,31 @@ function AbilityStoneCard({ item, styles }) {
   );
 }
 
+function OrbCard({ item, styles }) {
+  const paradisePower = item.orb?.paradisePower || "낙원력 정보 없음";
+
+  return (
+    <article className={`${styles.equipmentCard} ${styles.orbCard}`}>
+      <img
+        className={styles.itemIcon}
+        src={item.icon || CHARACTER_PLACEHOLDER_IMAGE}
+        alt=""
+        onError={replaceWithPlaceholder}
+      />
+      <div className={styles.itemBody}>
+        <h4>{displayValue(item.name)}</h4>
+        <p className={styles.orbPowerLine}>{paradisePower}</p>
+      </div>
+    </article>
+  );
+}
+
 function isAbilityStoneItem(item) {
   return /어빌리티\s*스톤|스톤/.test(`${item?.type || ""} ${item?.name || ""}`);
+}
+
+function isOrbItem(item) {
+  return /보주/.test(`${item?.type || ""} ${item?.name || ""}`);
 }
 
 function isAccessoryItem(item) {
