@@ -643,9 +643,34 @@
   text-shadow: 0 0 14px rgba(85, 167, 255, 0.35);
 }
 
-.dayHeader > span:not(.dayTitle) {
+.dayHeaderMeta {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.dayHeaderMeta > span:last-child {
   color: var(--muted);
   font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.dayTimeBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid rgba(105, 230, 255, 0.24);
+  border-radius: 999px;
+  color: #d8f2ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: rgba(85, 167, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .dayGroup .cardGrid,

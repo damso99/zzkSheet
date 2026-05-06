@@ -8,6 +8,7 @@ export default function RaidCard({
   collapsible = false,
   isHighlighted = false,
   selectedOwnerName = "",
+  showTimeLabel = true,
 }) {
   const [isOpen, setIsOpen] = useState(!collapsible);
 
@@ -35,7 +36,7 @@ export default function RaidCard({
     >
       <header className={styles.cardHeader}>
         <div>
-          <span className={styles.raidTimeLabel}>{raid.time || "-"}</span>
+          {showTimeLabel ? <span className={styles.raidTimeLabel}>{raid.time || "시간 미정"}</span> : null}
           <h3>{raid.raidName}</h3>
         </div>
         <div className={styles.cardHeaderActions}>

@@ -62,8 +62,8 @@ export default function RaidSchedulePage() {
         });
         setErrorMessage(
           error instanceof Error
-            ? `시트 로딩에 실패했지만 임시 데이터를 보여주고 있습니다. ${error.message}`
-            : "시트 로딩에 실패했지만 임시 데이터를 보여주고 있습니다.",
+            ? `시트 로딩에 실패했습니다. 잠시 후 다시 시도해주세요. ${error.message}`
+            : "시트 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.",
         );
       } finally {
         if (!ignore) setIsLoading(false);
@@ -90,7 +90,7 @@ export default function RaidSchedulePage() {
     return [...new Set(ownerNames)];
   }, [todayRaids]);
 
-  const groupedRaids = useMemo(() => groupRaidsByDate(raids), [raids]);
+  const groupedRaids = useMemo(() => groupItemsByDateAndTime(raids), [raids]);
 
   const searchResults = useMemo(() => {
     if (!deferredSearchQuery) return [];
@@ -115,7 +115,12 @@ export default function RaidSchedulePage() {
     );
   }, [deferredSearchQuery, raids]);
 
-  const searchGroups = useMemo(() => groupSearchResults(searchResults), [searchResults]);
+  const searchGroups = useMemo(() => groupItemsByDateAndTime(searchResults), [searchResults]);
+
+  const sortedTodayRaids = useMemo(
+    () => [...todayRaids].sort(compareRaidTime),
+    [todayRaids],
+  );
 
   return (
     <div className={styles.page}>
@@ -124,7 +129,7 @@ export default function RaidSchedulePage() {
         <header className={styles.hero}>
           <div>
             <p className={styles.eyebrow}>Lostark Weekly Planner</p>
-            <h1>레이드 일정</h1>
+            <h1>레이드 일정표</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
               <span>{sourceMeta.isFallback ? "Disconnected" : "Connected"}</span>
@@ -188,11 +193,11 @@ export default function RaidSchedulePage() {
               onSelectOwnerName={setSelectedOwnerName}
               styles={styles}
             />
-            {todayRaids.length === 0 ? (
+            {sortedTodayRaids.length === 0 ? (
               <StatePanel styles={styles} message="금일 일정이 없습니다." />
             ) : (
               <div className={styles.cardGrid}>
-                {todayRaids.sort(compareRaidTime).map((raid) => {
+                {sortedTodayRaids.map((raid) => {
                   const isHighlighted =
                     Boolean(selectedOwnerName) &&
                     raid.participants.some((participant) => participant.ownerName === selectedOwnerName);
@@ -216,20 +221,24 @@ export default function RaidSchedulePage() {
 
         {!isLoading && activeTab === "week" ? (
           <section className={styles.section}>
-            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="레이드캘린더 기준 전체 일정" />
+            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="주간 레이드 일정" />
             <div className={styles.weekSearchBox}>
               <RaidSearch value={searchQuery} onChange={setSearchQuery} styles={styles} />
             </div>
+
             {deferredSearchQuery ? (
-              searchResults.length === 0 ? (
+              searchGroups.length === 0 ? (
                 <StatePanel styles={styles} message="검색 결과가 없습니다." />
               ) : (
                 <div className={styles.weekStack}>
                   {searchGroups.map((group) => (
-                    <details key={group.date} className={styles.dayGroup}>
+                    <details key={group.id} className={styles.dayGroup}>
                       <summary className={styles.dayHeader}>
-                        <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
-                        <span>{group.items.length}개 결과</span>
+                        <span className={styles.dayTitle}>{group.label}</span>
+                        <span className={styles.dayHeaderMeta}>
+                          <span className={styles.dayTimeBadge}>{formatGroupTime(group)}</span>
+                          <span>{group.items.length}개 결과</span>
+                        </span>
                       </summary>
                       <div className={styles.searchResults}>
                         {group.items.map((item) => (
@@ -239,7 +248,7 @@ export default function RaidSchedulePage() {
                             </div>
                             <div className={styles.searchInlineMeta}>
                               <div className={styles.searchInlineField}>
-                                <span>참여 캐릭</span>
+                                <span>참여 캐릭터</span>
                                 <button
                                   type="button"
                                   className={styles.searchCharacterButton}
@@ -249,7 +258,7 @@ export default function RaidSchedulePage() {
                                 </button>
                               </div>
                               <div className={styles.searchInlineField}>
-                                <span>주인명</span>
+                                <span>주인</span>
                                 <strong>{item.ownerName}</strong>
                               </div>
                             </div>
@@ -265,18 +274,22 @@ export default function RaidSchedulePage() {
             ) : (
               <div className={styles.weekStack}>
                 {groupedRaids.map((group) => (
-                  <details key={group.date} className={styles.dayGroup}>
+                  <details key={group.id} className={styles.dayGroup}>
                     <summary className={styles.dayHeader}>
-                      <span className={styles.dayTitle}>{formatGroupTitle(group)}</span>
-                      <span>{group.raids.length}개 일정</span>
+                      <span className={styles.dayTitle}>{group.label}</span>
+                      <span className={styles.dayHeaderMeta}>
+                        <span className={styles.dayTimeBadge}>{formatGroupTime(group)}</span>
+                        <span>{group.items.length}개 일정</span>
+                      </span>
                     </summary>
                     <div className={styles.cardGrid}>
-                      {group.raids.map((raid) => (
+                      {group.items.map((raid) => (
                         <RaidCard
                           key={raid.id}
                           raid={raid}
                           styles={styles}
                           onCharacterClick={setSelectedCharacterName}
+                          showTimeLabel={false}
                         />
                       ))}
                     </div>
@@ -347,78 +360,55 @@ function StatePanel({ styles, message }) {
   );
 }
 
-function groupRaidsByDate(raids) {
+function groupItemsByDateAndTime(items) {
   const groups = new Map();
 
-  raids.slice().sort(compareRaidTime).forEach((raid) => {
-    const key = raid.date || "미지정";
-    if (!groups.has(key)) {
-      groups.set(key, {
-        date: key,
-        label: raid.date ? formatDateLabel(raid.date) : "미지정",
-        raids: [],
-      });
-    }
+  items
+    .slice()
+    .sort(compareRaidTime)
+    .forEach((item) => {
+      const dateKey = item.date || "unscheduled";
+      const timeKey = item.time || "";
+      const key = `${dateKey}|${timeKey}`;
 
-    groups.get(key).raids.push(raid);
-  });
+      if (!groups.has(key)) {
+        groups.set(key, {
+          date: dateKey,
+          id: key,
+          label: item.date ? formatDateLabel(item.date) : "미지정",
+          time: timeKey,
+          items: [],
+        });
+      }
 
-  return Array.from(groups.values()).map((group) => ({
-    ...group,
-    startTime: getFirstStartTime(group.raids),
-  }));
-}
+      groups.get(key).items.push(item);
+    });
 
-function groupSearchResults(items) {
-  const groups = new Map();
-
-  items.slice().sort(compareSearchResult).forEach((item) => {
-    const key = item.date || "미지정";
-    if (!groups.has(key)) {
-      groups.set(key, {
-        date: key,
-        label: item.date ? formatDateLabel(item.date) : "미지정",
-        items: [],
-      });
-    }
-    groups.get(key).items.push(item);
-  });
-
-  return Array.from(groups.values()).map((group) => ({
-    ...group,
-    startTime: getFirstStartTime(group.items),
-  }));
+  return Array.from(groups.values()).sort((left, right) =>
+    `${left.date} ${left.time || "99:99"}`.localeCompare(`${right.date} ${right.time || "99:99"}`),
+  );
 }
 
 function countUniqueCharacters(raids) {
   const names = new Set();
+
   raids.forEach((raid) => {
     raid.participants.forEach((participant) => {
       if (participant.characterName) names.add(participant.characterName);
     });
   });
+
   return names.size;
 }
 
 function compareRaidTime(left, right) {
-  return `${left.date || "9999-12-31"} ${left.time || "99:99"}`.localeCompare(
-    `${right.date || "9999-12-31"} ${right.time || "99:99"}`,
+  return `${left.date || "9999-12-31"} ${left.time || "99:99"} ${left.raidName || ""}`.localeCompare(
+    `${right.date || "9999-12-31"} ${right.time || "99:99"} ${right.raidName || ""}`,
   );
 }
 
-function compareSearchResult(left, right) {
-  return compareRaidTime(left, right);
-}
-
-function getFirstStartTime(items) {
-  return items
-    .map((item) => item.time)
-    .filter(Boolean)
-    .sort((left, right) => left.localeCompare(right))[0] || "";
-}
-
-function formatGroupTitle(group) {
-  return group.startTime ? `${group.label} · ${group.startTime}` : group.label;
+function formatGroupTime(group) {
+  return group.time || "시간 미정";
 }
 
 function formatFetchedAt(value) {

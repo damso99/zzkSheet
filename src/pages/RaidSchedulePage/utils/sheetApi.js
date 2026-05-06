@@ -5,23 +5,20 @@ export const DEFAULT_TARGET_GID = "57930127";
 
 const SHEET_GIDS = {
   setting: "279415455",
-  calendar: "521341679",
   raidCalendar: "57930127",
 };
 
 export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, targetGid = DEFAULT_TARGET_GID } = {}) {
   const targetSheetUrl = ensureGid(sheetUrl, targetGid);
 
-  const [raidCalendarSheet, calendarSheet, settingSheet] = await Promise.all([
+  const [raidCalendarSheet, settingSheet] = await Promise.all([
     fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.raidCalendar }),
-    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.calendar }),
     fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.setting }),
   ]);
 
   return {
     fetchedAt: new Date().toISOString(),
     raidCalendarRows: raidCalendarSheet.rows || [],
-    calendarRows: calendarSheet.rows || [],
     settingRows: settingSheet.rows || [],
     sourceUrl: targetSheetUrl,
     targetGid,

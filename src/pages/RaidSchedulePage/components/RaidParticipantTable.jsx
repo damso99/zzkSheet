@@ -1,6 +1,6 @@
 export default function RaidParticipantTable({ participants, styles, onCharacterClick, selectedOwnerName = "" }) {
   if (!participants.length) {
-    return <p className={styles.emptyParticipants}>참여자 정보가 없습니다.</p>;
+    return <p className={styles.emptyParticipants}>참여 정보가 없습니다.</p>;
   }
 
   return (
@@ -59,7 +59,7 @@ export default function RaidParticipantTable({ participants, styles, onCharacter
                 className: styles.mobileCharacterNameButton,
               })}
               <p>
-                <span>{participant.ownerName}</span>
+                <span>주인 {participant.ownerName}</span>
                 <span>Lv.{participant.level}</span>
                 <span>전투력 {participant.power}</span>
               </p>
