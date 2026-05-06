@@ -13,10 +13,8 @@ export default function CharacterEquipmentGrid({ equipment = [], engravings = []
   return (
     <div className={styles.equipmentStack}>
       <div className={styles.equipmentLayout}>
-        <EquipmentSection title="장비" items={gearItems} styles={styles} emptyMessage="장비 정보 없음" />
-        <div className={styles.equipmentSideColumn}>
-          <EquipmentSection title="악세서리" items={accessoryItems} styles={styles} emptyMessage="악세서리 정보 없음" />
-          <EquipmentSection title="팔찌" items={braceletItems} styles={styles} emptyMessage="팔찌 정보 없음" />
+        <div className={styles.equipmentMainColumn}>
+          <EquipmentSection title="장비" items={gearItems} styles={styles} emptyMessage="장비 정보 없음" />
           {engravings.length ? (
             <section className={styles.equipmentEngravingSection}>
               <header className={styles.equipmentSectionHeader}>
@@ -28,6 +26,10 @@ export default function CharacterEquipmentGrid({ equipment = [], engravings = []
               <CharacterEngravingList engravings={engravings} styles={styles} />
             </section>
           ) : null}
+        </div>
+        <div className={styles.equipmentSideColumn}>
+          <EquipmentSection title="악세서리" items={accessoryItems} styles={styles} emptyMessage="악세서리 정보 없음" />
+          <EquipmentSection title="팔찌" items={braceletItems} styles={styles} emptyMessage="팔찌 정보 없음" />
         </div>
       </div>
     </div>

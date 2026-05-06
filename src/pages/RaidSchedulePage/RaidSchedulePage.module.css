@@ -1066,6 +1066,7 @@
   align-items: start;
 }
 
+.equipmentMainColumn,
 .equipmentSideColumn {
   display: grid;
   gap: 14px;

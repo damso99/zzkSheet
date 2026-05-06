@@ -262,11 +262,24 @@ function normalizeArkGrid(arkGridPayload) {
 
 function normalizeArkGridSlot(slot) {
   const name = displayValue(slot?.Name || slot?.name);
-  const sectionName = detectArkGridSectionName(name);
+  const categoryText = [
+    slot?.Type,
+    slot?.type,
+    slot?.Category,
+    slot?.category,
+    slot?.Title,
+    slot?.title,
+    name,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const sectionName = detectArkGridSectionName(categoryText);
+  const coreName = detectArkGridCoreName(categoryText);
 
   return {
     raw: slot,
     name,
+    coreName,
     sectionName,
     point: displayValue(slot?.Point ?? slot?.point ?? ""),
     grade: displayValue(slot?.Grade || slot?.grade),
@@ -293,19 +306,31 @@ function buildArkGridSections(slots) {
   const sectionMap = new Map();
 
   for (const slot of slots) {
-    const key = normalizeArkSectionName(slot.sectionName || "기타");
+    const sectionName = slot.sectionName || "기타";
+    const coreName = slot.coreName || "";
+    const key = normalizeArkSectionName([sectionName, coreName].filter(Boolean).join(" "));
     if (!sectionMap.has(key)) sectionMap.set(key, []);
     sectionMap.get(key).push(slot);
   }
 
-  const order = ["질서의", "혼돈의", "기타"];
+  const order = [
+    "질서의 해",
+    "질서의 달",
+    "질서의 별",
+    "혼돈의 해",
+    "혼돈의 달",
+    "혼돈의 별",
+    "질서의",
+    "혼돈의",
+    "기타",
+  ].map(normalizeArkSectionName);
   const keys = [...new Set([...order, ...sectionMap.keys()])];
 
   return keys
     .map((key) => {
       const items = sectionMap.get(key) || [];
       if (!items.length) return null;
-      return { key, name: key, items };
+      return { key, name: formatArkGridSectionName(items[0], key), items };
     })
     .filter(Boolean);
 }
@@ -314,6 +339,19 @@ function detectArkGridSectionName(name) {
   if (/질서의/.test(name)) return "질서의";
   if (/혼돈의/.test(name)) return "혼돈의";
   return "기타";
+}
+
+function detectArkGridCoreName(value) {
+  const text = displayValue(stripHtml(value));
+  if (/해/.test(text)) return "해";
+  if (/달/.test(text)) return "달";
+  if (/별/.test(text)) return "별";
+  return "";
+}
+
+function formatArkGridSectionName(slot, fallbackKey) {
+  const names = [slot?.sectionName, slot?.coreName].filter(Boolean);
+  return names.length ? names.join(" ") : fallbackKey;
 }
 
 function extractNumericText(value) {

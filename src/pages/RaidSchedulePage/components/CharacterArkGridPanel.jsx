@@ -1,6 +1,6 @@
 import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
 
-const SECTION_ORDER = ["질서", "혼돈"];
+const SECTION_ORDER = ["질서의 해", "질서의 달", "질서의 별", "혼돈의 해", "혼돈의 달", "혼돈의 별"];
 
 export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
   const sections = Array.isArray(arkGrid.sections) ? arkGrid.sections : [];
@@ -10,7 +10,7 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
     return <p className={styles.modalEmpty}>정보 없음</p>;
   }
 
-  const sectionMap = new Map(sections.map((section) => [normalizeSectionName(section.name), section]));
+  const displaySections = orderArkGridSections(sections);
   const totalPoint = sections.reduce((sum, section) => sum + formatTotalPoint(section.items), 0);
 
   return (
@@ -24,14 +24,13 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
       </header>
 
       <div className={styles.arkGridCardGrid}>
-        {SECTION_ORDER.map((sectionName) => {
-          const section = findSectionByName(sectionMap, sectionName);
+        {displaySections.map((section) => {
           const representativeItem = section?.items?.[0] || null;
           const point = formatTotalPoint(section?.items);
           return (
-            <article key={sectionName} className={styles.arkGridCard}>
+            <article key={section.key || section.name} className={styles.arkGridCard}>
               <div className={styles.arkGridCardTopRow}>
-                <span className={styles.arkGridCardSectionName}>{sectionName}</span>
+                <span className={styles.arkGridCardSectionName}>{displayValue(section.name)}</span>
                 <span className={styles.arkPointBadge}>{point}P</span>
               </div>
 
@@ -107,13 +106,13 @@ function normalizeSectionName(value) {
   return String(value ?? "").replace(/\s+/g, "").trim();
 }
 
-function findSectionByName(sectionMap, sectionName) {
-  const normalizedName = normalizeSectionName(sectionName);
-  return (
-    sectionMap.get(normalizedName) ||
-    [...sectionMap.entries()].find(([key]) => key.includes(normalizedName) || normalizedName.includes(key))?.[1] ||
-    null
-  );
+function orderArkGridSections(sections) {
+  const sectionMap = new Map(sections.map((section) => [normalizeSectionName(section.name), section]));
+  const orderedSections = SECTION_ORDER.map((name) => sectionMap.get(normalizeSectionName(name))).filter(Boolean);
+  const orderedKeys = new Set(orderedSections.map((section) => normalizeSectionName(section.name)));
+  const extraSections = sections.filter((section) => !orderedKeys.has(normalizeSectionName(section.name)));
+
+  return [...orderedSections, ...extraSections];
 }
 
 function replaceWithPlaceholder(event) {
