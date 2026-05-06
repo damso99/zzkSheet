@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ko } from "date-fns/locale";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/style.css";
 import styles from "./PersonalSchedulePage.module.css";
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
@@ -18,12 +21,20 @@ export default function PersonalSchedulePage() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [items, setItems] = useState([]);
   const [sortMode, setSortMode] = useState("latest");
+  const [selectedFilterDate, setSelectedFilterDate] = useState(() => new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const filterDatePickerRef = useRef(null);
 
   const sortedItems = useMemo(() => sortPersonalSchedules(items, sortMode), [items, sortMode]);
+  const selectedFilterDateIso = useMemo(() => formatDateForInput(selectedFilterDate), [selectedFilterDate]);
+  const filteredItems = useMemo(
+    () => sortedItems.filter((item) => item.date === selectedFilterDateIso),
+    [selectedFilterDateIso, sortedItems],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -31,6 +42,17 @@ export default function PersonalSchedulePage() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    function handlePointerDown(event) {
+      if (!filterDatePickerRef.current?.contains(event.target)) {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    if (isCalendarOpen) document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isCalendarOpen]);
 
   async function loadPersonalSchedules({ signal, silent = false } = {}) {
     if (!silent) {
@@ -114,6 +136,12 @@ export default function PersonalSchedulePage() {
     }));
   }
 
+  function handleFilterDateSelect(date) {
+    if (!date) return;
+    setSelectedFilterDate(date);
+    setIsCalendarOpen(false);
+  }
+
   return (
     <main className={styles.page}>
       <div className={styles.backdrop} />
@@ -182,25 +210,49 @@ export default function PersonalSchedulePage() {
           <div className={styles.panelHeader}>
             <div>
               <h2>개인일정 목록</h2>
-              <p>Google Sheet 개인일정 탭에서 읽어온 목록입니다.</p>
+              <p>{formatDateLabel(selectedFilterDateIso)}에 등록된 개인일정입니다.</p>
             </div>
-            <label className={styles.sortSelect}>
-              <span>정렬</span>
-              <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
-                {Object.entries(SORT_OPTIONS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className={styles.panelControls}>
+              <label className={styles.datePickerField} ref={filterDatePickerRef}>
+                <span>조회 날짜</span>
+                <button
+                  type="button"
+                  className={styles.datePickerButton}
+                  onClick={() => setIsCalendarOpen((current) => !current)}
+                  aria-expanded={isCalendarOpen}
+                >
+                  <CalendarIcon />
+                  <strong>{formatDateButtonLabel(selectedFilterDate)}</strong>
+                </button>
+                {isCalendarOpen ? (
+                  <div className={styles.calendarPopover}>
+                    <DayPicker
+                      mode="single"
+                      selected={selectedFilterDate}
+                      onSelect={handleFilterDateSelect}
+                      locale={ko}
+                    />
+                  </div>
+                ) : null}
+              </label>
+              <label className={styles.sortSelect}>
+                <span>정렬</span>
+                <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+                  {Object.entries(SORT_OPTIONS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
 
           {isLoading ? (
             <div className={styles.emptyState}>개인일정을 불러오는 중입니다.</div>
-          ) : sortedItems.length ? (
+          ) : filteredItems.length ? (
             <div className={styles.scheduleList}>
-              {sortedItems.map((item) => (
+              {filteredItems.map((item) => (
                 <article key={item.id} className={styles.scheduleCard}>
                   <time dateTime={item.date}>{formatDateLabel(item.date)}</time>
                   <strong>{item.name || "이름 없음"}</strong>
@@ -209,7 +261,7 @@ export default function PersonalSchedulePage() {
               ))}
             </div>
           ) : (
-            <div className={styles.emptyState}>개인일정이 없습니다.</div>
+            <div className={styles.emptyState}>선택한 날짜의 개인일정이 없습니다.</div>
           )}
         </section>
       </div>
@@ -273,6 +325,22 @@ function normalizeDateTime(value) {
   return date.toISOString();
 }
 
+function formatDateForInput(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatDateButtonLabel(date) {
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+}
+
 function formatDateLabel(value) {
   if (!value) return "날짜 없음";
 
@@ -285,6 +353,21 @@ function formatDateLabel(value) {
   } catch {
     return value;
   }
+}
+
+function CalendarIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={styles.calendarIcon}>
+      <path
+        d="M7 2.75v2.5M17 2.75v2.5M3.75 9.25h16.5M6.25 5.25h11.5a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5H6.25a2.5 2.5 0 0 1-2.5-2.5v-10a2.5 2.5 0 0 1 2.5-2.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
 }
 
 async function readJsonSafely(response) {
