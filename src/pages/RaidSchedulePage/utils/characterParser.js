@@ -157,7 +157,18 @@ function buildEngravingImageMap(engravingsPayload = {}, normalizedItems = []) {
     ...asArray(engravingsPayload?.ArkPassiveEffects),
     ...normalizedItems.map((item) => ({
       Name: item.Name || item.name || "",
-      Icon: item.apiIconUrl || item.Icon || item.icon || item.IconUrl || item.iconUrl || item.Image || item.image || "",
+      Icon:
+        item.realApiIconUrl ||
+        item.apiIconUrl ||
+        item.tooltipIconUrl ||
+        item.effectIconUrl ||
+        item.Icon ||
+        item.icon ||
+        item.IconUrl ||
+        item.iconUrl ||
+        item.Image ||
+        item.image ||
+        "",
       Grade: item.Grade || item.grade || "",
     })),
   ]
@@ -165,7 +176,10 @@ function buildEngravingImageMap(engravingsPayload = {}, normalizedItems = []) {
       const name = displayValue(stripHtml(item?.Name || item?.name || item?.EngravingName || item?.Title || ""));
       const normalizedName = normalizeEngravingName(name);
       const icon = normalizeOptionalIconUrl(
+        item?.realApiIconUrl ||
         item?.apiIconUrl ||
+          item?.tooltipIconUrl ||
+          item?.effectIconUrl ||
           item?.Icon ||
           item?.icon ||
           item?.Effect?.Icon ||
@@ -276,6 +290,13 @@ function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Ma
   );
   const grade = displayValue(engraving.Grade || engraving.grade);
   const directIcon = getDirectEngravingIcon(engraving);
+  const tooltipIconUrl = normalizeOptionalIconUrl(
+    extractIconFromTooltip(engraving.Tooltip || engraving.tooltip || engraving.Description || engraving.description),
+  );
+  const effectIconUrl = normalizeOptionalIconUrl(
+    engraving.Effect?.Icon || engraving.effect?.icon || engraving.Effect?.icon || engraving.effect?.Icon || "",
+  );
+  const realApiIconUrl = directIcon || tooltipIconUrl || effectIconUrl || "";
   const tooltip = String(engraving.Tooltip || engraving.tooltip || "");
 
   return {
@@ -289,15 +310,18 @@ function normalizeEngravingItem(engraving, fallbackDescription, iconMap = new Ma
     Description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
     description: stripHtml(engraving.Description || engraving.description || fallbackDescription),
     Tooltip: tooltip,
-      tooltip,
-      Effect: engraving.Effect || engraving.effect || null,
-      effect: engraving.effect || engraving.Effect || null,
-      apiIconUrl: directIcon,
-      Icon: normalizeOptionalIconUrl(engraving.Icon),
-      icon: directIcon,
-      IconUrl: normalizeOptionalIconUrl(engraving.IconUrl || engraving.iconUrl),
-      iconUrl: normalizeOptionalIconUrl(engraving.iconUrl || engraving.IconUrl),
-      Image: normalizeOptionalIconUrl(engraving.Image || engraving.image),
+    tooltip,
+    Effect: engraving.Effect || engraving.effect || null,
+    effect: engraving.effect || engraving.Effect || null,
+    apiIconUrl: directIcon,
+    realApiIconUrl,
+    tooltipIconUrl,
+    effectIconUrl,
+    Icon: normalizeOptionalIconUrl(engraving.Icon),
+    icon: directIcon,
+    IconUrl: normalizeOptionalIconUrl(engraving.IconUrl || engraving.iconUrl),
+    iconUrl: normalizeOptionalIconUrl(engraving.iconUrl || engraving.IconUrl),
+    Image: normalizeOptionalIconUrl(engraving.Image || engraving.image),
     image: normalizeOptionalIconUrl(engraving.image || engraving.Image),
     ImageUrl: normalizeOptionalIconUrl(engraving.ImageUrl || engraving.imageUrl),
     imageUrl: normalizeOptionalIconUrl(engraving.imageUrl || engraving.ImageUrl),
@@ -505,6 +529,7 @@ function logEngravingSourceDebug({ payload, items, imageMap }) {
     level: item?.Level ?? item?.level ?? "",
     grade: item?.Grade ?? item?.grade ?? "",
     apiIconUrl: item?.apiIconUrl ?? "",
+    realApiIconUrl: item?.realApiIconUrl ?? "",
     iconFields: {
       Icon: item?.Icon ?? "",
       icon: item?.icon ?? "",
@@ -514,6 +539,8 @@ function logEngravingSourceDebug({ payload, items, imageMap }) {
       image: item?.image ?? "",
       ImageUrl: item?.ImageUrl ?? "",
       imageUrl: item?.imageUrl ?? "",
+      tooltipIconUrl: item?.tooltipIconUrl ?? "",
+      effectIconUrl: item?.effectIconUrl ?? "",
       EffectIcon: item?.Effect?.Icon ?? item?.effect?.icon ?? "",
     },
     tooltipKeys: typeof item?.Tooltip === "string" ? ["Tooltip"] : [],

@@ -33,41 +33,45 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
   useEffect(() => {
     if (!isDevMode()) return;
 
-    const fallbackItems = [];
     const rows = engravings.map((engraving) => {
       const engravingName = getEngravingName(engraving);
-      const apiIconUrl = getDirectApiIconUrl(engraving);
-      const mapIconUrl = getMappedIconUrl(engravingName, engravingImageMap);
-      const hardcodedIconUrl = getHardcodedIconUrl(engravingName);
-      const finalIconUrl = resolveEngravingIconUrl(engraving, engravingImageMap, sharedApiIconUrl);
+      const apiIcon = getRealApiIconUrl(engraving);
+      const fallbackIcon = getHardcodedIconUrl(engravingName);
+      const mapIcon = getMappedIconUrl(engravingName, engravingImageMap);
+      const finalIcon = getFinalIconUrl(engraving, engravingImageMap, sharedApiIconUrl);
+      const source = getIconSource(finalIcon, { apiIcon, mapIcon, fallbackIcon, sharedApiIconUrl });
 
-      console.log("[lostark engravings] engraving object", engraving);
-
-      if (!finalIconUrl) {
-        fallbackItems.push(engravingName || "(empty)");
-      }
+      console.log(`[engraving-icon] ${engravingName || "(empty)"}`, {
+        engraving,
+        apiIcon,
+        mapIcon,
+        fallbackIcon,
+        finalIcon,
+        renderedSrc: finalIcon || DEFAULT_ENGRAVING_ICON_SRC,
+        source,
+      });
 
       return {
         name: engravingName || "(empty)",
-        apiIconUrl: apiIconUrl || "",
-        mapIconUrl: mapIconUrl || "",
-        hardcodedIconUrl: hardcodedIconUrl || "",
-        finalIconUrl: finalIconUrl || DEFAULT_ENGRAVING_ICON_SRC,
-        source: getIconSourceLabel({
-          apiIconUrl,
-          mapIconUrl,
-          hardcodedIconUrl,
-          sharedApiIconUrl,
-        }),
+        apiIcon,
+        mapIcon,
+        fallbackIcon,
+        finalIcon: finalIcon || DEFAULT_ENGRAVING_ICON_SRC,
+        source,
       };
     });
 
+    const apiCount = rows.filter((row) => row.source === "api").length;
+    const fallbackCount = rows.filter((row) => row.source === "fallback").length;
+    const defaultCount = rows.filter((row) => row.source === "default").length;
+
     console.table(rows);
     console.log("[lostark engravings] ENGRAVING_ICON_MAP keys", Object.keys(ENGRAVING_ICON_MAP));
-
-    if (fallbackItems.length) {
-      console.warn("[lostark engravings] fallback engravings", fallbackItems);
-    }
+    console.log("[lostark engravings] source ratio", {
+      api: apiCount,
+      fallback: fallbackCount,
+      default: defaultCount,
+    });
   }, [engravings, engravingImageMap, sharedApiIconUrl]);
 
   if (!engravings.length) {
@@ -78,7 +82,7 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
     <div className={styles.engravingList}>
       {engravings.map((engraving, index) => {
         const engravingName = getEngravingName(engraving);
-        const iconUrl = resolveEngravingIconUrl(engraving, engravingImageMap, sharedApiIconUrl) || DEFAULT_ENGRAVING_ICON_SRC;
+        const iconUrl = getFinalIconUrl(engraving, engravingImageMap, sharedApiIconUrl) || DEFAULT_ENGRAVING_ICON_SRC;
         const level = formatEngravingLevel(engraving.Level ?? engraving.level);
 
         return (
@@ -103,45 +107,45 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
   );
 }
 
-function resolveEngravingIconUrl(engraving, engravingImageMap, sharedApiIconUrl) {
+function getFinalIconUrl(engraving, engravingImageMap, sharedApiIconUrl) {
   const engravingName = getEngravingName(engraving);
-  const apiIconUrl = getDirectApiIconUrl(engraving);
+  const realApiIconUrl = getRealApiIconUrl(engraving);
+  const mapIconUrl = getMappedIconUrl(engravingName, engravingImageMap);
+  const fallbackIconUrl = getHardcodedIconUrl(engravingName);
 
-  if (isUsableIconUrl(apiIconUrl) && apiIconUrl !== sharedApiIconUrl) {
-    return apiIconUrl;
+  if (isUsableIconUrl(realApiIconUrl) && realApiIconUrl !== sharedApiIconUrl) {
+    return realApiIconUrl;
   }
 
-  const mapIconUrl = getMappedIconUrl(engravingName, engravingImageMap);
   if (isUsableIconUrl(mapIconUrl)) {
     return mapIconUrl;
   }
 
-  const hardcodedIconUrl = getHardcodedIconUrl(engravingName);
-  if (isUsableIconUrl(hardcodedIconUrl)) {
-    return hardcodedIconUrl;
+  if (isUsableIconUrl(fallbackIconUrl)) {
+    return fallbackIconUrl;
   }
 
   return "";
 }
 
-function getIconSourceLabel({ apiIconUrl, mapIconUrl, hardcodedIconUrl, sharedApiIconUrl }) {
-  if (isUsableIconUrl(apiIconUrl) && apiIconUrl !== sharedApiIconUrl) return "api";
-  if (isUsableIconUrl(mapIconUrl)) return "api-map";
-  if (isUsableIconUrl(hardcodedIconUrl)) return "fallback-map";
-  return "default";
+function getIconSource(finalIconUrl, { apiIcon, mapIcon, fallbackIcon, sharedApiIconUrl }) {
+  if (isUsableIconUrl(apiIcon) && apiIcon !== sharedApiIconUrl && finalIconUrl === apiIcon) return "api";
+  if (isUsableIconUrl(mapIcon) && finalIconUrl === mapIcon) return "api";
+  if (isUsableIconUrl(fallbackIcon) && finalIconUrl === fallbackIcon) return "fallback";
+  if (!finalIconUrl) return "default";
+  return "api";
 }
 
-function getDirectApiIconUrl(engraving) {
+function getRealApiIconUrl(engraving) {
   return (
+    engraving?.realApiIconUrl ||
     engraving?.apiIconUrl ||
+    engraving?.tooltipIconUrl ||
+    engraving?.effectIconUrl ||
     engraving?.Icon ||
     engraving?.icon ||
     engraving?.IconUrl ||
     engraving?.iconUrl ||
-    engraving?.Image ||
-    engraving?.image ||
-    engraving?.ImageUrl ||
-    engraving?.imageUrl ||
     engraving?.Effect?.Icon ||
     engraving?.effect?.icon ||
     engraving?.Effect?.icon ||
@@ -153,11 +157,7 @@ function getDirectApiIconUrl(engraving) {
 function getMappedIconUrl(engravingName, engravingImageMap) {
   if (!engravingImageMap) return "";
 
-  return (
-    engravingImageMap.get(engravingName) ||
-    engravingImageMap.get(normalizeEngravingName(engravingName)) ||
-    ""
-  );
+  return engravingImageMap.get(engravingName) || engravingImageMap.get(normalizeEngravingName(engravingName)) || "";
 }
 
 function getHardcodedIconUrl(engravingName) {
@@ -165,7 +165,7 @@ function getHardcodedIconUrl(engravingName) {
 }
 
 function getSharedApiIconUrl(engravings = []) {
-  const icons = engravings.map((engraving) => getDirectApiIconUrl(engraving)).filter(Boolean);
+  const icons = engravings.map((engraving) => getRealApiIconUrl(engraving)).filter(Boolean);
   if (icons.length <= 1) return "";
 
   const uniqueIcons = [...new Set(icons)];
