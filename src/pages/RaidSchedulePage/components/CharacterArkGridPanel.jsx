@@ -12,8 +12,6 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
   }
 
   const groupedSections = groupArkGridSections(sections);
-  const totalPoint = sections.reduce((sum, section) => sum + formatTotalPoint(section.items), 0);
-
   return (
     <div className={styles.arkTabLayout}>
       <header className={styles.arkTabHeader}>
@@ -21,7 +19,6 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
           <p className={styles.modalSubtitle}>Ark Grid</p>
           <h3>{displayValue(arkGrid.title || "아크 그리드")}</h3>
         </div>
-        <span className={styles.arkGridHeaderBadge}>{totalPoint}P</span>
       </header>
 
       <div className={styles.arkGridCardGrid}>
