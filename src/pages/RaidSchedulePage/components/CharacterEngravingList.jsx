@@ -1,5 +1,13 @@
-import { useEffect, useId } from "react";
-import { displayValue, normalizeEngravingName } from "../utils/characterParser.js";
+import { useEffect } from "react";
+import { displayValue } from "../utils/characterParser.js";
+
+const ENGRAVING_ICON_MAP = Object.freeze({
+  "\uC6D0\uD55C": "https://cdn-lostark.game.onstove.com/efui_iconatlas/use/use_7_15.png",
+  "\uC608\uB9AC\uD55C \uB454\uAE30": "https://cdn-lostark.game.onstove.com/efui_iconatlas/use/use_7_29.png",
+  "\uB3CC\uACA9\uB300\uC7A5": "https://cdn-lostark.game.onstove.com/efui_iconatlas/use/use_7_24.png",
+  "\uC544\uB4DC\uB808\uB0A0\uB9B0": "https://cdn-lostark.game.onstove.com/efui_iconatlas/use/use_7_35.png",
+  "\uACB0\uD22C\uC758 \uB300\uAC00": "https://cdn-lostark.game.onstove.com/efui_iconatlas/use/use_7_34.png",
+});
 
 const DEFAULT_ENGRAVING_ICON_SRC = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" viewBox="0 0 54 54" fill="none">
@@ -19,56 +27,35 @@ const DEFAULT_ENGRAVING_ICON_SRC = `data:image/svg+xml;charset=UTF-8,${encodeURI
   </svg>`,
 )}`;
 
-export default function CharacterEngravingList({ engravings = [], engravingImageMap = new Map(), styles }) {
-  const map = engravingImageMap instanceof Map ? engravingImageMap : new Map();
-
+export default function CharacterEngravingList({ engravings = [], styles }) {
   useEffect(() => {
     if (!isDevMode()) return;
 
-    const rawIcons = engravings.map((engraving) => getRawIconUrl(engraving));
-    const uniqueRawIcons = [...new Set(rawIcons.filter(Boolean))];
-    const commonIconUrl = uniqueRawIcons.length === 1 ? uniqueRawIcons[0] : "";
     const fallbackItems = [];
+    const rows = engravings.map((engraving) => {
+      const engravingName = getEngravingName(engraving);
+      const appliedSrc = getResolvedEngravingIconUrl(engravingName);
+      const finalSrc = appliedSrc || DEFAULT_ENGRAVING_ICON_SRC;
+      const source = appliedSrc ? "ENGRAVING_ICON_MAP" : "fallback";
 
-    console.table(
-      engravings.map((engraving) => {
-        const engravingName = getEngravingName(engraving);
-        const normalized = normalizeEngravingName(engravingName);
-        const rawIcon = getRawIconUrl(engraving);
-        const mapIcon = map.get(normalized) || "";
-        const finalIcon = resolveFinalIcon({ rawIcon, mapIcon, commonIconUrl, sharedRawIcon: uniqueRawIcons.length === 1 });
+      if (!appliedSrc) {
+        fallbackItems.push(engravingName || "(empty)");
+      }
 
-        if (!finalIcon) {
-          fallbackItems.push({
-            name: engravingName,
-            normalized,
-            rawIcon,
-            mapIcon,
-          });
-        }
+      return {
+        name: engravingName || "(empty)",
+        appliedSrc: finalSrc,
+        source,
+      };
+    });
 
-        return {
-          name: engravingName,
-          normalized,
-          rawIcon,
-          mapIcon,
-          finalIcon,
-        };
-      }),
-    );
+    console.table(rows);
+    console.log("[lostark engravings] ENGRAVING_ICON_MAP keys", Object.keys(ENGRAVING_ICON_MAP));
 
-    console.log("[lostark engravings] image map keys", [...map.keys()]);
     if (fallbackItems.length) {
       console.warn("[lostark engravings] fallback engravings", fallbackItems);
     }
-
-    if (uniqueRawIcons.length === 1 && engravings.length > 1) {
-      console.warn("[lostark engravings] all raw icons are identical and treated as fallback", {
-        commonIconUrl,
-        count: engravings.length,
-      });
-    }
-  }, [engravings, map]);
+  }, [engravings]);
 
   if (!engravings.length) {
     return <p className={styles.modalEmpty}>0</p>;
@@ -78,32 +65,20 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
     <div className={styles.engravingList}>
       {engravings.map((engraving, index) => {
         const engravingName = getEngravingName(engraving);
-        const normalized = normalizeEngravingName(engravingName);
-        const rawIcon = getRawIconUrl(engraving);
-        const mapIcon = map.get(normalized) || "";
-        const commonIconUrl = getSharedRawIconUrl(engravings);
-        const iconUrl = resolveFinalIcon({
-          rawIcon,
-          mapIcon,
-          commonIconUrl,
-          sharedRawIcon: Boolean(commonIconUrl),
-        });
+        const iconUrl = getResolvedEngravingIconUrl(engravingName) || DEFAULT_ENGRAVING_ICON_SRC;
+        const level = formatEngravingLevel(engraving.Level ?? engraving.level);
 
         return (
           <article key={`${engravingName || "engraving"}-${index}`} className={styles.engravingCard}>
-            {iconUrl ? (
-              <img
-                className={styles.itemIcon}
-                src={iconUrl}
-                alt={engravingName || "engraving icon"}
-                onError={handleEngravingIconError}
-              />
-            ) : (
-              <DefaultEngravingIcon className={styles.itemIcon} />
-            )}
+            <img
+              className={styles.itemIcon}
+              src={iconUrl}
+              alt={engravingName || "engraving icon"}
+              onError={handleEngravingIconError}
+            />
             <div>
               <div className={styles.itemMeta}>
-                <strong>Lv.{formatEngravingLevel(engraving.Level ?? engraving.level)}</strong>
+                <strong>Lv.{level}</strong>
               </div>
               <h4>{displayValue(engravingName)}</h4>
               {engraving.description ? <p>{engraving.description}</p> : null}
@@ -115,21 +90,8 @@ export default function CharacterEngravingList({ engravings = [], engravingImage
   );
 }
 
-function getSharedRawIconUrl(engravings) {
-  const rawIcons = engravings.map((engraving) => getRawIconUrl(engraving)).filter(Boolean);
-  const uniqueRawIcons = [...new Set(rawIcons)];
-  return uniqueRawIcons.length === 1 && rawIcons.length > 1 ? uniqueRawIcons[0] : "";
-}
-
-function resolveFinalIcon({ rawIcon, mapIcon, commonIconUrl, sharedRawIcon }) {
-  const isCommonFallbackIcon =
-    !rawIcon ||
-    rawIcon.includes("profile") ||
-    rawIcon.includes("default") ||
-    rawIcon === commonIconUrl ||
-    (sharedRawIcon && rawIcon === commonIconUrl);
-
-  return mapIcon || (!isCommonFallbackIcon ? rawIcon : "");
+function getResolvedEngravingIconUrl(engravingName) {
+  return ENGRAVING_ICON_MAP[String(engravingName || "").trim()] || "";
 }
 
 function handleEngravingIconError(event) {
@@ -149,85 +111,11 @@ function getEngravingName(engraving) {
   ).trim();
 }
 
-function getRawIconUrl(engraving) {
-  return normalizeIconUrl(
-    engraving?.Icon ??
-      engraving?.icon ??
-      engraving?.Effect?.Icon ??
-      engraving?.effect?.icon ??
-      engraving?.Image ??
-      engraving?.image ??
-      engraving?.IconUrl ??
-      engraving?.iconUrl ??
-      engraving?.ImageUrl ??
-      engraving?.imageUrl ??
-      "",
-  );
-}
-
-function normalizeIconUrl(value) {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  if (text.startsWith("data:image/")) return text;
-  if (/^https?:\/\//i.test(text)) return text;
-  if (text.startsWith("//")) return `https:${text}`;
-  if (text.startsWith("/")) return `https://cdn-lostark.game.onstove.com${text}`;
-  return text;
-}
-
 function formatEngravingLevel(level) {
-  if (level == null || level === "" || level === "?뺣낫 ?놁쓬") return "0";
+  if (level == null || level === "") return "0";
   return String(level);
 }
 
 function isDevMode() {
   return Boolean(import.meta?.env?.DEV);
-}
-
-function DefaultEngravingIcon({ className }) {
-  const gradientId = useId();
-
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 54 54"
-      role="img"
-      aria-label="engraving default icon"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="8" y1="8" x2="46" y2="46" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#a855f7" />
-          <stop offset="1" stopColor="#38bdf8" />
-        </linearGradient>
-      </defs>
-      <rect
-        x="1"
-        y="1"
-        width="52"
-        height="52"
-        rx="14"
-        fill="#091326"
-        stroke={`url(#${gradientId})`}
-        strokeWidth="2"
-      />
-      <circle cx="27" cy="27" r="15" fill={`url(#${gradientId})`} fillOpacity="0.16" />
-      <path d="M19 20H35" stroke="#f4f7ff" strokeOpacity="0.92" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M18 27H36" stroke="#f4f7ff" strokeOpacity="0.84" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M20 34H34" stroke="#f4f7ff" strokeOpacity="0.76" strokeWidth="2.4" strokeLinecap="round" />
-      <path
-        d="M23 15C22.2 18.5 21.9 22.1 21.9 27C21.9 31.9 22.2 35.5 23 39"
-        stroke={`url(#${gradientId})`}
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      />
-      <path
-        d="M31 15C31.8 18.5 32.1 22.1 32.1 27C32.1 31.9 31.8 35.5 31 39"
-        stroke={`url(#${gradientId})`}
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
 }
