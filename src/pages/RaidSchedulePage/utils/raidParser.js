@@ -15,6 +15,7 @@ const KNOWN_RAID_TITLES = [
   "\uc9c0\ud33d\ub9c9\uac78\ub9ac",
   "\uc544\ub974\ubaa8\uccb4",
   "\uc775\uc2a4\ud2b8\ub9bc \uc5d0\uae30\ub974",
+  "\uc77c\uc815\uc5c6\uc74c",
 ];
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
@@ -129,8 +130,10 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
     const blockStartRow = dateRow.index;
     const blockTime = findBlockTimeFromColumnA(rows, dateRow.index, nextDateRow?.index);
     const blockEndRow = (nextDateRow?.index ?? rows.length) - 1;
+    const dateScopedBlocks =
+      collectRaidColumnBlocksForDateBlock(rows, blockStartRow - 1) || raidBlocks;
 
-    raidBlocks.forEach((block) => {
+    dateScopedBlocks.forEach((block) => {
       raids.push(
         ...collectRaidsForBlock({
           block,
@@ -159,6 +162,10 @@ function collectRaidsForBlock({
   raidNameLookup,
   settingLookup,
 }) {
+  if (isSkippedRaidTitle(block.raidName)) {
+    return [];
+  }
+
   const raids = [];
   let currentParty = createParty({
     blockTime,
@@ -300,9 +307,49 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
     .sort((left, right) => left.startCol - right.startCol);
 }
 
+function collectRaidColumnBlocksForDateBlock(rows = [], headerRowIndex = -1) {
+  if (headerRowIndex < 0) return null;
+
+  const headerRow = rows[headerRowIndex] || [];
+  const detectedEndCol = getDetectedEndCol(rows);
+  const titleColumns = [];
+
+  for (let columnIndex = 0; columnIndex <= detectedEndCol; columnIndex += 1) {
+    const rawValue = cleanText(headerRow[columnIndex]);
+    if (!rawValue) continue;
+    if (!isRaidTitle(rawValue)) continue;
+
+    titleColumns.push({
+      index: columnIndex,
+      raidName: normalizeRaidName(rawValue),
+    });
+  }
+
+  if (titleColumns.length === 0) {
+    return null;
+  }
+
+  return titleColumns.map(({ index, raidName }, currentIndex) => {
+    const nextIndex = titleColumns[currentIndex + 1]?.index;
+    return {
+      endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
+      raidName,
+      startCol: index,
+    };
+  });
+}
+
 function buildRaidNameLookup(raidBlocks) {
   const knownTitles = KNOWN_RAID_TITLES.map((title) => normalizeKey(title));
   return new Set([...knownTitles, ...raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean)]);
+}
+
+function isRaidTitle(value) {
+  return KNOWN_RAID_TITLES.includes(normalizeRaidName(value));
+}
+
+function isSkippedRaidTitle(value) {
+  return normalizeRaidName(value) === "\uc77c\uc815\uc5c6\uc74c";
 }
 
 function findRaidHeaderInBlock(row, block, raidNameLookup) {
