@@ -142,7 +142,14 @@ export default function RaidSchedulePage() {
             <h1>레이드 일정표</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
-              <span>{sourceMeta.isFallback ? "Disconnected" : "Connected"}</span>
+              <span
+                className={`${styles.connectionStatus} ${
+                  sourceMeta.isFallback ? styles.connectionOffline : styles.connectionOnline
+                }`}
+              >
+                <span className={styles.connectionStatusDot} aria-hidden="true" />
+                {sourceMeta.isFallback ? "Disconnected" : "Connected"}
+              </span>
             </div>
           </div>
         </header>
