@@ -565,28 +565,27 @@
     color 160ms ease,
     border-color 160ms ease,
     background-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    box-shadow 160ms ease;
 }
 
 .todayParticipantBadge:hover {
   color: #ffffff;
-  border-color: rgba(34, 211, 238, 0.24);
-  background: rgba(34, 211, 238, 0.08);
+  border-color: rgba(251, 191, 36, 0.22);
+  background: rgba(251, 191, 36, 0.05);
   box-shadow:
-    0 0 10px rgba(34, 211, 238, 0.1),
+    0 0 10px rgba(251, 191, 36, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+  transform: none !important;
 }
 
 .activeTodayParticipantBadge {
-  color: #cffafe;
-  border-color: var(--highlight-border);
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(34, 211, 238, 0.08));
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 107, 53, 0.08)) !important;
+  border: 1px solid rgba(251, 191, 36, 0.48) !important;
+  color: #f5faff !important;
   box-shadow:
-    0 0 12px rgba(34, 211, 238, 0.22),
-    0 0 26px rgba(34, 211, 238, 0.14);
-  transform: translateY(-1px);
+    0 0 14px rgba(251, 191, 36, 0.2),
+    0 0 28px rgba(249, 115, 22, 0.12) !important;
+  transform: none !important;
 }
 
 .todayParticipantEmpty {
@@ -667,16 +666,17 @@
 }
 
 .highlightRaidCard {
-  border-color: var(--highlight-border);
   background:
-    linear-gradient(180deg, rgba(34, 211, 238, 0.14), rgba(26, 34, 51, 1)),
-    var(--panel);
+    linear-gradient(180deg, rgba(251, 191, 36, 0.12), rgba(26, 34, 51, 1)),
+    var(--panel) !important;
+  border: 1px solid rgba(251, 191, 36, 0.42) !important;
   box-shadow:
     0 22px 58px rgba(0, 0, 0, 0.42),
-    0 0 16px rgba(34, 211, 238, 0.16),
-    0 0 26px rgba(34, 211, 238, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+    0 0 18px rgba(251, 191, 36, 0.18),
+    0 0 32px rgba(255, 107, 53, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  color: #f5faff !important;
+  transform: none !important;
 }
 
 .raidCard::before {
@@ -791,19 +791,19 @@
 }
 
 .participantTable tr.participantHighlight td {
-  border-color: var(--highlight-border);
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(34, 211, 238, 0.08));
+  border-color: rgba(251, 191, 36, 0.48) !important;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 107, 53, 0.08)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(34, 211, 238, 0.16),
-    inset 0 0 0 1px rgba(34, 211, 238, 0.08),
-    0 0 12px rgba(34, 211, 238, 0.12);
+    inset 0 1px 0 rgba(251, 191, 36, 0.14),
+    inset 0 0 0 1px rgba(251, 191, 36, 0.06),
+    0 0 12px rgba(251, 191, 36, 0.12) !important;
 }
 
 .participantTable tr.participantHighlight td:first-child {
   box-shadow:
-    inset 4px 0 0 var(--highlight),
-    inset 0 1px 0 rgba(34, 211, 238, 0.16),
-    inset 0 0 0 1px rgba(34, 211, 238, 0.08);
+    inset 4px 0 0 var(--accent-gold),
+    inset 0 1px 0 rgba(251, 191, 36, 0.14),
+    inset 0 0 0 1px rgba(251, 191, 36, 0.06) !important;
 }
 
 .participantTable tr:last-child td {
@@ -811,13 +811,13 @@
 }
 
 .participantHighlight {
-  border-color: var(--highlight-border);
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(34, 211, 238, 0.08));
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 107, 53, 0.08)) !important;
+  border: 1px solid rgba(251, 191, 36, 0.48) !important;
   box-shadow:
-    0 0 0 1px rgba(34, 211, 238, 0.32),
-    0 0 12px rgba(34, 211, 238, 0.22),
-    0 0 26px rgba(34, 211, 238, 0.14);
-  transform: translateY(-1px);
+    0 0 14px rgba(251, 191, 36, 0.2),
+    0 0 28px rgba(249, 115, 22, 0.12) !important;
+  color: #f5faff !important;
+  transform: none !important;
 }
 
 .mobileParticipantList {
@@ -1483,12 +1483,10 @@
   min-height: 108px;
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    box-shadow 160ms ease;
 }
 
 .equipmentCard:hover {
-  transform: translateY(-2px);
   border-color: rgba(105, 230, 255, 0.42);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.34),
@@ -1897,13 +1895,11 @@
   transition:
     border-color 160ms ease,
     background-color 160ms ease,
-    transform 160ms ease,
     box-shadow 160ms ease;
 }
 
 .arkPassiveRow:hover,
 .arkGridEffectRow:hover {
-  transform: translateY(-1px);
   border-color: rgba(105, 230, 255, 0.34);
   background: rgba(9, 17, 36, 0.42);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
@@ -2108,12 +2104,10 @@
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
-    transform 160ms ease,
     background-color 160ms ease;
 }
 
 .compactEngravingRow:hover {
-  transform: translateY(-1px);
   border-color: rgba(105, 230, 255, 0.36);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.34),

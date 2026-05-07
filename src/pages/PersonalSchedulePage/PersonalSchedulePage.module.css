@@ -380,13 +380,11 @@
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
-    background-color 160ms ease,
-    transform 160ms ease;
+    background-color 160ms ease;
 }
 
 .selectShell:hover,
 .selectShell:focus-within {
-  transform: translateY(-1px);
   border-color: rgba(124, 184, 255, 0.35);
   background: rgba(33, 44, 66, 0.82);
   box-shadow:
@@ -563,13 +561,11 @@
   background: linear-gradient(135deg, var(--primary), var(--primary-strong));
   box-shadow: var(--shadow);
   transition:
-    transform 160ms ease,
     filter 160ms ease,
     opacity 160ms ease;
 }
 
 .form > button:hover:not(:disabled) {
-  transform: translateY(-1px);
   filter: brightness(1.06);
 }
 
