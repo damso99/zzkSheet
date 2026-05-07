@@ -1,13 +1,28 @@
 :root {
+  --bg: #0b0b12;
+  --bg-elevated: #140d24;
+  --card: #19102e;
+  --card-strong: #21143a;
+  --primary: #be8aef;
+  --secondary: #7d58b1;
+  --glow: #e9ccfb;
+  --border: #402472;
+  --border-soft: rgba(190, 138, 239, 0.22);
+  --text: #f5f5f5;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --shadow-glow:
+    0 0 8px rgba(190, 138, 239, 0.6),
+    0 0 20px rgba(125, 88, 177, 0.4);
+
   font-family: "SUIT Variable", "Pretendard", "Noto Sans KR", sans-serif;
-  color: #231815;
+  color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(255, 198, 121, 0.45), transparent 28%),
-    radial-gradient(circle at top right, rgba(227, 122, 76, 0.2), transparent 24%),
-    linear-gradient(180deg, #f7efe1 0%, #f3e5d0 44%, #ead5ba 100%);
+    radial-gradient(circle at top left, rgba(190, 138, 239, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(125, 88, 177, 0.1), transparent 24%),
+    linear-gradient(180deg, #0b0b12 0%, #100917 44%, #171021 100%);
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -23,6 +38,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(190, 138, 239, 0.12), transparent 24%),
+    radial-gradient(circle at 88% 12%, rgba(125, 88, 177, 0.12), transparent 28%),
+    linear-gradient(180deg, var(--bg) 0%, #100917 100%);
 }
 
 body,
@@ -42,4 +62,31 @@ input {
 
 #root {
   min-height: 100vh;
+}
+
+::selection {
+  color: #0b0b12;
+  background: rgba(233, 204, 251, 0.92);
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+#root::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(190, 138, 239, 0.92), rgba(125, 88, 177, 0.9));
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+#root::-webkit-scrollbar-track {
+  background: rgba(25, 16, 46, 0.48);
 }

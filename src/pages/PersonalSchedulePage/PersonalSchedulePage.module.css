@@ -1,26 +1,26 @@
 /* Personal schedule page */
 .page {
-  --bg-0: #03050d;
-  --bg-1: #071021;
-  --bg-2: #10143a;
-  --panel: rgba(15, 23, 45, 0.82);
-  --panel-strong: rgba(18, 29, 58, 0.94);
-  --line: rgba(104, 150, 255, 0.28);
-  --text: #f4f7ff;
-  --muted: #9aa8c5;
-  --blue: #55a7ff;
-  --cyan: #69e6ff;
-  --purple: #a879ff;
-  --gold: #ffd88a;
-  --green: #54e89c;
-  --orange: #ffad5c;
+  --bg-0: var(--bg);
+  --bg-1: var(--bg-elevated);
+  --bg-2: var(--card);
+  --panel: rgba(25, 16, 46, 0.84);
+  --panel-strong: rgba(33, 20, 58, 0.94);
+  --line: rgba(64, 36, 114, 0.72);
+  --text: var(--text);
+  --muted: var(--text-muted);
+  --blue: var(--primary);
+  --cyan: var(--glow);
+  --purple: var(--secondary);
+  --gold: var(--glow);
+  --green: var(--primary);
+  --orange: var(--secondary);
 
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
   color: var(--text);
   background:
-    linear-gradient(180deg, rgba(3, 5, 13, 0.1), rgba(3, 5, 13, 0.78)),
+    linear-gradient(180deg, rgba(11, 11, 18, 0.12), rgba(11, 11, 18, 0.82)),
     linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-2) 100%);
 }
 
@@ -37,10 +37,10 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 8%, rgba(105, 230, 255, 0.16), transparent 28%),
-    radial-gradient(circle at 78% 18%, rgba(168, 121, 255, 0.2), transparent 30%),
-    linear-gradient(90deg, rgba(85, 167, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(168, 121, 255, 0.07) 1px, transparent 1px);
+    radial-gradient(circle at 18% 8%, rgba(190, 138, 239, 0.15), transparent 28%),
+    radial-gradient(circle at 78% 18%, rgba(125, 88, 177, 0.18), transparent 30%),
+    linear-gradient(90deg, rgba(125, 88, 177, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(190, 138, 239, 0.07) 1px, transparent 1px);
   background-size:
     100% 100%,
     100% 100%,
@@ -64,42 +64,18 @@
   margin-bottom: 28px;
 }
 
-.hero > h1 {
-  display: none;
-}
-
-.brandLockup {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-
-.brandIcon {
-  width: clamp(48px, 9vw, 60px);
-  height: clamp(48px, 9vw, 60px);
-  object-fit: contain;
-  filter:
-    drop-shadow(0 0 12px rgba(168, 121, 255, 0.52))
-    drop-shadow(0 0 24px rgba(85, 167, 255, 0.22));
-}
-
-.brandTextBlock {
-  display: grid;
-  gap: 6px;
-}
-
 .backLink {
   width: fit-content;
-  color: var(--cyan);
+  color: var(--primary);
   font-size: 0.9rem;
   font-weight: 900;
   text-decoration: none;
-  text-shadow: 0 0 14px rgba(105, 230, 255, 0.36);
+  text-shadow: 0 0 14px rgba(190, 138, 239, 0.3);
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--gold);
+  color: var(--primary);
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.16em;
@@ -112,8 +88,8 @@
   font-size: clamp(2.5rem, 6vw, 4.6rem);
   line-height: 1;
   text-shadow:
-    0 0 16px rgba(85, 167, 255, 0.72),
-    0 0 36px rgba(168, 121, 255, 0.42);
+    0 0 16px rgba(190, 138, 239, 0.52),
+    0 0 36px rgba(125, 88, 177, 0.28);
 }
 
 .hero p {
@@ -123,19 +99,12 @@
   font-weight: 800;
 }
 
-@media (max-width: 640px) {
-  .brandLockup {
-    gap: 12px;
-    align-items: flex-start;
-  }
-}
-
 .notice,
 .panel {
   border: 1px solid var(--line);
   border-radius: 26px;
   background:
-    linear-gradient(135deg, rgba(85, 167, 255, 0.1), transparent 42%),
+    linear-gradient(135deg, rgba(190, 138, 239, 0.1), transparent 42%),
     var(--panel);
   box-shadow:
     0 22px 60px rgba(0, 0, 0, 0.3),
@@ -145,12 +114,12 @@
 .notice {
   margin-bottom: 18px;
   padding: 16px 18px;
-  color: #ffe3c4;
+  color: var(--glow);
   font-weight: 850;
   overflow-wrap: anywhere;
   background:
-    linear-gradient(135deg, rgba(255, 173, 92, 0.12), transparent 45%),
-    rgba(75, 32, 24, 0.72);
+    linear-gradient(135deg, rgba(125, 88, 177, 0.12), transparent 45%),
+    rgba(33, 20, 58, 0.82);
 }
 
 .panel {
@@ -219,10 +188,10 @@
   max-inline-size: 100%;
   height: 44px;
   padding: 0 13px;
-  border: 1px solid rgba(104, 150, 255, 0.22);
+  border: 1px solid rgba(64, 36, 114, 0.72);
   border-radius: 14px;
   color: #ffffff;
-  background: rgba(4, 9, 22, 0.72);
+  background: rgba(25, 16, 46, 0.78);
   outline: none;
   transition:
     border-color 160ms ease,
@@ -230,8 +199,8 @@
 }
 
 .form input:focus {
-  border-color: rgba(105, 230, 255, 0.62);
-  box-shadow: 0 0 0 3px rgba(105, 230, 255, 0.12);
+  border-color: rgba(190, 138, 239, 0.62);
+  box-shadow: 0 0 0 3px rgba(190, 138, 239, 0.12);
 }
 
 .datePickerField {
@@ -256,10 +225,10 @@
   position: relative;
   display: block;
   min-width: 0;
-  border: 1px solid rgba(104, 150, 255, 0.24);
+  border: 1px solid rgba(64, 36, 114, 0.72);
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(4, 9, 22, 0.58);
+  background: rgba(25, 16, 46, 0.68);
   box-shadow:
     0 14px 34px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -274,11 +243,11 @@
 .selectShell:hover,
 .selectShell:focus-within {
   transform: translateY(-1px);
-  border-color: rgba(105, 230, 255, 0.56);
-  background: rgba(11, 20, 42, 0.78);
+  border-color: rgba(190, 138, 239, 0.56);
+  background: rgba(33, 20, 58, 0.82);
   box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.26),
-    0 0 0 3px rgba(105, 230, 255, 0.1),
+    0 0 0 3px rgba(190, 138, 239, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
@@ -310,10 +279,10 @@
   right: 13px;
   width: 18px;
   height: 18px;
-  color: var(--cyan);
+  color: var(--primary);
   pointer-events: none;
   transform: translateY(-50%);
-  filter: drop-shadow(0 0 8px rgba(105, 230, 255, 0.28));
+  filter: drop-shadow(0 0 8px rgba(190, 138, 239, 0.28));
 }
 
 .datePickerControl {
@@ -335,10 +304,10 @@
   height: 44px;
   min-height: 44px;
   padding: 0 13px;
-  border: 1px solid rgba(104, 150, 255, 0.22);
+  border: 1px solid rgba(64, 36, 114, 0.72);
   border-radius: 14px;
   color: #ffffff;
-  background: rgba(4, 9, 22, 0.72);
+  background: rgba(25, 16, 46, 0.78);
   cursor: pointer;
   touch-action: manipulation;
   text-align: left;
@@ -350,9 +319,9 @@
 
 .datePickerButton:hover,
 .datePickerButton[aria-expanded="true"] {
-  border-color: rgba(105, 230, 255, 0.62);
-  background: rgba(11, 20, 42, 0.88);
-  box-shadow: 0 0 0 3px rgba(105, 230, 255, 0.12);
+  border-color: rgba(190, 138, 239, 0.62);
+  background: rgba(33, 20, 58, 0.88);
+  box-shadow: 0 0 0 3px rgba(190, 138, 239, 0.12);
 }
 
 .datePickerButton strong {
@@ -369,7 +338,7 @@
   flex: 0 0 auto;
   width: 19px;
   height: 19px;
-  color: #e5e7eb;
+  color: var(--glow);
 }
 
 .datePickerPopper {
@@ -383,21 +352,21 @@
 }
 
 .datePickerCalendar {
-  border: 1px solid rgba(104, 150, 255, 0.32);
+  border: 1px solid rgba(64, 36, 114, 0.82);
   border-radius: 18px;
-  color: #eef5ff;
+  color: var(--text);
   overflow: hidden;
   background:
-    linear-gradient(135deg, rgba(85, 167, 255, 0.16), transparent 48%),
-    rgba(5, 11, 27, 0.98);
+    linear-gradient(135deg, rgba(190, 138, 239, 0.14), transparent 48%),
+    rgba(20, 13, 36, 0.98);
   box-shadow:
     0 22px 60px rgba(0, 0, 0, 0.42),
-    0 0 28px rgba(85, 167, 255, 0.18);
+    0 0 28px rgba(125, 88, 177, 0.18);
 }
 
 .datePickerCalendar :global(.react-datepicker__header) {
-  border-color: rgba(104, 150, 255, 0.18);
-  background: rgba(11, 20, 42, 0.94);
+  border-color: rgba(64, 36, 114, 0.28);
+  background: rgba(25, 16, 46, 0.94);
 }
 
 .datePickerCalendar :global(.react-datepicker__current-month),
@@ -416,20 +385,20 @@
 .datePickerCalendar :global(.react-datepicker__day:hover) {
   color: #ffffff;
   border-radius: 12px;
-  background: rgba(85, 167, 255, 0.18);
+  background: rgba(190, 138, 239, 0.18);
 }
 
 .datePickerCalendar :global(.react-datepicker__day--keyboard-selected),
 .datePickerCalendar :global(.react-datepicker__day--selected) {
   color: #ffffff;
   border-radius: 12px;
-  background: linear-gradient(135deg, #8b5cf6, #55a7ff);
-  box-shadow: 0 0 22px rgba(85, 167, 255, 0.26);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  box-shadow: 0 0 22px rgba(190, 138, 239, 0.26);
 }
 
 .datePickerCalendar :global(.react-datepicker__day--today) {
   border-radius: 12px;
-  outline: 1px solid rgba(255, 216, 138, 0.58);
+  outline: 1px solid rgba(233, 204, 251, 0.58);
   font-weight: 950;
 }
 
@@ -445,10 +414,10 @@
   height: 44px;
   padding: 0 18px;
   border-radius: 14px;
-  color: #071021;
+  color: var(--bg);
   font-weight: 950;
-  background: linear-gradient(135deg, var(--cyan), var(--blue));
-  box-shadow: 0 0 24px rgba(85, 167, 255, 0.2);
+  background: linear-gradient(135deg, var(--primary), var(--glow));
+  box-shadow: var(--shadow-glow);
   transition:
     transform 160ms ease,
     filter 160ms ease,
@@ -474,13 +443,13 @@
 }
 
 .successMessage {
-  color: #d7ffe9;
-  background: rgba(84, 232, 156, 0.12);
+  color: var(--glow);
+  background: rgba(190, 138, 239, 0.14);
 }
 
 .errorMessage {
-  color: #ffd7c2;
-  background: rgba(255, 173, 92, 0.13);
+  color: #f7d7ff;
+  background: rgba(125, 88, 177, 0.18);
 }
 
 .scheduleList {
@@ -492,25 +461,25 @@
 .scheduleCard {
   min-width: 0;
   padding: 16px;
-  border: 1px solid rgba(104, 150, 255, 0.18);
+  border: 1px solid rgba(64, 36, 114, 0.68);
   border-radius: 18px;
   overflow-wrap: anywhere;
   word-break: keep-all;
   background:
-    linear-gradient(180deg, rgba(24, 35, 70, 0.66), rgba(6, 11, 25, 0.78)),
-    rgba(8, 14, 30, 0.72);
+    linear-gradient(180deg, rgba(33, 20, 58, 0.72), rgba(15, 10, 26, 0.82)),
+    rgba(25, 16, 46, 0.74);
 }
 
 .scheduleCard time {
   display: inline-flex;
   margin-bottom: 10px;
   padding: 5px 9px;
-  border: 1px solid rgba(105, 230, 255, 0.24);
+  border: 1px solid rgba(190, 138, 239, 0.3);
   border-radius: 999px;
-  color: var(--cyan);
+  color: var(--glow);
   font-size: 0.78rem;
   font-weight: 900;
-  background: rgba(85, 167, 255, 0.1);
+  background: rgba(190, 138, 239, 0.12);
 }
 
 .scheduleCard strong {
@@ -521,17 +490,17 @@
 
 .scheduleCard p {
   margin: 8px 0 0;
-  color: #dbe7ff;
+  color: var(--text-muted);
   font-weight: 800;
 }
 
 .emptyState {
   padding: 18px;
-  border: 1px solid rgba(104, 150, 255, 0.16);
+  border: 1px solid rgba(64, 36, 114, 0.62);
   border-radius: 18px;
   color: var(--muted);
   font-weight: 850;
-  background: rgba(2, 7, 18, 0.3);
+  background: rgba(25, 16, 46, 0.52);
 }
 
 @media (max-width: 820px) {
