@@ -8,6 +8,7 @@ import {
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
+const KNOWN_RAID_TITLES = ["카제로스", "세르카", "지평", "지팽막걸리", "아르모체"];
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
   const settingLookup = parseSettingRows(settingRows);
@@ -111,22 +112,15 @@ function collectRaidsForBlock({
   settingLookup,
 }) {
   const raids = [];
-  let currentParty = createParty({
-    blockTime,
-    date,
-    endCol: block.endCol,
-    raidName: block.raidName,
-    startCol: block.startCol,
-    startRow: blockStartRow,
-  });
+  let currentParty = null;
   let seenMembers = new Set();
 
   for (let rowIndex = blockStartRow; rowIndex <= blockEndRow; rowIndex += 1) {
     const row = rows[rowIndex] || [];
-    const header = findRaidHeaderInBlock(row, block, raidNameLookup);
+    const header = findRaidHeaderInBlock(row, block, raidNameLookup, settingLookup);
 
     if (header) {
-      if (currentParty.members.length > 0) {
+      if (currentParty?.members.length > 0) {
         currentParty.endRow = rowIndex - 1;
         raids.push(currentParty);
       }
@@ -143,6 +137,10 @@ function collectRaidsForBlock({
       continue;
     }
 
+    if (!currentParty) {
+      continue;
+    }
+
     const members = extractMembersFromRow(row, block.startCol, block.endCol, settingLookup);
     for (const member of members) {
       const normalized = normalizeKey(member);
@@ -152,7 +150,7 @@ function collectRaidsForBlock({
     }
   }
 
-  if (currentParty.members.length > 0) {
+  if (currentParty?.members.length > 0) {
     currentParty.endRow = blockEndRow;
     raids.push(currentParty);
   }
@@ -246,14 +244,16 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
 }
 
 function buildRaidNameLookup(raidBlocks) {
-  return new Set(raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean));
+  const knownTitles = KNOWN_RAID_TITLES.map((title) => normalizeKey(title));
+  return new Set([...knownTitles, ...raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean)]);
 }
 
-function findRaidHeaderInBlock(row, block, raidNameLookup) {
+function findRaidHeaderInBlock(row, block, raidNameLookup, settingLookup) {
   for (let columnIndex = block.startCol; columnIndex <= block.endCol && columnIndex < row.length; columnIndex += 1) {
     const value = cleanText(row[columnIndex]);
     if (!value) continue;
     if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
+    if (isCharacterValue(value, settingLookup)) continue;
 
     const normalized = normalizeKey(value);
     if (raidNameLookup.has(normalized)) {
