@@ -29,7 +29,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     settingLookup,
   });
 
-  return parsedRaids
+  const normalizedRaids = parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
       const resolvedRaidName =
@@ -58,6 +58,38 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       return item;
     })
     .sort(compareRaidOrder);
+
+  const raidsByDay = normalizedRaids.reduce((accumulator, raid) => {
+    const dayKey = raid.date || "unscheduled";
+    if (!accumulator[dayKey]) {
+      accumulator[dayKey] = [];
+    }
+    accumulator[dayKey].push(raid);
+    return accumulator;
+  }, {});
+
+  console.table(
+    Object.entries(raidsByDay).map(([day, raids]) => ({
+      day,
+      parsedRaidCount: raids.length,
+      titles: raids.map((raid) => raid.raidName).join(", "),
+    })),
+  );
+
+  const saturdayRaids = normalizedRaids.filter((raid) => raid.date === "2026-05-09");
+  console.table(
+    saturdayRaids.map((raid, index) => ({
+      colIndex: raid.startCol,
+      index,
+      members: raid.participantCount ?? raid.participants?.length ?? 0,
+      rowIndex: raid.startRow,
+      time: raid.time,
+      title: raid.raidName,
+    })),
+  );
+  console.log("[raid-calendar/debug] saturday parsed count:", saturdayRaids.length);
+
+  return normalizedRaids;
 }
 
 export function buildFallbackRaidSchedule(todayIsoDate) {

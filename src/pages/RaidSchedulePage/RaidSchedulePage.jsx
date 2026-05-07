@@ -128,6 +128,16 @@ export default function RaidSchedulePage() {
   const searchGroups = useMemo(() => groupItemsByDate(searchResults), [searchResults]);
 
   const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
+  const saturdayRaids = useMemo(
+    () => raids.filter((raid) => raid.date === "2026-05-09").sort(compareRaidOrder),
+    [raids],
+  );
+
+  useEffect(() => {
+    console.log("[raid-calendar/debug] render total raids:", raids.length);
+    console.log("[raid-calendar/debug] render saturday raids:", saturdayRaids.length);
+    console.log("[raid-calendar/debug] render visible raids:", activeTab === "today" ? sortedTodayRaids.length : raids.length);
+  }, [activeTab, raids, saturdayRaids, sortedTodayRaids]);
 
   return (
     <div className={styles.page}>
