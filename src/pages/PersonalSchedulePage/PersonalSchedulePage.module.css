@@ -219,12 +219,40 @@
 .panel {
   border: 1px solid var(--line);
   border-radius: 26px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   background:
     linear-gradient(135deg, rgba(124, 184, 255, 0.08), transparent 42%),
     var(--panel);
   box-shadow:
     0 22px 60px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.notice::before,
+.panel::before,
+.scheduleCard::before,
+.emptyState::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.82;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.notice > *,
+.panel > *,
+.scheduleCard > *,
+.emptyState > * {
+  position: relative;
+  z-index: 1;
 }
 
 .notice {
@@ -234,8 +262,8 @@
   font-weight: 850;
   overflow-wrap: anywhere;
   background:
-    linear-gradient(135deg, rgba(125, 88, 177, 0.12), transparent 45%),
-    rgba(33, 20, 58, 0.82);
+    linear-gradient(135deg, rgba(251, 191, 36, 0.08), transparent 45%),
+    rgba(33, 44, 66, 0.82);
 }
 
 .panel {
@@ -576,9 +604,12 @@
 
 .scheduleCard {
   min-width: 0;
+  position: relative;
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 18px;
+  overflow: hidden;
+  isolation: isolate;
   overflow-wrap: anywhere;
   word-break: keep-all;
   background:

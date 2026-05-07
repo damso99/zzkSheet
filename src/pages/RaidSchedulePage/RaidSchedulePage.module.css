@@ -486,15 +486,37 @@
 
 .todayParticipantPanel {
   margin-bottom: 26px;
+  position: relative;
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 22px;
+  overflow: hidden;
+  isolation: isolate;
   background:
     linear-gradient(135deg, rgba(124, 184, 255, 0.08), transparent 42%),
     rgba(33, 44, 66, 0.82);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.todayParticipantPanel::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.82;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.todayParticipantPanel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .todayParticipantHeader {
@@ -603,6 +625,8 @@
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
   background:
     linear-gradient(180deg, rgba(33, 44, 66, 0.88), rgba(26, 34, 51, 0.94)),
     var(--panel);
@@ -611,6 +635,25 @@
     0 0 28px rgba(76, 141, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
+}
+
+.raidCard::after {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.82;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.raidCard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .collapsibleRaidCard {
@@ -854,6 +897,8 @@
 
 .dayGroup {
   overflow: hidden;
+  position: relative;
+  isolation: isolate;
   border: 1px solid var(--border);
   border-radius: 22px;
   background:
@@ -862,6 +907,25 @@
   box-shadow:
     0 18px 48px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dayGroup::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.78;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.dayGroup > * {
+  position: relative;
+  z-index: 1;
 }
 
 .dayHeader {
@@ -1003,14 +1067,36 @@
 
 .searchResultCard {
   display: flex;
+  position: relative;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
   padding: 14px 18px;
   border: 1px solid var(--border);
   border-radius: 18px;
+  overflow: hidden;
+  isolation: isolate;
   background: var(--card);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.searchResultCard::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.78;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.searchResultCard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .searchResultCard h3 {
