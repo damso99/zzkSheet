@@ -33,15 +33,35 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   const normalizedRaids = parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
+      const titleSearchRow = raid.titleLookupRow ?? raid.startRow;
       const resolvedRaidName =
         findRaidTitleByPosition({
           endCol: raid.endCol,
           raidNameLookup,
-          rowIndex: raid.titleLookupRow ?? raid.startRow,
+          rowIndex: titleSearchRow,
           rows: raidCalendarRows,
           settingLookup,
           startCol: raid.startCol,
         }) || "미지정";
+      if (raid.date === "2026-05-06" && !isRaidTitle(resolvedRaidName)) {
+        console.log("[raid-title-debug] first day missing title", {
+          currentValue: raidCalendarRows[titleSearchRow]?.[raid.startCol] ?? "",
+          day: raid.date,
+          endCol: raid.endCol,
+          raidName: raid.raidName,
+          rowIndex: titleSearchRow,
+          startCol: raid.startCol,
+        });
+        debugFindRaidTitle({
+          endCol: raid.endCol,
+          raidNameLookup,
+          rowIndex: titleSearchRow,
+          rows: raidCalendarRows,
+          settingLookup,
+          startCol: raid.startCol,
+        });
+      }
+
       const item = {
         blockTime: raid.blockTime,
         date: raid.date,
@@ -375,10 +395,13 @@ function findRaidTitleByPosition({
   settingLookup = new Map(),
   raidNameLookup = new Set(),
 } = {}) {
+  const candidateColumns = buildCandidateTitleColumns(startCol, endCol);
+
   for (let currentRowIndex = rowIndex; currentRowIndex >= 0; currentRowIndex -= 1) {
     const row = rows[currentRowIndex] || [];
 
-    for (let columnIndex = startCol; columnIndex <= endCol && columnIndex < row.length; columnIndex += 1) {
+    for (const columnIndex of candidateColumns) {
+      if (columnIndex >= row.length) continue;
       const value = cleanText(row[columnIndex]);
       if (!value) continue;
       if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
@@ -392,6 +415,69 @@ function findRaidTitleByPosition({
   }
 
   return "";
+}
+
+function buildCandidateTitleColumns(startCol, endCol) {
+  const columns = [];
+  const midpoint = Math.floor((startCol + endCol) / 2);
+  const preferredColumns = [
+    startCol,
+    startCol - 1,
+    startCol + 1,
+    startCol - 2,
+    startCol + 2,
+    midpoint,
+    endCol,
+    endCol - 1,
+    endCol + 1,
+  ];
+
+  preferredColumns.forEach((columnIndex) => {
+    if (columnIndex < 0) return;
+    if (!columns.includes(columnIndex)) {
+      columns.push(columnIndex);
+    }
+  });
+
+  for (let columnIndex = startCol; columnIndex <= endCol; columnIndex += 1) {
+    if (!columns.includes(columnIndex)) {
+      columns.push(columnIndex);
+    }
+  }
+
+  return columns;
+}
+
+function debugFindRaidTitle({
+  rows = [],
+  rowIndex = 0,
+  startCol = 0,
+  endCol = 0,
+  settingLookup = new Map(),
+  raidNameLookup = new Set(),
+} = {}) {
+  const trace = [];
+  const candidateColumns = buildCandidateTitleColumns(startCol, endCol);
+
+  for (let currentRowIndex = rowIndex; currentRowIndex >= 0; currentRowIndex -= 1) {
+    const row = rows[currentRowIndex] || [];
+
+    candidateColumns.forEach((columnIndex) => {
+      const value = cleanText(row[columnIndex]);
+      if (!value) return;
+
+      trace.push({
+        colIndex: columnIndex,
+        isCharacter: isCharacterValue(value, settingLookup),
+        isKnownTitle: raidNameLookup.has(normalizeKey(value)),
+        isRaidTitle: isRaidTitle(value),
+        rowIndex: currentRowIndex,
+        value,
+      });
+    });
+  }
+
+  console.table(trace);
 }
 
 function extractMembersFromRow(row, startCol, endCol, settingLookup) {
