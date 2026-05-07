@@ -64,6 +64,122 @@
   margin-bottom: 28px;
 }
 
+/* Navy neon palette overrides */
+.page {
+  --line: var(--border);
+  --blue: var(--primary);
+  --cyan: var(--glow);
+  --purple: var(--primary-strong);
+}
+
+.backLink,
+.eyebrow {
+  color: var(--primary);
+}
+
+.hero h1 {
+  text-shadow:
+    0 0 12px rgba(124, 184, 255, 0.22),
+    0 0 28px rgba(76, 141, 255, 0.12);
+}
+
+.notice,
+.panel,
+.scheduleCard,
+.emptyState {
+  border-color: var(--border);
+}
+
+.notice,
+.panel,
+.scheduleCard {
+  background:
+    linear-gradient(180deg, rgba(43, 53, 78, 0.58), rgba(26, 34, 51, 0.78)),
+    var(--panel);
+}
+
+.form input,
+.selectShell,
+.datePickerButton {
+  border-color: var(--border);
+  background: var(--card-soft);
+}
+
+.form input:focus,
+.selectShell:hover,
+.selectShell:focus-within,
+.datePickerButton:hover,
+.datePickerButton[aria-expanded="true"] {
+  border-color: rgba(124, 184, 255, 0.35);
+  box-shadow:
+    0 0 0 3px rgba(124, 184, 255, 0.1),
+    0 0 18px rgba(76, 141, 255, 0.08);
+}
+
+.selectArrow,
+.calendarIcon,
+.scheduleCard time {
+  color: var(--primary);
+}
+
+.datePickerCalendar {
+  border-color: var(--border);
+  background:
+    linear-gradient(135deg, rgba(124, 184, 255, 0.1), transparent 48%),
+    var(--card);
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.36),
+    0 0 22px rgba(76, 141, 255, 0.08);
+}
+
+.datePickerCalendar :global(.react-datepicker__header) {
+  border-color: var(--border);
+  background: var(--card-soft);
+}
+
+.datePickerCalendar :global(.react-datepicker__day:hover) {
+  background: var(--hover);
+}
+
+.datePickerCalendar :global(.react-datepicker__day--keyboard-selected),
+.datePickerCalendar :global(.react-datepicker__day--selected) {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  box-shadow: var(--shadow);
+}
+
+.datePickerCalendar :global(.react-datepicker__day--today) {
+  outline: 1px solid rgba(124, 184, 255, 0.42);
+}
+
+.form > button {
+  color: #101522;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  box-shadow: var(--shadow);
+}
+
+.successMessage {
+  color: var(--glow);
+  background: rgba(124, 184, 255, 0.12);
+}
+
+.errorMessage {
+  color: var(--text);
+  background: rgba(76, 141, 255, 0.14);
+}
+
+.scheduleCard time {
+  border-color: rgba(124, 184, 255, 0.28);
+  background: rgba(124, 184, 255, 0.1);
+}
+
+.scheduleCard p {
+  color: var(--text-muted);
+}
+
+.emptyState {
+  background: rgba(33, 44, 66, 0.58);
+}
+
 .backLink {
   width: fit-content;
   color: var(--primary);
