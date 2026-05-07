@@ -22,6 +22,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
+  const titleCache = new Map();
 
   const parsedRaids = parseRaidCalendarRows({
     raidBlocks,
@@ -34,6 +35,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
       const titleSearchRow = raid.titleLookupRow ?? raid.startRow;
+      const titleCacheKey = `${titleSearchRow}:${raid.startCol}:${raid.endCol}`;
       const resolvedRaidName =
         findRaidTitleByPosition({
           endCol: raid.endCol,
@@ -43,29 +45,15 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
           settingLookup,
           startCol: raid.startCol,
         }) || "미지정";
+      const cachedFinalRaidName = titleCache.get(titleCacheKey);
       const finalRaidName =
-        isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "\uc77c\uc815\uc5c6\uc74c"
+        cachedFinalRaidName ||
+        (isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "\uc77c\uc815\uc5c6\uc74c"
           ? resolvedRaidName
-          : normalizeRaidName(raid.raidName) || "\ubbf8\uc9c0\uc815";
-      if (raid.date === "2026-05-06" && !isRaidTitle(finalRaidName)) {
-        console.log("[raid-title-debug] first day missing title", {
-          currentValue: raidCalendarRows[titleSearchRow]?.[raid.startCol] ?? "",
-          day: raid.date,
-          endCol: raid.endCol,
-          raidName: raid.raidName,
-          rowIndex: titleSearchRow,
-          startCol: raid.startCol,
-        });
-        debugFindRaidTitle({
-          endCol: raid.endCol,
-          raidNameLookup,
-          rowIndex: titleSearchRow,
-          rows: raidCalendarRows,
-          settingLookup,
-          startCol: raid.startCol,
-        });
+          : normalizeRaidName(raid.raidName) || "\ubbf8\uc9c0\uc815");
+      if (!cachedFinalRaidName) {
+        titleCache.set(titleCacheKey, finalRaidName);
       }
-
       const item = {
         blockTime: raid.blockTime,
         date: raid.date,
@@ -83,36 +71,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       return item;
     })
     .sort(compareRaidOrder);
-
-  const raidsByDay = normalizedRaids.reduce((accumulator, raid) => {
-    const dayKey = raid.date || "unscheduled";
-    if (!accumulator[dayKey]) {
-      accumulator[dayKey] = [];
-    }
-    accumulator[dayKey].push(raid);
-    return accumulator;
-  }, {});
-
-  console.table(
-    Object.entries(raidsByDay).map(([day, raids]) => ({
-      day,
-      parsedRaidCount: raids.length,
-      titles: raids.map((raid) => raid.raidName).join(", "),
-    })),
-  );
-
-  const saturdayRaids = normalizedRaids.filter((raid) => raid.date === "2026-05-09");
-  console.table(
-    saturdayRaids.map((raid, index) => ({
-      colIndex: raid.startCol,
-      index,
-      members: raid.participantCount ?? raid.participants?.length ?? 0,
-      rowIndex: raid.startRow,
-      time: raid.time,
-      title: raid.raidName,
-    })),
-  );
-  console.log("[raid-calendar/debug] saturday parsed count:", saturdayRaids.length);
 
   return normalizedRaids;
 }
@@ -450,38 +408,6 @@ function buildCandidateTitleColumns(startCol, endCol) {
   }
 
   return columns;
-}
-
-function debugFindRaidTitle({
-  rows = [],
-  rowIndex = 0,
-  startCol = 0,
-  endCol = 0,
-  settingLookup = new Map(),
-  raidNameLookup = new Set(),
-} = {}) {
-  const trace = [];
-  const candidateColumns = buildCandidateTitleColumns(startCol, endCol);
-
-  for (let currentRowIndex = rowIndex; currentRowIndex >= 0; currentRowIndex -= 1) {
-    const row = rows[currentRowIndex] || [];
-
-    candidateColumns.forEach((columnIndex) => {
-      const value = cleanText(row[columnIndex]);
-      if (!value) return;
-
-      trace.push({
-        colIndex: columnIndex,
-        isCharacter: isCharacterValue(value, settingLookup),
-        isKnownTitle: raidNameLookup.has(normalizeKey(value)),
-        isRaidTitle: isRaidTitle(value),
-        rowIndex: currentRowIndex,
-        value,
-      });
-    });
-  }
-
-  console.table(trace);
 }
 
 function extractMembersFromRow(row, startCol, endCol, settingLookup) {

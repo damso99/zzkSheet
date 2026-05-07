@@ -327,10 +327,6 @@ function formatLocalDateTime(date) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}`;
 }
 
-function parseLocalDateString(dateString) {
-  return parsePersonalDateParts(dateString);
-}
-
 function formatScheduleDateLabel(dateString) {
   return normalizePersonalDate(dateString) || "날짜 확인 필요";
 }

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { CHARACTER_PLACEHOLDER_IMAGE, displayValue } from "../utils/characterParser.js";
 
 const GROUP_ORDER = ["질서", "혼돈"];
@@ -11,7 +12,7 @@ export default function CharacterArkGridPanel({ arkGrid = {}, styles }) {
     return <p className={styles.modalEmpty}>정보 없음</p>;
   }
 
-  const groupedSections = groupArkGridSections(sections);
+  const groupedSections = useMemo(() => groupArkGridSections(sections), [sections]);
   return (
     <div className={styles.arkTabLayout}>
       <header className={styles.arkTabHeader}>
