@@ -43,7 +43,11 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
           settingLookup,
           startCol: raid.startCol,
         }) || "미지정";
-      if (raid.date === "2026-05-06" && !isRaidTitle(resolvedRaidName)) {
+      const finalRaidName =
+        isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "\uc77c\uc815\uc5c6\uc74c"
+          ? resolvedRaidName
+          : normalizeRaidName(raid.raidName) || "\ubbf8\uc9c0\uc815";
+      if (raid.date === "2026-05-06" && !isRaidTitle(finalRaidName)) {
         console.log("[raid-title-debug] first day missing title", {
           currentValue: raidCalendarRows[titleSearchRow]?.[raid.startCol] ?? "",
           day: raid.date,
@@ -68,10 +72,10 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         dayLabel: formatDateLabel(raid.date),
         endCol: raid.endCol,
         endRow: raid.endRow,
-        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(resolvedRaidName)}-${raidIndex}`,
+        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(finalRaidName)}-${raidIndex}`,
         participantCount: participants.length,
         participants,
-        raidName: resolvedRaidName,
+        raidName: finalRaidName,
         startCol: raid.startCol,
         startRow: raid.startRow,
         time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
