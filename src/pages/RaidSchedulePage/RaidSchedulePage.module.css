@@ -1081,6 +1081,55 @@
   gap: 16px;
 }
 
+.weeklySearchResult .raidCard,
+.weeklySearchResult .raidItem,
+.weeklySearchResult .raidRow,
+.weeklySearchResult .raidInner,
+.weeklySearchResult .raidDetail,
+.weeklySearchResult .participantBadge,
+.weeklySearchResult .ownerBadge,
+.weeklySearchResult .characterBadge,
+.weeklySearchResult .pill,
+.weeklySearchResult .chip,
+.weeklySearchResult .searchResultCard,
+.weeklySearchResult .searchInlineField {
+  background: #1a2233 !important;
+  border-color: rgba(124, 184, 255, 0.22) !important;
+  color: #f5faff !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.weeklySearchResult .participantBadge,
+.weeklySearchResult .ownerBadge,
+.weeklySearchResult .characterBadge,
+.weeklySearchResult .pill,
+.weeklySearchResult .chip,
+.weeklySearchResult .searchInlineField {
+  background: rgba(124, 184, 255, 0.1) !important;
+  border: 1px solid rgba(124, 184, 255, 0.24) !important;
+}
+
+.weeklySearchResult strong,
+.weeklySearchResult .ownerName,
+.weeklySearchResult .characterName,
+.weeklySearchResult .searchCharacterButton {
+  color: #fbbf24 !important;
+}
+
+.weeklySearchResult .searchCharacterButton {
+  text-shadow: none !important;
+  text-decoration-color: rgba(251, 191, 36, 0.32) !important;
+}
+
+.weeklySearchResult .searchCharacterButton:hover {
+  color: #fff7d6 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 .searchResultCard {
   display: flex;
   position: relative;

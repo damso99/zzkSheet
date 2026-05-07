@@ -258,7 +258,7 @@ export default function RaidSchedulePage() {
                           <span>{group.items.length}개 결과</span>
                         </span>
                       </summary>
-                      <div className={styles.searchResults}>
+                      <div className={`${styles.searchResults} ${styles.weeklySearchResult}`}>
                         {group.items.map((item) => (
                           <article key={item.id} className={styles.searchResultCard}>
                             <div>
