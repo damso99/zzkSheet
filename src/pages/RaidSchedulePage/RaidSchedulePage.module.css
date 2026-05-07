@@ -839,6 +839,60 @@
   border-bottom-right-radius: 18px;
 }
 
+.todaySchedule .participantTable {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.todaySchedule .tableWrapper,
+.todaySchedule .raidTableWrapper,
+.todaySchedule .participantTableWrap {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.todaySchedule .participantTable tr.participantHighlight,
+.todaySchedule .highlightedRow,
+.todaySchedule .selectedRow,
+.todaySchedule .matchedRow {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 191, 36, 0.1),
+      rgba(251, 191, 36, 0.06),
+      transparent
+    ) !important;
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.45) !important;
+  transform: none !important;
+}
+
+.todaySchedule .participantTable tr.participantHighlight td,
+.todaySchedule .highlightedRow td,
+.todaySchedule .selectedRow td,
+.todaySchedule .matchedRow td {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: rgba(124, 184, 255, 0.1) !important;
+}
+
+.todaySchedule .participantTable tr.participantHighlight td:first-child,
+.todaySchedule .highlightedRow td:first-child,
+.todaySchedule .selectedRow td:first-child,
+.todaySchedule .matchedRow td:first-child {
+  border-left: none !important;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.todaySchedule .participantTable tr.participantHighlight td:last-child,
+.todaySchedule .highlightedRow td:last-child,
+.todaySchedule .selectedRow td:last-child,
+.todaySchedule .matchedRow td:last-child {
+  border-right: none !important;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
 .participantTable tr:last-child td {
   border-bottom: 0;
 }
@@ -1178,6 +1232,55 @@
 .weeklySearchResult .chip strong {
   color: #7cb8ff !important;
   text-decoration: none !important;
+}
+
+.weeklySearchResult table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.weeklySearchResult .tableWrapper,
+.weeklySearchResult .raidTableWrapper,
+.weeklySearchResult .participantTableWrap,
+.weeklySearchResult .raidCardInner {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.weeklySearchResult .highlightedRow,
+.weeklySearchResult .participantHighlight,
+.weeklySearchResult tr.participantHighlight {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 191, 36, 0.1),
+      rgba(251, 191, 36, 0.06),
+      transparent
+    ) !important;
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.45) !important;
+  transform: none !important;
+}
+
+.weeklySearchResult .highlightedRow td,
+.weeklySearchResult .participantHighlight td,
+.weeklySearchResult tr.participantHighlight td {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: rgba(124, 184, 255, 0.1) !important;
+}
+
+.weeklySearchResult .highlightedRow td:first-child,
+.weeklySearchResult .participantHighlight td:first-child,
+.weeklySearchResult tr.participantHighlight td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.weeklySearchResult .highlightedRow td:last-child,
+.weeklySearchResult .participantHighlight td:last-child,
+.weeklySearchResult tr.participantHighlight td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
 .searchResultCard {

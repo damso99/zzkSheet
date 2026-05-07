@@ -198,7 +198,7 @@ export default function RaidSchedulePage() {
         ) : null}
 
         {!isLoading && activeTab === "today" ? (
-          <section className={styles.section}>
+          <section className={`${styles.section} ${styles.todaySchedule}`}>
             <SectionHeading
               styles={styles}
               title={TAB_LABELS.today}
