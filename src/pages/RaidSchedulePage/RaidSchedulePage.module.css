@@ -341,15 +341,15 @@
   border-radius: 999px;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--secondary), var(--primary), var(--glow));
-  box-shadow: 0 0 16px rgba(190, 138, 239, 0.45);
+  background: linear-gradient(90deg, var(--primary-strong), var(--primary), var(--glow));
+  box-shadow: 0 0 16px rgba(124, 184, 255, 0.2);
   transition: transform 180ms ease;
 }
 
 .tab:hover,
 .activeTab {
   color: #ffffff;
-  text-shadow: 0 0 14px rgba(190, 138, 239, 0.42);
+  text-shadow: 0 0 14px rgba(124, 184, 255, 0.2);
 }
 
 .tab:hover::after,
@@ -431,11 +431,11 @@
 .todayParticipantPanel {
   margin-bottom: 26px;
   padding: 20px;
-  border: 1px solid rgba(64, 36, 114, 0.72);
+  border: 1px solid var(--border);
   border-radius: 22px;
   background:
-    linear-gradient(135deg, rgba(190, 138, 239, 0.1), transparent 42%),
-    rgba(25, 16, 46, 0.82);
+    linear-gradient(135deg, rgba(124, 184, 255, 0.08), transparent 42%),
+    rgba(33, 44, 66, 0.82);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -453,7 +453,7 @@
   margin: 0;
   color: #ffffff;
   font-size: 1.05rem;
-  text-shadow: 0 0 16px rgba(190, 138, 239, 0.26);
+  text-shadow: 0 0 16px rgba(124, 184, 255, 0.16);
 }
 
 .todayParticipantHeader span {
@@ -473,14 +473,14 @@
   align-items: center;
   min-height: 32px;
   padding: 7px 12px;
-  border: 1px solid rgba(64, 36, 114, 0.84);
+  border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 900;
-  background: rgba(33, 20, 58, 0.82);
+  background: var(--card-soft);
   box-shadow:
-    0 0 18px rgba(125, 88, 177, 0.16),
+    0 0 18px rgba(76, 141, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition:
@@ -493,18 +493,18 @@
 
 .todayParticipantBadge:hover {
   color: #ffffff;
-  border-color: rgba(190, 138, 239, 0.64);
+  border-color: rgba(124, 184, 255, 0.35);
   box-shadow:
-    0 0 24px rgba(190, 138, 239, 0.22),
+    0 0 24px rgba(124, 184, 255, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transform: translateY(-1px);
 }
 
 .activeTodayParticipantBadge {
   color: var(--bg);
-  border-color: rgba(233, 204, 251, 0.92);
-  background: linear-gradient(135deg, var(--glow), var(--primary));
-  box-shadow: var(--shadow-glow);
+  border-color: rgba(124, 184, 255, 0.35);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  box-shadow: var(--shadow);
 }
 
 .todayParticipantEmpty {
@@ -541,14 +541,14 @@
   display: grid;
   gap: 18px;
   padding: 22px;
-  border: 1px solid rgba(64, 36, 114, 0.72);
+  border: 1px solid var(--border);
   border-radius: 24px;
   background:
-    linear-gradient(180deg, rgba(33, 20, 58, 0.9), rgba(15, 10, 26, 0.94)),
+    linear-gradient(180deg, rgba(33, 44, 66, 0.88), rgba(26, 34, 51, 0.94)),
     var(--panel);
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.35),
-    0 0 28px rgba(125, 88, 177, 0.12),
+    0 0 28px rgba(76, 141, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
 }
@@ -790,8 +790,8 @@
   border: 1px solid var(--border);
   border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(43, 33, 66, 0.76), rgba(34, 26, 54, 0.78)),
-    rgba(34, 26, 54, 0.72);
+    linear-gradient(180deg, rgba(33, 44, 66, 0.76), rgba(26, 34, 51, 0.78)),
+    rgba(26, 34, 51, 0.72);
   box-shadow:
     0 18px 48px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -823,13 +823,13 @@
   border-bottom: 2px solid var(--primary);
   transform: rotate(-45deg);
   transition: transform 180ms ease;
-  box-shadow: 4px 4px 18px rgba(207, 164, 255, 0.22);
+  box-shadow: 4px 4px 18px rgba(124, 184, 255, 0.16);
 }
 
 .dayGroup[open] .dayHeader {
-  background: rgba(207, 164, 255, 0.08);
+  background: rgba(124, 184, 255, 0.08);
   border-bottom: 1px solid var(--border);
-  box-shadow: inset 0 -1px 0 rgba(207, 164, 255, 0.08);
+  box-shadow: inset 0 -1px 0 rgba(124, 184, 255, 0.08);
 }
 
 .dayGroup[open] .dayHeader::before {
@@ -837,7 +837,7 @@
 }
 
 .dayHeader:hover {
-  background: rgba(207, 164, 255, 0.1);
+  background: rgba(124, 184, 255, 0.1);
 }
 
 .dayTitle {
@@ -845,7 +845,7 @@
   flex: 1;
   font-size: 1.12rem;
   font-weight: 900;
-  text-shadow: 0 0 14px rgba(207, 164, 255, 0.22);
+  text-shadow: 0 0 14px rgba(124, 184, 255, 0.18);
 }
 
 .dayHeaderMeta {
@@ -871,13 +871,13 @@
   padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  color: var(--glow);
+  color: var(--text);
   font-size: 0.78rem;
   font-weight: 900;
-  background: rgba(207, 164, 255, 0.12);
+  background: rgba(124, 184, 255, 0.12);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 12px rgba(207, 164, 255, 0.08);
+    0 0 12px rgba(124, 184, 255, 0.08);
 }
 
 .dayGroup .cardGrid,
@@ -942,7 +942,7 @@
   padding: 14px 18px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: var(--panel);
+  background: var(--card);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
 }
 
@@ -1003,14 +1003,14 @@
   width: min(1120px, 100%);
   max-height: min(860px, calc(100dvh - 56px));
   overflow: hidden;
-  border: 1px solid rgba(64, 36, 114, 0.92);
+  border: 1px solid var(--border);
   border-radius: 28px;
   background:
-    linear-gradient(145deg, rgba(33, 20, 58, 0.96), rgba(12, 8, 20, 0.98)),
+    linear-gradient(145deg, rgba(33, 44, 66, 0.96), rgba(16, 21, 34, 0.98)),
     var(--panel-strong);
   box-shadow:
     0 30px 90px rgba(0, 0, 0, 0.72),
-    0 0 70px rgba(125, 88, 177, 0.2),
+    0 0 42px rgba(76, 141, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -1107,11 +1107,11 @@
 .activeModalTab {
   flex: 0 0 auto;
   padding: 10px 14px;
-  border: 1px solid rgba(64, 36, 114, 0.62);
+  border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--muted);
   font-weight: 900;
-  background: rgba(25, 16, 46, 0.76);
+  background: var(--card-soft);
   transition:
     color 160ms ease,
     border-color 160ms ease,
@@ -1122,9 +1122,9 @@
 .modalTab:hover,
 .activeModalTab {
   color: #ffffff;
-  border-color: rgba(105, 230, 255, 0.58);
-  background: rgba(85, 167, 255, 0.18);
-  box-shadow: 0 0 22px rgba(85, 167, 255, 0.2);
+  border-color: rgba(124, 184, 255, 0.35);
+  background: rgba(124, 184, 255, 0.14);
+  box-shadow: 0 0 22px rgba(124, 184, 255, 0.12);
 }
 
 .modalBody {
