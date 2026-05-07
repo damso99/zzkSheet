@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import styles from "./RaidSchedulePage.module.css";
 import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import RaidCard from "./components/RaidCard.jsx";
