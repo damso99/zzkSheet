@@ -790,20 +790,36 @@
   font-size: 0.9rem;
 }
 
-.participantTable tr.participantHighlight td {
-  border-color: rgba(251, 191, 36, 0.48) !important;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 107, 53, 0.08)) !important;
+.participantTable tr.participantHighlight {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 191, 36, 0.18),
+      rgba(249, 115, 22, 0.1),
+      rgba(251, 191, 36, 0.06)
+    ) !important;
   box-shadow:
-    inset 0 1px 0 rgba(251, 191, 36, 0.14),
-    inset 0 0 0 1px rgba(251, 191, 36, 0.06),
-    0 0 12px rgba(251, 191, 36, 0.12) !important;
+    inset 0 0 18px rgba(251, 191, 36, 0.1),
+    0 0 14px rgba(251, 191, 36, 0.12);
+  transform: none !important;
+}
+
+.participantTable tr.participantHighlight td {
+  background: transparent !important;
+  border-color: rgba(251, 191, 36, 0.12) !important;
+  box-shadow: none !important;
 }
 
 .participantTable tr.participantHighlight td:first-child {
-  box-shadow:
-    inset 4px 0 0 var(--accent-gold),
-    inset 0 1px 0 rgba(251, 191, 36, 0.14),
-    inset 0 0 0 1px rgba(251, 191, 36, 0.06) !important;
+  border-left: 1px solid rgba(251, 191, 36, 0.42) !important;
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+}
+
+.participantTable tr.participantHighlight td:last-child {
+  border-right: 1px solid rgba(251, 191, 36, 0.42) !important;
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
 .participantTable tr:last-child td {
