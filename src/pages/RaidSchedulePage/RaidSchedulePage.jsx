@@ -31,6 +31,7 @@ export default function RaidSchedulePage() {
 
   useEffect(() => {
     let ignore = false;
+    const controller = new AbortController();
 
     async function loadSchedule() {
       setIsLoading(true);
@@ -38,6 +39,7 @@ export default function RaidSchedulePage() {
 
       try {
         const bundle = await loadRaidSheetBundle({
+          signal: controller.signal,
           sheetUrl: DEFAULT_SHEET_URL,
           targetGid: DEFAULT_TARGET_GID,
         });
@@ -73,6 +75,7 @@ export default function RaidSchedulePage() {
     loadSchedule();
 
     return () => {
+      controller.abort();
       ignore = true;
     };
   }, [todayIsoDate]);
@@ -139,7 +142,14 @@ export default function RaidSchedulePage() {
             <h1>레이드 일정표</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
-              <span>{sourceMeta.isFallback ? "Disconnected" : "Connected"}</span>
+              <span
+                className={`${styles.connectionStatus} ${
+                  sourceMeta.isFallback ? styles.connectionOffline : styles.connectionOnline
+                }`}
+              >
+                <span className={styles.connectionStatusDot} aria-hidden="true" />
+                {sourceMeta.isFallback ? "Disconnected" : "Connected"}
+              </span>
             </div>
           </div>
         </header>
@@ -188,7 +198,7 @@ export default function RaidSchedulePage() {
         ) : null}
 
         {!isLoading && activeTab === "today" ? (
-          <section className={styles.section}>
+          <section className={`${styles.section} ${styles.todaySchedule}`}>
             <SectionHeading
               styles={styles}
               title={TAB_LABELS.today}
@@ -248,7 +258,7 @@ export default function RaidSchedulePage() {
                           <span>{group.items.length}개 결과</span>
                         </span>
                       </summary>
-                      <div className={styles.searchResults}>
+                      <div className={`${styles.searchResults} ${styles.weeklySearchResult}`}>
                         {group.items.map((item) => (
                           <article key={item.id} className={styles.searchResultCard}>
                             <div>

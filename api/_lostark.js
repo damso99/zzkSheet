@@ -1,6 +1,7 @@
 const LOSTARK_BASE_URL = "https://developer-lostark.game.onstove.com";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const characterCache = new Map();
+const characterInFlight = new Map();
 
 const CHARACTER_ENDPOINTS = {
   summary: "",
@@ -66,71 +67,87 @@ export async function getLostarkCharacterBundle(characterName) {
     };
   }
 
+  if (characterInFlight.has(cacheKey)) {
+    return characterInFlight.get(cacheKey);
+  }
+
   const encodedName = encodeURIComponent(safeCharacterName);
-  const settledEntries = await Promise.allSettled(
-    Object.entries(CHARACTER_ENDPOINTS).map(async ([key, endpoint]) => {
-      const apiUrl = `${LOSTARK_BASE_URL}/armories/characters/${encodedName}${endpoint ? `/${endpoint}` : ""}`;
-      const { body, response } = await fetchLostarkJson(apiUrl, lostarkApiKey);
+  const requestPromise = (async () => {
+    const settledEntries = await Promise.allSettled(
+      Object.entries(CHARACTER_ENDPOINTS).map(async ([key, endpoint]) => {
+        const apiUrl = `${LOSTARK_BASE_URL}/armories/characters/${encodedName}${endpoint ? `/${endpoint}` : ""}`;
+        const { body, response } = await fetchLostarkJson(apiUrl, lostarkApiKey);
 
+        return {
+          key,
+          body,
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+        };
+      }),
+    );
+
+    const armory = {};
+    const errors = {};
+
+    for (const entry of settledEntries) {
+      if (entry.status === "rejected") {
+        errors.unknown = {
+          status: 502,
+          detail: entry.reason instanceof Error ? entry.reason.message : String(entry.reason),
+        };
+        continue;
+      }
+
+      const result = entry.value;
+      if (result.ok) {
+        armory[result.key] = result.body;
+      } else {
+        errors[result.key] = {
+          status: result.status,
+          statusText: result.statusText,
+          detail: result.body,
+        };
+      }
+    }
+
+    if (!armory.profile && errors.profile) {
       return {
-        key,
-        body,
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-      };
-    }),
-  );
-
-  const armory = {};
-  const errors = {};
-
-  for (const entry of settledEntries) {
-    if (entry.status === "rejected") {
-      errors.unknown = {
-        status: 502,
-        detail: entry.reason instanceof Error ? entry.reason.message : String(entry.reason),
-      };
-      continue;
-    }
-
-    const result = entry.value;
-    if (result.ok) {
-      armory[result.key] = result.body;
-    } else {
-      errors[result.key] = {
-        status: result.status,
-        statusText: result.statusText,
-        detail: result.body,
+        status: errors.profile.status || 502,
+        body: {
+          error: "Lost Ark OpenAPI profile request failed.",
+          detail: errors.profile.detail,
+          errors,
+        },
       };
     }
-  }
 
-  if (!armory.profile && errors.profile) {
-    return {
-      status: errors.profile.status || 502,
-      body: {
-        error: "Lost Ark OpenAPI profile request failed.",
-        detail: errors.profile.detail,
-        errors,
-      },
+    const body = {
+      characterName: safeCharacterName,
+      fetchedAt: new Date().toISOString(),
+      armory,
+      errors,
+      cache: { hit: false, ttlMs: CACHE_TTL_MS },
     };
+
+    characterCache.set(cacheKey, {
+      createdAt: Date.now(),
+      body,
+    });
+
+    return { status: 200, body };
+  })();
+
+  characterInFlight.set(cacheKey, requestPromise);
+
+  try {
+    return await requestPromise;
+  } finally {
+    if (characterInFlight.get(cacheKey) === requestPromise) {
+      characterInFlight.delete(cacheKey);
+    }
   }
-
-  const body = {
-    characterName: safeCharacterName,
-    fetchedAt: new Date().toISOString(),
-    armory,
-    errors,
-    cache: { hit: false, ttlMs: CACHE_TTL_MS },
-  };
-
-  characterCache.set(cacheKey, {
-    createdAt: Date.now(),
-    body,
-  });
-
-  return { status: 200, body };
 }
 
 export async function fetchLostarkJson(apiUrl, lostarkApiKey) {

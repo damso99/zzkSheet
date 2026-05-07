@@ -8,11 +8,21 @@ import {
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
+const KNOWN_RAID_TITLES = [
+  "\uce74\uc81c\ub85c\uc2a4",
+  "\uc138\ub974\uce74",
+  "\uc9c0\ud3c9",
+  "\uc9c0\ud33d\ub9c9\uac78\ub9ac",
+  "\uc544\ub974\ubaa8\uccb4",
+  "\uc775\uc2a4\ud2b8\ub9bc \uc5d0\uae30\ub974",
+  "\uc77c\uc815\uc5c6\uc74c",
+];
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
+  const titleCache = new Map();
 
   const parsedRaids = parseRaidCalendarRows({
     raidBlocks,
@@ -21,19 +31,39 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     settingLookup,
   });
 
-  return parsedRaids
+  const normalizedRaids = parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
+      const titleSearchRow = raid.titleLookupRow ?? raid.startRow;
+      const titleCacheKey = `${titleSearchRow}:${raid.startCol}:${raid.endCol}`;
+      const resolvedRaidName =
+        findRaidTitleByPosition({
+          endCol: raid.endCol,
+          raidNameLookup,
+          rowIndex: titleSearchRow,
+          rows: raidCalendarRows,
+          settingLookup,
+          startCol: raid.startCol,
+        }) || "미지정";
+      const cachedFinalRaidName = titleCache.get(titleCacheKey);
+      const finalRaidName =
+        cachedFinalRaidName ||
+        (isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "\uc77c\uc815\uc5c6\uc74c"
+          ? resolvedRaidName
+          : normalizeRaidName(raid.raidName) || "\ubbf8\uc9c0\uc815");
+      if (!cachedFinalRaidName) {
+        titleCache.set(titleCacheKey, finalRaidName);
+      }
       const item = {
         blockTime: raid.blockTime,
         date: raid.date,
         dayLabel: formatDateLabel(raid.date),
         endCol: raid.endCol,
         endRow: raid.endRow,
-        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(raid.raidName)}-${raidIndex}`,
+        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(finalRaidName)}-${raidIndex}`,
         participantCount: participants.length,
         participants,
-        raidName: raid.raidName,
+        raidName: finalRaidName,
         startCol: raid.startCol,
         startRow: raid.startRow,
         time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
@@ -41,6 +71,8 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       return item;
     })
     .sort(compareRaidOrder);
+
+  return normalizedRaids;
 }
 
 export function buildFallbackRaidSchedule(todayIsoDate) {
@@ -80,8 +112,10 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
     const blockStartRow = dateRow.index;
     const blockTime = findBlockTimeFromColumnA(rows, dateRow.index, nextDateRow?.index);
     const blockEndRow = (nextDateRow?.index ?? rows.length) - 1;
+    const dateScopedBlocks =
+      collectRaidColumnBlocksForDateBlock(rows, blockStartRow - 1) || raidBlocks;
 
-    raidBlocks.forEach((block) => {
+    dateScopedBlocks.forEach((block) => {
       raids.push(
         ...collectRaidsForBlock({
           block,
@@ -110,6 +144,10 @@ function collectRaidsForBlock({
   raidNameLookup,
   settingLookup,
 }) {
+  if (isSkippedRaidTitle(block.raidName)) {
+    return [];
+  }
+
   const raids = [];
   let currentParty = createParty({
     blockTime,
@@ -145,6 +183,10 @@ function collectRaidsForBlock({
 
     const members = extractMembersFromRow(row, block.startCol, block.endCol, settingLookup);
     for (const member of members) {
+      if (currentParty.members.length === 0) {
+        currentParty.titleLookupRow = rowIndex;
+      }
+
       const normalized = normalizeKey(member);
       if (seenMembers.has(normalized)) continue;
       seenMembers.add(normalized);
@@ -171,6 +213,7 @@ function createParty({ blockTime = "", date, raidName, startCol, endCol, startRo
     startCol,
     startRow,
     time: blockTime || "",
+    titleLookupRow: startRow,
   };
 }
 
@@ -207,6 +250,7 @@ function findBlockTimeFromColumnA(rows, dateRow, nextDateRow) {
 }
 
 function collectRaidColumnBlocks(cols = [], rows = []) {
+  const detectedEndCol = getDetectedEndCol(rows);
   const labeledColumns = cols
     .map((col, index) => ({
       index,
@@ -219,7 +263,7 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
       .map(({ index, label }, currentIndex) => {
         const nextIndex = labeledColumns[currentIndex + 1]?.index;
         return {
-          endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
+          endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
           raidName: normalizeRaidName(label),
           startCol: index,
         };
@@ -237,7 +281,7 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
     .map(({ index, raidName }, currentIndex) => {
       const nextIndex = fallbackColumns[currentIndex + 1]?.index;
       return {
-        endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
+        endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
         raidName,
         startCol: index,
       };
@@ -245,8 +289,49 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
     .sort((left, right) => left.startCol - right.startCol);
 }
 
+function collectRaidColumnBlocksForDateBlock(rows = [], headerRowIndex = -1) {
+  if (headerRowIndex < 0) return null;
+
+  const headerRow = rows[headerRowIndex] || [];
+  const detectedEndCol = getDetectedEndCol(rows);
+  const titleColumns = [];
+
+  for (let columnIndex = 0; columnIndex <= detectedEndCol; columnIndex += 1) {
+    const rawValue = cleanText(headerRow[columnIndex]);
+    if (!rawValue) continue;
+    if (!isRaidTitle(rawValue)) continue;
+
+    titleColumns.push({
+      index: columnIndex,
+      raidName: normalizeRaidName(rawValue),
+    });
+  }
+
+  if (titleColumns.length === 0) {
+    return null;
+  }
+
+  return titleColumns.map(({ index, raidName }, currentIndex) => {
+    const nextIndex = titleColumns[currentIndex + 1]?.index;
+    return {
+      endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
+      raidName,
+      startCol: index,
+    };
+  });
+}
+
 function buildRaidNameLookup(raidBlocks) {
-  return new Set(raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean));
+  const knownTitles = KNOWN_RAID_TITLES.map((title) => normalizeKey(title));
+  return new Set([...knownTitles, ...raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean)]);
+}
+
+function isRaidTitle(value) {
+  return KNOWN_RAID_TITLES.includes(normalizeRaidName(value));
+}
+
+function isSkippedRaidTitle(value) {
+  return normalizeRaidName(value) === "\uc77c\uc815\uc5c6\uc74c";
 }
 
 function findRaidHeaderInBlock(row, block, raidNameLookup) {
@@ -264,6 +349,67 @@ function findRaidHeaderInBlock(row, block, raidNameLookup) {
   return "";
 }
 
+function findRaidTitleByPosition({
+  rows = [],
+  rowIndex = 0,
+  startCol = 0,
+  endCol = 0,
+  settingLookup = new Map(),
+  raidNameLookup = new Set(),
+} = {}) {
+  const candidateColumns = buildCandidateTitleColumns(startCol, endCol);
+
+  for (let currentRowIndex = rowIndex; currentRowIndex >= 0; currentRowIndex -= 1) {
+    const row = rows[currentRowIndex] || [];
+
+    for (const columnIndex of candidateColumns) {
+      if (columnIndex >= row.length) continue;
+      const value = cleanText(row[columnIndex]);
+      if (!value) continue;
+      if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
+      if (isCharacterValue(value, settingLookup)) continue;
+
+      const normalized = normalizeKey(value);
+      if (raidNameLookup.has(normalized)) {
+        return normalizeRaidName(value);
+      }
+    }
+  }
+
+  return "";
+}
+
+function buildCandidateTitleColumns(startCol, endCol) {
+  const columns = [];
+  const midpoint = Math.floor((startCol + endCol) / 2);
+  const preferredColumns = [
+    startCol,
+    startCol - 1,
+    startCol + 1,
+    startCol - 2,
+    startCol + 2,
+    midpoint,
+    endCol,
+    endCol - 1,
+    endCol + 1,
+  ];
+
+  preferredColumns.forEach((columnIndex) => {
+    if (columnIndex < 0) return;
+    if (!columns.includes(columnIndex)) {
+      columns.push(columnIndex);
+    }
+  });
+
+  for (let columnIndex = startCol; columnIndex <= endCol; columnIndex += 1) {
+    if (!columns.includes(columnIndex)) {
+      columns.push(columnIndex);
+    }
+  }
+
+  return columns;
+}
+
 function extractMembersFromRow(row, startCol, endCol, settingLookup) {
   const members = [];
 
@@ -277,6 +423,30 @@ function extractMembersFromRow(row, startCol, endCol, settingLookup) {
   }
 
   return members;
+}
+
+function getDetectedEndCol(rows = []) {
+  let detectedEndCol = 0;
+
+  rows.forEach((row) => {
+    const currentEndCol = findLastMeaningfulColumnIndex(row);
+    if (currentEndCol > detectedEndCol) {
+      detectedEndCol = currentEndCol;
+    }
+  });
+
+  return detectedEndCol;
+}
+
+function findLastMeaningfulColumnIndex(row = []) {
+  for (let columnIndex = row.length - 1; columnIndex >= 0; columnIndex -= 1) {
+    const value = cleanText(row[columnIndex]);
+    if (value) {
+      return columnIndex;
+    }
+  }
+
+  return 0;
 }
 
 function parseSettingRows(rows) {

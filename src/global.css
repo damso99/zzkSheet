@@ -1,17 +1,39 @@
 :root {
+  --bg: #12121a;
+  --bg-elevated: #181824;
+  --card: #221a36;
+  --card-strong: #2b2142;
+  --primary: #7cb8ff;
+  --primary-strong: #4c8dff;
+  --highlight: #22d3ee;
+  --highlight-soft: rgba(34, 211, 238, 0.16);
+  --highlight-border: rgba(34, 211, 238, 0.45);
+  --highlight-glow: rgba(34, 211, 238, 0.35);
+  --secondary: #4c8dff;
+  --glow: #e9ccfb;
+  --border: #4d6488;
+  --border-strong: rgba(124, 184, 255, 0.35);
+  --border-soft: rgba(124, 184, 255, 0.18);
+  --text: #f7f2ff;
+  --text-muted: rgba(247, 242, 255, 0.68);
+  --shadow-glow:
+    0 0 10px rgba(124, 184, 255, 0.18),
+    0 0 24px rgba(76, 141, 255, 0.12);
+
   font-family: "SUIT Variable", "Pretendard", "Noto Sans KR", sans-serif;
-  color: #231815;
+  color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(255, 198, 121, 0.45), transparent 28%),
-    radial-gradient(circle at top right, rgba(227, 122, 76, 0.2), transparent 24%),
-    linear-gradient(180deg, #f7efe1 0%, #f3e5d0 44%, #ead5ba 100%);
+    radial-gradient(circle at top left, rgba(124, 184, 255, 0.1), transparent 28%),
+    radial-gradient(circle at top right, rgba(76, 141, 255, 0.08), transparent 24%),
+    linear-gradient(180deg, #12121a 0%, #171722 44%, #1d1a2a 100%);
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
   box-sizing: border-box;
+  text-decoration: none;
 }
 
 html {
@@ -23,6 +45,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(124, 184, 255, 0.1), transparent 24%),
+    radial-gradient(circle at 88% 12%, rgba(76, 141, 255, 0.08), transparent 28%),
+    linear-gradient(180deg, var(--bg) 0%, #1a1725 100%);
 }
 
 body,
@@ -42,4 +69,31 @@ input {
 
 #root {
   min-height: 100vh;
+}
+
+::selection {
+  color: #12121a;
+  background: rgba(233, 204, 251, 0.92);
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+#root::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(124, 184, 255, 0.92), rgba(76, 141, 255, 0.84));
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+#root::-webkit-scrollbar-track {
+  background: rgba(34, 26, 54, 0.44);
 }

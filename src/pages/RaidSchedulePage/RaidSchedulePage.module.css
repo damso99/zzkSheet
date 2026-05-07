@@ -1,26 +1,26 @@
 /* Page shell */
 .page {
-  --bg-0: #03050d;
-  --bg-1: #071021;
-  --bg-2: #10143a;
-  --panel: rgba(15, 23, 45, 0.78);
-  --panel-strong: rgba(18, 29, 58, 0.92);
-  --line: rgba(104, 150, 255, 0.34);
-  --text: #f4f7ff;
-  --muted: #9aa8c5;
-  --blue: #55a7ff;
-  --cyan: #69e6ff;
-  --purple: #a879ff;
-  --green: #54e89c;
-  --orange: #ffad5c;
-  --gold: #ffd88a;
+  --bg-0: var(--bg);
+  --bg-1: var(--bg-elevated);
+  --bg-2: var(--card);
+  --panel: rgba(26, 34, 51, 0.82);
+  --panel-strong: rgba(33, 44, 66, 0.94);
+  --line: var(--border);
+  --text: var(--text);
+  --muted: var(--text-muted);
+  --blue: var(--primary);
+  --cyan: var(--glow);
+  --accent: var(--primary-strong);
+  --green: var(--primary);
+  --orange: var(--secondary);
+  --gold: var(--glow);
 
   position: relative;
   min-height: 100vh;
   overflow: hidden;
   color: var(--text);
   background:
-    linear-gradient(180deg, rgba(3, 5, 13, 0.1), rgba(3, 5, 13, 0.7)),
+    linear-gradient(180deg, rgba(18, 18, 26, 0.08), rgba(18, 18, 26, 0.7)),
     linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 44%, var(--bg-2) 100%);
 }
 
@@ -30,9 +30,9 @@
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(85, 167, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(168, 121, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(120deg, rgba(255, 216, 138, 0.08), transparent 38%);
+    linear-gradient(90deg, rgba(76, 141, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(124, 184, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(120deg, rgba(224, 241, 255, 0.08), transparent 38%);
   background-size:
     72px 72px,
     72px 72px,
@@ -54,14 +54,205 @@
   padding-bottom: 26px;
 }
 
+/* Navy neon palette overrides */
+.page {
+  --line: var(--border);
+  --blue: var(--primary);
+  --cyan: var(--glow);
+  --accent: var(--primary-strong);
+}
+
+.eyebrow,
+.todayParticipantHeader span,
+.modalTitleBlock span,
+.modalSubtitle {
+  color: var(--primary);
+}
+
+.hero h1,
+.dayTitle,
+.modalTitleBlock h2,
+.cardHeader h3 {
+  text-shadow:
+    0 0 12px rgba(124, 184, 255, 0.22),
+    0 0 28px rgba(76, 141, 255, 0.12);
+}
+
+.todayParticipantPanel,
+.raidCard,
+.searchResultCard,
+.statePanel,
+.dayGroup,
+.modalShell,
+.participantTableWrap {
+  border-color: var(--border);
+}
+
+.todayParticipantPanel,
+.raidCard,
+.searchResultCard,
+.statePanel,
+.dayGroup {
+  background:
+    linear-gradient(180deg, rgba(43, 53, 78, 0.58), rgba(26, 34, 51, 0.78)),
+    var(--panel);
+}
+
+.todayParticipantBadge,
+.modalTab,
+.activeModalTab,
+.detailToggleButton {
+  border-color: var(--border);
+  background: var(--card-soft);
+  color: var(--text);
+}
+
+.todayParticipantBadge:hover,
+.modalTab:hover,
+.detailToggleButton:hover,
+.dayHeader:hover {
+  border-color: rgba(124, 184, 255, 0.35);
+  background: var(--hover);
+  box-shadow:
+    0 0 10px rgba(124, 184, 255, 0.16),
+    0 0 24px rgba(76, 141, 255, 0.1);
+}
+
+.activeTodayParticipantBadge,
+.activeModalTab {
+  color: #101522;
+  border-color: rgba(124, 184, 255, 0.35);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  box-shadow: var(--shadow);
+}
+
+.cardGrid::before {
+  background: linear-gradient(180deg, transparent, var(--primary), var(--primary-strong), transparent);
+  box-shadow:
+    0 0 10px rgba(124, 184, 255, 0.18),
+    0 0 24px rgba(76, 141, 255, 0.1);
+}
+
+.raidCard::before {
+  background: radial-gradient(circle, var(--glow) 0 35%, var(--primary) 36% 100%);
+  box-shadow:
+    0 0 0 5px rgba(124, 184, 255, 0.1),
+    0 0 18px rgba(124, 184, 255, 0.18);
+}
+
+.scheduled,
+.recruiting {
+  background: rgba(124, 184, 255, 0.14);
+  border-color: rgba(124, 184, 255, 0.32);
+}
+
+.inProgress {
+  color: #101522;
+  background: rgba(224, 241, 255, 0.18);
+  border-color: rgba(224, 241, 255, 0.34);
+}
+
+.participantTable tr.participantHighlight td,
+.participantHighlight {
+  border-color: rgba(124, 184, 255, 0.3);
+  background: rgba(124, 184, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(124, 184, 255, 0.08),
+    0 0 0 1px rgba(124, 184, 255, 0.16);
+}
+
+.participantTable tr.participantHighlight td:first-child {
+  box-shadow:
+    inset 3px 0 0 rgba(124, 184, 255, 0.52),
+    inset 0 1px 0 rgba(124, 184, 255, 0.08);
+}
+
+.characterNameButton,
+.searchCharacterButton {
+  color: var(--primary);
+  text-decoration-color: rgba(124, 184, 255, 0.28);
+}
+
+.characterNameButton:hover,
+.searchCharacterButton:hover {
+  text-shadow: 0 0 14px rgba(124, 184, 255, 0.22);
+}
+
+.dayHeader::before {
+  border-right-color: var(--primary);
+  border-bottom-color: var(--primary);
+  box-shadow: 4px 4px 14px rgba(124, 184, 255, 0.16);
+}
+
+.dayGroup[open] .dayHeader {
+  background: var(--active);
+  border-bottom: 1px solid var(--border);
+  box-shadow: inset 0 -1px 0 rgba(124, 184, 255, 0.08);
+}
+
+.dayTimeBadge {
+  border-color: var(--border);
+  color: var(--text);
+  background: rgba(124, 184, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 10px rgba(124, 184, 255, 0.08);
+}
+
+.searchBox input {
+  border-color: var(--border);
+  background: var(--card-soft);
+  box-shadow: inset 0 0 18px rgba(76, 141, 255, 0.05);
+}
+
+.searchBox input:focus {
+  border-color: rgba(124, 184, 255, 0.35);
+  box-shadow:
+    0 0 0 4px rgba(124, 184, 255, 0.12),
+    0 0 22px rgba(124, 184, 255, 0.1),
+    inset 0 0 18px rgba(76, 141, 255, 0.06);
+}
+
+.searchResultCard {
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+.modalOverlay {
+  background:
+    radial-gradient(circle at 50% 14%, rgba(124, 184, 255, 0.12), transparent 34%),
+    rgba(12, 18, 30, 0.84);
+}
+
+.modalShell {
+  border-color: var(--border);
+  background:
+    linear-gradient(145deg, rgba(33, 44, 66, 0.96), rgba(16, 21, 34, 0.98)),
+    var(--panel-strong);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.72),
+    0 0 42px rgba(76, 141, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.modalCloseButton {
+  border-color: var(--border);
+  background: var(--card-soft);
+  box-shadow: 0 0 16px rgba(76, 141, 255, 0.1);
+}
+
+.modalCloseButton:hover {
+  border-color: rgba(124, 184, 255, 0.35);
+  box-shadow: 0 0 20px rgba(124, 184, 255, 0.14);
+}
+
 .eyebrow {
-  margin: 0 0 10px;
-  color: var(--gold);
+  margin: 0;
+  color: var(--primary);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  text-shadow: 0 0 16px rgba(255, 216, 138, 0.42);
+  text-shadow: 0 0 16px rgba(124, 184, 255, 0.28);
 }
 
 .hero h1 {
@@ -71,8 +262,8 @@
   line-height: 1;
   letter-spacing: 0;
   text-shadow:
-    0 0 16px rgba(85, 167, 255, 0.72),
-    0 0 36px rgba(168, 121, 255, 0.45);
+    0 0 16px rgba(124, 184, 255, 0.4),
+    0 0 36px rgba(76, 141, 255, 0.22);
 }
 
 .description {
@@ -105,7 +296,58 @@
   content: "";
   border-radius: 50%;
   background: var(--cyan);
-  box-shadow: 0 0 12px rgba(105, 230, 255, 0.72);
+  box-shadow: 0 0 12px rgba(124, 184, 255, 0.36);
+}
+
+.connectionStatus::before {
+  display: none;
+}
+
+.connectionStatus {
+  min-height: 30px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.connectionStatusDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.connectionOnline {
+  color: #dfffea;
+  border-color: rgba(77, 214, 140, 0.36);
+  background: rgba(40, 108, 71, 0.22);
+  box-shadow:
+    0 0 10px rgba(77, 214, 140, 0.14),
+    inset 0 0 0 1px rgba(77, 214, 140, 0.08);
+}
+
+.connectionOnline .connectionStatusDot {
+  background: #4dd68c;
+  box-shadow:
+    0 0 8px rgba(77, 214, 140, 0.8),
+    0 0 18px rgba(77, 214, 140, 0.42);
+}
+
+.connectionOffline {
+  color: #ffe4e4;
+  border-color: rgba(255, 98, 117, 0.36);
+  background: rgba(123, 34, 47, 0.22);
+  box-shadow:
+    0 0 10px rgba(255, 98, 117, 0.14),
+    inset 0 0 0 1px rgba(255, 98, 117, 0.08);
+}
+
+.connectionOffline .connectionStatusDot {
+  background: #ff6275;
+  box-shadow:
+    0 0 8px rgba(255, 98, 117, 0.8),
+    0 0 18px rgba(255, 98, 117, 0.42);
 }
 
 /* Tabs and controls */
@@ -150,15 +392,15 @@
   border-radius: 999px;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--purple), var(--blue), var(--cyan));
-  box-shadow: 0 0 16px rgba(105, 230, 255, 0.65);
+  background: linear-gradient(90deg, var(--primary-strong), var(--primary), var(--glow));
+  box-shadow: 0 0 16px rgba(124, 184, 255, 0.2);
   transition: transform 180ms ease;
 }
 
 .tab:hover,
 .activeTab {
   color: #ffffff;
-  text-shadow: 0 0 14px rgba(85, 167, 255, 0.46);
+  text-shadow: 0 0 14px rgba(124, 184, 255, 0.2);
 }
 
 .tab:hover::after,
@@ -176,10 +418,14 @@
 .chip {
   min-width: 112px;
   padding: 10px 14px;
-  border: 1px solid rgba(104, 150, 255, 0.22);
+  border: 1px solid rgba(124, 184, 255, 0.28);
   border-radius: 18px;
-  background: rgba(15, 23, 45, 0.7);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(33, 44, 66, 0.88), rgba(26, 34, 51, 0.92)),
+    var(--card);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 12px rgba(124, 184, 255, 0.1);
 }
 
 .chip span {
@@ -189,8 +435,9 @@
 }
 
 .chip strong {
-  color: var(--cyan);
+  color: var(--primary);
   font-size: 1.05rem;
+  text-shadow: 0 0 14px rgba(124, 184, 255, 0.18);
 }
 
 /* Section headings */
@@ -239,15 +486,37 @@
 
 .todayParticipantPanel {
   margin-bottom: 26px;
+  position: relative;
   padding: 20px;
-  border: 1px solid rgba(104, 150, 255, 0.22);
+  border: 1px solid var(--border);
   border-radius: 22px;
+  overflow: hidden;
+  isolation: isolate;
   background:
-    linear-gradient(135deg, rgba(85, 167, 255, 0.12), transparent 42%),
-    rgba(9, 15, 33, 0.78);
+    linear-gradient(135deg, rgba(124, 184, 255, 0.08), transparent 42%),
+    rgba(33, 44, 66, 0.82);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.todayParticipantPanel::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.82;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.todayParticipantPanel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .todayParticipantHeader {
@@ -262,11 +531,11 @@
   margin: 0;
   color: #ffffff;
   font-size: 1.05rem;
-  text-shadow: 0 0 16px rgba(105, 230, 255, 0.28);
+  text-shadow: 0 0 16px rgba(124, 184, 255, 0.16);
 }
 
 .todayParticipantHeader span {
-  color: var(--gold);
+  color: var(--primary);
   font-size: 0.82rem;
   font-weight: 900;
 }
@@ -282,40 +551,41 @@
   align-items: center;
   min-height: 32px;
   padding: 7px 12px;
-  border: 1px solid rgba(105, 230, 255, 0.28);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  color: #eaf7ff;
+  color: var(--text);
   font-size: 0.9rem;
   font-weight: 900;
-  background: rgba(18, 31, 62, 0.82);
+  background: var(--card-soft);
   box-shadow:
-    0 0 18px rgba(85, 167, 255, 0.14),
+    0 0 18px rgba(76, 141, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition:
     color 160ms ease,
     border-color 160ms ease,
     background-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    box-shadow 160ms ease;
 }
 
 .todayParticipantBadge:hover {
   color: #ffffff;
-  border-color: rgba(105, 230, 255, 0.58);
+  border-color: rgba(251, 191, 36, 0.22);
+  background: rgba(251, 191, 36, 0.05);
   box-shadow:
-    0 0 24px rgba(105, 230, 255, 0.22),
+    0 0 10px rgba(251, 191, 36, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+  transform: none !important;
 }
 
 .activeTodayParticipantBadge {
-  color: #06101f;
-  border-color: rgba(255, 216, 138, 0.86);
-  background: linear-gradient(135deg, var(--gold), rgba(105, 230, 255, 0.92));
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 107, 53, 0.08)) !important;
+  border: 1px solid rgba(251, 191, 36, 0.48) !important;
+  color: #f5faff !important;
   box-shadow:
-    0 0 26px rgba(255, 216, 138, 0.34),
-    0 0 38px rgba(105, 230, 255, 0.2);
+    0 0 14px rgba(251, 191, 36, 0.2),
+    0 0 28px rgba(249, 115, 22, 0.12) !important;
+  transform: none !important;
 }
 
 .todayParticipantEmpty {
@@ -341,10 +611,10 @@
   width: 2px;
   content: "";
   border-radius: 999px;
-  background: linear-gradient(180deg, transparent, var(--blue), var(--purple), transparent);
+  background: linear-gradient(180deg, transparent, var(--primary), var(--secondary), transparent);
   box-shadow:
-    0 0 12px rgba(85, 167, 255, 0.55),
-    0 0 28px rgba(168, 121, 255, 0.32);
+    0 0 12px rgba(124, 184, 255, 0.28),
+    0 0 28px rgba(76, 141, 255, 0.18);
 }
 
 .raidCard {
@@ -352,16 +622,37 @@
   display: grid;
   gap: 18px;
   padding: 22px;
-  border: 1px solid rgba(104, 150, 255, 0.22);
+  border: 1px solid var(--border);
   border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(24, 35, 70, 0.86), rgba(9, 14, 30, 0.9)),
+    linear-gradient(180deg, rgba(33, 44, 66, 0.88), rgba(26, 34, 51, 0.94)),
     var(--panel);
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.35),
-    0 0 28px rgba(85, 167, 255, 0.1),
+    0 0 28px rgba(76, 141, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
+}
+
+.raidCard::after {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.82;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.raidCard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .collapsibleRaidCard {
@@ -370,20 +661,22 @@
 }
 
 .collapsibleRaidCard:focus-visible {
-  outline: 3px solid rgba(105, 230, 255, 0.34);
+  outline: 3px solid rgba(124, 184, 255, 0.34);
   outline-offset: 4px;
 }
 
 .highlightRaidCard {
-  border-color: rgba(255, 216, 138, 0.88);
   background:
-    linear-gradient(135deg, rgba(255, 216, 138, 0.16), rgba(105, 230, 255, 0.1) 44%, rgba(9, 14, 30, 0.92)),
-    var(--panel);
+    linear-gradient(180deg, rgba(251, 191, 36, 0.12), rgba(26, 34, 51, 1)),
+    var(--panel) !important;
+  border: 1px solid rgba(251, 191, 36, 0.42) !important;
   box-shadow:
     0 22px 58px rgba(0, 0, 0, 0.42),
-    0 0 34px rgba(255, 216, 138, 0.28),
-    0 0 54px rgba(105, 230, 255, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 0 18px rgba(251, 191, 36, 0.18),
+    0 0 32px rgba(255, 107, 53, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  color: #f5faff !important;
+  transform: none !important;
 }
 
 .raidCard::before {
@@ -395,10 +688,10 @@
   content: "";
   border: 2px solid rgba(244, 247, 255, 0.9);
   border-radius: 50%;
-  background: radial-gradient(circle, var(--cyan) 0 35%, var(--blue) 36% 100%);
+  background: radial-gradient(circle, var(--glow) 0 35%, var(--primary) 36% 100%);
   box-shadow:
-    0 0 0 5px rgba(85, 167, 255, 0.14),
-    0 0 22px rgba(105, 230, 255, 0.72);
+    0 0 0 5px rgba(124, 184, 255, 0.14),
+    0 0 22px rgba(124, 184, 255, 0.32);
 }
 
 /* Raid card header */
@@ -443,18 +736,19 @@
 }
 
 .scheduled {
-  background: rgba(85, 167, 255, 0.22);
-  border: 1px solid rgba(85, 167, 255, 0.48);
+  background: rgba(76, 141, 255, 0.18);
+  border: 1px solid rgba(76, 141, 255, 0.36);
 }
 
 .recruiting {
-  background: rgba(84, 232, 156, 0.2);
-  border: 1px solid rgba(84, 232, 156, 0.48);
+  background: rgba(124, 184, 255, 0.14);
+  border: 1px solid rgba(124, 184, 255, 0.32);
 }
 
 .inProgress {
-  background: rgba(255, 173, 92, 0.22);
-  border: 1px solid rgba(255, 173, 92, 0.52);
+  color: #101522;
+  background: rgba(224, 241, 255, 0.18);
+  border: 1px solid rgba(224, 241, 255, 0.36);
 }
 
 .participantSummary {
@@ -466,6 +760,7 @@
 /* Participant table */
 .participantTableWrap {
   overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid rgba(104, 150, 255, 0.16);
   border-radius: 18px;
   background: rgba(2, 7, 18, 0.34);
@@ -496,16 +791,106 @@
   font-size: 0.9rem;
 }
 
+.participantTable tr.participantHighlight {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 191, 36, 0.18),
+      rgba(249, 115, 22, 0.1),
+      rgba(251, 191, 36, 0.06)
+    ) !important;
+  box-shadow:
+    inset 0 0 18px rgba(251, 191, 36, 0.1),
+    0 0 14px rgba(251, 191, 36, 0.12);
+  transform: none !important;
+}
+
 .participantTable tr.participantHighlight td {
-  border-color: rgba(250, 204, 21, 0.34);
-  background: rgba(250, 204, 21, 0.08);
-  box-shadow: inset 0 1px 0 rgba(250, 204, 21, 0.12);
+  background: transparent !important;
+  border-color: rgba(251, 191, 36, 0.12) !important;
+  box-shadow: none !important;
 }
 
 .participantTable tr.participantHighlight td:first-child {
-  box-shadow:
-    inset 3px 0 0 rgba(250, 204, 21, 0.78),
-    inset 0 1px 0 rgba(250, 204, 21, 0.12);
+  border-left: 1px solid rgba(251, 191, 36, 0.42) !important;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.participantTable tr.participantHighlight td:last-child {
+  border-right: 1px solid rgba(251, 191, 36, 0.42) !important;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.participantTable tbody tr.participantHighlight:first-child td:first-child {
+  border-top-left-radius: 18px;
+}
+
+.participantTable tbody tr.participantHighlight:first-child td:last-child {
+  border-top-right-radius: 18px;
+}
+
+.participantTable tbody tr.participantHighlight:last-child td:first-child {
+  border-bottom-left-radius: 18px;
+}
+
+.participantTable tbody tr.participantHighlight:last-child td:last-child {
+  border-bottom-right-radius: 18px;
+}
+
+.todaySchedule .participantTable {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.todaySchedule .tableWrapper,
+.todaySchedule .raidTableWrapper,
+.todaySchedule .participantTableWrap {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.todaySchedule .participantTable tr.participantHighlight,
+.todaySchedule .highlightedRow,
+.todaySchedule .selectedRow,
+.todaySchedule .matchedRow {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 191, 36, 0.1),
+      rgba(251, 191, 36, 0.06),
+      transparent
+    ) !important;
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.45) !important;
+  transform: none !important;
+}
+
+.todaySchedule .participantTable tr.participantHighlight td,
+.todaySchedule .highlightedRow td,
+.todaySchedule .selectedRow td,
+.todaySchedule .matchedRow td {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: rgba(124, 184, 255, 0.1) !important;
+}
+
+.todaySchedule .participantTable tr.participantHighlight td:first-child,
+.todaySchedule .highlightedRow td:first-child,
+.todaySchedule .selectedRow td:first-child,
+.todaySchedule .matchedRow td:first-child {
+  border-left: none !important;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.todaySchedule .participantTable tr.participantHighlight td:last-child,
+.todaySchedule .highlightedRow td:last-child,
+.todaySchedule .selectedRow td:last-child,
+.todaySchedule .matchedRow td:last-child {
+  border-right: none !important;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
 .participantTable tr:last-child td {
@@ -513,11 +898,13 @@
 }
 
 .participantHighlight {
-  border-color: rgba(250, 204, 21, 0.72);
-  background: rgba(250, 204, 21, 0.08);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14), rgba(255, 107, 53, 0.08)) !important;
+  border: 1px solid rgba(251, 191, 36, 0.48) !important;
   box-shadow:
-    0 0 0 1px rgba(250, 204, 21, 0.24),
-    0 0 18px rgba(250, 204, 21, 0.1);
+    0 0 14px rgba(251, 191, 36, 0.2),
+    0 0 28px rgba(249, 115, 22, 0.12) !important;
+  color: #f5faff !important;
+  transform: none !important;
 }
 
 .mobileParticipantList {
@@ -527,12 +914,12 @@
 .characterNameButton,
 .searchCharacterButton {
   padding: 0;
-  color: var(--cyan);
+  color: var(--primary);
   font: inherit;
   font-weight: 900;
   text-align: left;
-  text-decoration: underline;
-  text-decoration-color: rgba(105, 230, 255, 0.35);
+  text-decoration: none;
+  text-decoration-color: rgba(124, 184, 255, 0.4);
   text-underline-offset: 4px;
   background: transparent;
   transition:
@@ -545,7 +932,7 @@
 .searchCharacterButton:hover {
   color: #ffffff;
   text-decoration-color: var(--gold);
-  text-shadow: 0 0 16px rgba(105, 230, 255, 0.56);
+  text-shadow: 0 0 16px rgba(124, 184, 255, 0.32);
 }
 
 .emptyParticipants {
@@ -597,14 +984,35 @@
 
 .dayGroup {
   overflow: hidden;
-  border: 1px solid rgba(104, 150, 255, 0.18);
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--border);
   border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(20, 31, 62, 0.7), rgba(7, 13, 29, 0.7)),
-    rgba(15, 23, 45, 0.68);
+    linear-gradient(180deg, rgba(33, 44, 66, 0.76), rgba(26, 34, 51, 0.78)),
+    rgba(26, 34, 51, 0.72);
   box-shadow:
-    0 18px 48px rgba(0, 0, 0, 0.24),
+    0 18px 48px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dayGroup::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.78;
+  filter: blur(42px);
+  background:
+    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
+    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
+    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+}
+
+.dayGroup > * {
+  position: relative;
+  z-index: 1;
 }
 
 .dayHeader {
@@ -629,16 +1037,17 @@
   width: 10px;
   height: 10px;
   content: "";
-  border-right: 2px solid var(--cyan);
-  border-bottom: 2px solid var(--cyan);
+  border-right: 2px solid var(--primary);
+  border-bottom: 2px solid var(--primary);
   transform: rotate(-45deg);
   transition: transform 180ms ease;
-  box-shadow: 4px 4px 18px rgba(105, 230, 255, 0.35);
+  box-shadow: 4px 4px 18px rgba(124, 184, 255, 0.16);
 }
 
 .dayGroup[open] .dayHeader {
-  background: rgba(105, 230, 255, 0.06);
-  border-bottom: 1px solid rgba(104, 150, 255, 0.12);
+  background: rgba(124, 184, 255, 0.08);
+  border-bottom: 1px solid var(--border);
+  box-shadow: inset 0 -1px 0 rgba(124, 184, 255, 0.08);
 }
 
 .dayGroup[open] .dayHeader::before {
@@ -646,7 +1055,7 @@
 }
 
 .dayHeader:hover {
-  background: rgba(105, 230, 255, 0.08);
+  background: rgba(124, 184, 255, 0.1);
 }
 
 .dayTitle {
@@ -654,7 +1063,7 @@
   flex: 1;
   font-size: 1.12rem;
   font-weight: 900;
-  text-shadow: 0 0 14px rgba(85, 167, 255, 0.35);
+  text-shadow: 0 0 14px rgba(124, 184, 255, 0.18);
 }
 
 .dayHeaderMeta {
@@ -678,13 +1087,15 @@
   align-items: center;
   min-height: 28px;
   padding: 5px 10px;
-  border: 1px solid rgba(105, 230, 255, 0.24);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  color: #d8f2ff;
+  color: var(--text);
   font-size: 0.78rem;
   font-weight: 900;
-  background: rgba(85, 167, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(124, 184, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 12px rgba(124, 184, 255, 0.08);
 }
 
 .dayGroup .cardGrid,
@@ -709,12 +1120,12 @@
 .searchBox input {
   width: 100%;
   padding: 13px 15px;
-  border: 1px solid rgba(104, 150, 255, 0.28);
+  border: 1px solid var(--border);
   border-radius: 18px;
   color: var(--text);
   outline: none;
-  background: rgba(8, 14, 30, 0.88);
-  box-shadow: inset 0 0 18px rgba(85, 167, 255, 0.08);
+  background: rgba(26, 34, 51, 0.88);
+  box-shadow: inset 0 0 18px rgba(76, 141, 255, 0.08);
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -725,11 +1136,11 @@
 }
 
 .searchBox input:focus {
-  border-color: rgba(105, 230, 255, 0.68);
+  border-color: rgba(124, 184, 255, 0.46);
   box-shadow:
-    0 0 0 4px rgba(85, 167, 255, 0.14),
-    0 0 24px rgba(105, 230, 255, 0.16),
-    inset 0 0 18px rgba(85, 167, 255, 0.1);
+    0 0 0 4px rgba(124, 184, 255, 0.14),
+    0 0 24px rgba(76, 141, 255, 0.16),
+    inset 0 0 18px rgba(76, 141, 255, 0.1);
 }
 
 .searchHint {
@@ -741,16 +1152,160 @@
   gap: 16px;
 }
 
+.weeklySearchResult .raidCard,
+.weeklySearchResult .raidItem,
+.weeklySearchResult .raidRow,
+.weeklySearchResult .raidInner,
+.weeklySearchResult .raidDetail,
+.weeklySearchResult .participantBadge,
+.weeklySearchResult .ownerBadge,
+.weeklySearchResult .characterBadge,
+.weeklySearchResult .pill,
+.weeklySearchResult .chip,
+.weeklySearchResult .searchResultCard,
+.weeklySearchResult .searchInlineField {
+  background: #1a2233 !important;
+  border-color: rgba(124, 184, 255, 0.22) !important;
+  color: #f5faff !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.weeklySearchResult .participantBadge,
+.weeklySearchResult .ownerBadge,
+.weeklySearchResult .characterBadge,
+.weeklySearchResult .pill,
+.weeklySearchResult .chip,
+.weeklySearchResult .searchInlineField {
+  background: rgba(124, 184, 255, 0.1) !important;
+  border: 1px solid rgba(124, 184, 255, 0.24) !important;
+}
+
+.weeklySearchResult strong,
+.weeklySearchResult .ownerName,
+.weeklySearchResult .characterName,
+.weeklySearchResult .participantName,
+.weeklySearchResult .raidName,
+.weeklySearchResult .searchCharacterButton,
+.weeklySearchResult .searchResultCard h3,
+.weeklySearchResult .searchInlineField strong {
+  color: #7cb8ff !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.weeklySearchResult a,
+.weeklySearchResult button {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.weeklySearchResult .searchCharacterButton {
+  text-shadow: none !important;
+  text-decoration-color: transparent !important;
+}
+
+.weeklySearchResult .searchCharacterButton:hover {
+  color: #a9d4ff !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  text-decoration: none !important;
+}
+
+.weeklySearchResult .participantBadge,
+.weeklySearchResult .ownerBadge,
+.weeklySearchResult .characterBadge,
+.weeklySearchResult .pill,
+.weeklySearchResult .chip {
+  background: rgba(124, 184, 255, 0.1) !important;
+  border: 1px solid rgba(124, 184, 255, 0.24) !important;
+  color: #f5faff !important;
+  box-shadow: none !important;
+}
+
+.weeklySearchResult .participantBadge strong,
+.weeklySearchResult .ownerBadge strong,
+.weeklySearchResult .characterBadge strong,
+.weeklySearchResult .pill strong,
+.weeklySearchResult .chip strong {
+  color: #7cb8ff !important;
+  text-decoration: none !important;
+}
+
+.weeklySearchResult table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.weeklySearchResult .tableWrapper,
+.weeklySearchResult .raidTableWrapper,
+.weeklySearchResult .participantTableWrap,
+.weeklySearchResult .raidCardInner {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.weeklySearchResult .highlightedRow,
+.weeklySearchResult .participantHighlight,
+.weeklySearchResult tr.participantHighlight {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(251, 191, 36, 0.1),
+      rgba(251, 191, 36, 0.06),
+      transparent
+    ) !important;
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.45) !important;
+  transform: none !important;
+}
+
+.weeklySearchResult .highlightedRow td,
+.weeklySearchResult .participantHighlight td,
+.weeklySearchResult tr.participantHighlight td {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: rgba(124, 184, 255, 0.1) !important;
+}
+
+.weeklySearchResult .highlightedRow td:first-child,
+.weeklySearchResult .participantHighlight td:first-child,
+.weeklySearchResult tr.participantHighlight td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.weeklySearchResult .highlightedRow td:last-child,
+.weeklySearchResult .participantHighlight td:last-child,
+.weeklySearchResult tr.participantHighlight td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
 .searchResultCard {
   display: flex;
+  position: relative;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
   padding: 14px 18px;
-  border: 1px solid rgba(104, 150, 255, 0.22);
+  border: 1px solid var(--border);
   border-radius: 18px;
-  background: var(--panel);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--card) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.searchResultCard::before {
+  display: none;
+}
+
+.searchResultCard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .searchResultCard h3 {
@@ -773,9 +1328,9 @@
   align-items: center;
   min-height: 40px;
   padding: 8px 12px;
-  border: 1px solid rgba(104, 150, 255, 0.18);
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
-  background: rgba(2, 7, 18, 0.32);
+  background: rgba(16, 21, 34, 0.42);
 }
 
 .searchInlineField span {
@@ -785,9 +1340,21 @@
 }
 
 .searchInlineField strong {
-  color: #ffffff;
   font-size: 0.94rem;
   font-weight: 900;
+}
+
+.searchResults .searchCharacterButton {
+  text-decoration-color: rgba(251, 191, 36, 0.32);
+  text-shadow: none !important;
+}
+
+.searchResults .searchCharacterButton:hover {
+  color: #fff7d6 !important;
+  text-decoration-color: rgba(251, 191, 36, 0.48);
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* Character detail modal */
@@ -801,8 +1368,8 @@
   overflow-y: auto;
   padding: 28px;
   background:
-    radial-gradient(circle at 50% 14%, rgba(85, 167, 255, 0.18), transparent 34%),
-    rgba(1, 4, 12, 0.82);
+    radial-gradient(circle at 50% 14%, rgba(124, 184, 255, 0.12), transparent 34%),
+    rgba(8, 6, 14, 0.84);
   backdrop-filter: blur(8px);
 }
 
@@ -810,14 +1377,14 @@
   width: min(1120px, 100%);
   max-height: min(860px, calc(100dvh - 56px));
   overflow: hidden;
-  border: 1px solid rgba(105, 230, 255, 0.28);
+  border: 1px solid var(--border);
   border-radius: 28px;
   background:
-    linear-gradient(145deg, rgba(19, 30, 61, 0.96), rgba(4, 8, 20, 0.98)),
+    linear-gradient(145deg, rgba(33, 44, 66, 0.96), rgba(16, 21, 34, 0.98)),
     var(--panel-strong);
   box-shadow:
     0 30px 90px rgba(0, 0, 0, 0.72),
-    0 0 70px rgba(85, 167, 255, 0.22),
+    0 0 42px rgba(76, 141, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -826,12 +1393,12 @@
 .detailToggleButton {
   min-height: 28px;
   padding: 5px 10px;
-  border: 1px solid rgba(105, 230, 255, 0.3);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  color: #eaf7ff;
+  color: var(--text);
   font-size: 0.78rem;
   font-weight: 900;
-  background: rgba(8, 14, 30, 0.76);
+  background: rgba(26, 34, 51, 0.76);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
   transition:
     color 160ms ease,
@@ -842,9 +1409,9 @@
 
 .detailToggleButton:hover {
   color: #ffffff;
-  border-color: rgba(255, 216, 138, 0.62);
-  background: rgba(85, 167, 255, 0.16);
-  box-shadow: 0 0 18px rgba(105, 230, 255, 0.18);
+  border-color: rgba(124, 184, 255, 0.46);
+  background: rgba(124, 184, 255, 0.14);
+  box-shadow: 0 0 18px rgba(76, 141, 255, 0.14);
 }
 
 .modalHeader {
@@ -854,13 +1421,13 @@
   gap: 18px;
   align-items: flex-start;
   padding: 24px 26px 18px;
-  border-bottom: 1px solid rgba(104, 150, 255, 0.2);
+  border-bottom: 1px solid var(--border);
 }
 
 .modalTitleBlock span,
 .modalSubtitle {
   margin: 0;
-  color: var(--gold);
+  color: var(--primary);
   font-size: 0.76rem;
   font-weight: 900;
   letter-spacing: 0.14em;
@@ -872,8 +1439,8 @@
   color: #ffffff;
   font-size: clamp(1.6rem, 4vw, 2.6rem);
   text-shadow:
-    0 0 18px rgba(85, 167, 255, 0.64),
-    0 0 34px rgba(168, 121, 255, 0.32);
+    0 0 18px rgba(124, 184, 255, 0.36),
+    0 0 34px rgba(76, 141, 255, 0.18);
 }
 
 .modalCloseButton {
@@ -883,13 +1450,13 @@
   width: 42px;
   height: 42px;
   padding: 0;
-  border: 1px solid rgba(104, 150, 255, 0.32);
+  border: 1px solid var(--border);
   border-radius: 50%;
   color: #ffffff;
   font-size: 1.8rem;
   line-height: 1;
-  background: rgba(4, 9, 22, 0.72);
-  box-shadow: 0 0 20px rgba(85, 167, 255, 0.16);
+  background: rgba(26, 34, 51, 0.78);
+  box-shadow: 0 0 20px rgba(76, 141, 255, 0.12);
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -898,8 +1465,8 @@
 
 .modalCloseButton:hover {
   transform: rotate(6deg) scale(1.04);
-  border-color: rgba(105, 230, 255, 0.62);
-  box-shadow: 0 0 26px rgba(105, 230, 255, 0.26);
+  border-color: rgba(124, 184, 255, 0.46);
+  box-shadow: 0 0 26px rgba(76, 141, 255, 0.16);
 }
 
 .modalTabs {
@@ -914,11 +1481,11 @@
 .activeModalTab {
   flex: 0 0 auto;
   padding: 10px 14px;
-  border: 1px solid rgba(104, 150, 255, 0.2);
+  border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--muted);
   font-weight: 900;
-  background: rgba(8, 14, 30, 0.72);
+  background: var(--card-soft);
   transition:
     color 160ms ease,
     border-color 160ms ease,
@@ -929,9 +1496,9 @@
 .modalTab:hover,
 .activeModalTab {
   color: #ffffff;
-  border-color: rgba(105, 230, 255, 0.58);
-  background: rgba(85, 167, 255, 0.18);
-  box-shadow: 0 0 22px rgba(85, 167, 255, 0.2);
+  border-color: rgba(124, 184, 255, 0.35);
+  background: rgba(124, 184, 255, 0.14);
+  box-shadow: 0 0 22px rgba(124, 184, 255, 0.12);
 }
 
 .modalBody {
@@ -1137,12 +1704,10 @@
   min-height: 108px;
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    box-shadow 160ms ease;
 }
 
 .equipmentCard:hover {
-  transform: translateY(-2px);
   border-color: rgba(105, 230, 255, 0.42);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.34),
@@ -1551,13 +2116,11 @@
   transition:
     border-color 160ms ease,
     background-color 160ms ease,
-    transform 160ms ease,
     box-shadow 160ms ease;
 }
 
 .arkPassiveRow:hover,
 .arkGridEffectRow:hover {
-  transform: translateY(-1px);
   border-color: rgba(105, 230, 255, 0.34);
   background: rgba(9, 17, 36, 0.42);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
@@ -1762,12 +2325,10 @@
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
-    transform 160ms ease,
     background-color 160ms ease;
 }
 
 .compactEngravingRow:hover {
-  transform: translateY(-1px);
   border-color: rgba(105, 230, 255, 0.36);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, 0.34),

@@ -1,10 +1,14 @@
-import PersonalSchedulePage from "./pages/PersonalSchedulePage/PersonalSchedulePage.jsx";
-import RaidSchedulePage from "./pages/RaidSchedulePage/RaidSchedulePage.jsx";
+import { lazy, Suspense } from "react";
+
+const PersonalSchedulePage = lazy(() => import("./pages/PersonalSchedulePage/PersonalSchedulePage.jsx"));
+const RaidSchedulePage = lazy(() => import("./pages/RaidSchedulePage/RaidSchedulePage.jsx"));
 
 export default function App() {
-  if (window.location.pathname.replace(/\/$/, "") === "/personal") {
-    return <PersonalSchedulePage />;
-  }
+  const isPersonalPage = window.location.pathname.replace(/\/$/, "") === "/personal";
 
-  return <RaidSchedulePage />;
+  return (
+    <Suspense fallback={null}>
+      {isPersonalPage ? <PersonalSchedulePage /> : <RaidSchedulePage />}
+    </Suspense>
+  );
 }
