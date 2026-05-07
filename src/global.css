@@ -5,6 +5,10 @@
   --card-strong: #2b2142;
   --primary: #7cb8ff;
   --primary-strong: #4c8dff;
+  --highlight: #22d3ee;
+  --highlight-soft: rgba(34, 211, 238, 0.16);
+  --highlight-border: rgba(34, 211, 238, 0.45);
+  --highlight-glow: rgba(34, 211, 238, 0.35);
   --secondary: #4c8dff;
   --glow: #e9ccfb;
   --border: #4d6488;
