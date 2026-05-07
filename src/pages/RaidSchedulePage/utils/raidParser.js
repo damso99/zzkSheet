@@ -8,7 +8,13 @@ import {
 const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
-const KNOWN_RAID_TITLES = ["카제로스", "세르카", "지평", "지팽막걸리", "아르모체"];
+const KNOWN_RAID_TITLES = [
+  "\uce74\uc81c\ub85c\uc2a4",
+  "\uc138\ub974\uce74",
+  "\uc9c0\ud3c9",
+  "\uc9c0\ud33d\ub9c9\uac78\ub9ac",
+  "\uc544\ub974\ubaa8\uccb4",
+];
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
   const settingLookup = parseSettingRows(settingRows);
@@ -25,16 +31,25 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   return parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
+      const resolvedRaidName =
+        findRaidTitle({
+          endCol: raid.endCol,
+          raidNameLookup,
+          rowIndex: raid.startRow,
+          rows: raidCalendarRows,
+          settingLookup,
+          startCol: raid.startCol,
+        }) || raid.raidName;
       const item = {
         blockTime: raid.blockTime,
         date: raid.date,
         dayLabel: formatDateLabel(raid.date),
         endCol: raid.endCol,
         endRow: raid.endRow,
-        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(raid.raidName)}-${raidIndex}`,
+        id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(resolvedRaidName)}-${raidIndex}`,
         participantCount: participants.length,
         participants,
-        raidName: raid.raidName,
+        raidName: resolvedRaidName,
         startCol: raid.startCol,
         startRow: raid.startRow,
         time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
@@ -112,15 +127,22 @@ function collectRaidsForBlock({
   settingLookup,
 }) {
   const raids = [];
-  let currentParty = null;
+  let currentParty = createParty({
+    blockTime,
+    date,
+    endCol: block.endCol,
+    raidName: block.raidName,
+    startCol: block.startCol,
+    startRow: blockStartRow,
+  });
   let seenMembers = new Set();
 
   for (let rowIndex = blockStartRow; rowIndex <= blockEndRow; rowIndex += 1) {
     const row = rows[rowIndex] || [];
-    const header = findRaidHeaderInBlock(row, block, raidNameLookup, settingLookup);
+    const header = findRaidHeaderInBlock(row, block, raidNameLookup);
 
     if (header) {
-      if (currentParty?.members.length > 0) {
+      if (currentParty.members.length > 0) {
         currentParty.endRow = rowIndex - 1;
         raids.push(currentParty);
       }
@@ -137,10 +159,6 @@ function collectRaidsForBlock({
       continue;
     }
 
-    if (!currentParty) {
-      continue;
-    }
-
     const members = extractMembersFromRow(row, block.startCol, block.endCol, settingLookup);
     for (const member of members) {
       const normalized = normalizeKey(member);
@@ -150,7 +168,7 @@ function collectRaidsForBlock({
     }
   }
 
-  if (currentParty?.members.length > 0) {
+  if (currentParty.members.length > 0) {
     currentParty.endRow = blockEndRow;
     raids.push(currentParty);
   }
@@ -248,16 +266,35 @@ function buildRaidNameLookup(raidBlocks) {
   return new Set([...knownTitles, ...raidBlocks.map((block) => normalizeKey(block.raidName)).filter(Boolean)]);
 }
 
-function findRaidHeaderInBlock(row, block, raidNameLookup, settingLookup) {
+function findRaidHeaderInBlock(row, block, raidNameLookup) {
   for (let columnIndex = block.startCol; columnIndex <= block.endCol && columnIndex < row.length; columnIndex += 1) {
     const value = cleanText(row[columnIndex]);
     if (!value) continue;
     if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
-    if (isCharacterValue(value, settingLookup)) continue;
 
     const normalized = normalizeKey(value);
     if (raidNameLookup.has(normalized)) {
       return normalizeRaidName(value);
+    }
+  }
+
+  return "";
+}
+
+function findRaidTitle({ rows = [], rowIndex = 0, startCol = 0, endCol = 0, settingLookup = new Map(), raidNameLookup = new Set() } = {}) {
+  for (let currentRowIndex = rowIndex; currentRowIndex >= 0; currentRowIndex -= 1) {
+    const row = rows[currentRowIndex] || [];
+
+    for (let columnIndex = startCol; columnIndex <= endCol && columnIndex < row.length; columnIndex += 1) {
+      const value = cleanText(row[columnIndex]);
+      if (!value) continue;
+      if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
+      if (isCharacterValue(value, settingLookup)) continue;
+
+      const normalized = normalizeKey(value);
+      if (raidNameLookup.has(normalized)) {
+        return normalizeRaidName(value);
+      }
     }
   }
 
