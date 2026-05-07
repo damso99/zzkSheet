@@ -138,7 +138,19 @@ export default function RaidSchedulePage() {
       <div className={styles.content}>
         <header className={styles.hero}>
           <div>
-            <p className={styles.eyebrow}>Lost Ark Weekly Planner</p>
+            <div className={styles.brandLockup}>
+              <img
+                src="/zzk-favicon-02-glow.png?v=2"
+                alt=""
+                className={styles.brandIcon}
+                width="64"
+                height="64"
+              />
+              <div className={styles.brandTextBlock}>
+                <p className={styles.eyebrow}>LostArk Weekly Planner</p>
+                <h1>ZZK</h1>
+              </div>
+            </div>
             <h1>레이드 일정표</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>

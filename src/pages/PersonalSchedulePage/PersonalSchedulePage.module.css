@@ -64,6 +64,30 @@
   margin-bottom: 28px;
 }
 
+.hero > h1 {
+  display: none;
+}
+
+.brandLockup {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.brandIcon {
+  width: clamp(48px, 9vw, 60px);
+  height: clamp(48px, 9vw, 60px);
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 12px rgba(168, 121, 255, 0.52))
+    drop-shadow(0 0 24px rgba(85, 167, 255, 0.22));
+}
+
+.brandTextBlock {
+  display: grid;
+  gap: 6px;
+}
+
 .backLink {
   width: fit-content;
   color: var(--cyan);
@@ -97,6 +121,13 @@
   margin: 0;
   color: var(--muted);
   font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .brandLockup {
+    gap: 12px;
+    align-items: flex-start;
+  }
 }
 
 .notice,
