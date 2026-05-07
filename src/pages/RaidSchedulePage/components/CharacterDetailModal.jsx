@@ -9,7 +9,9 @@ import CharacterSkillList from "./CharacterSkillList.jsx";
 import { normalizeCharacterDetail } from "../utils/characterParser.js";
 
 const CHARACTER_DETAIL_CACHE_VERSION = "compact-ark-tabs-v11";
+const CHARACTER_DETAIL_CACHE_TTL_MS = 5 * 60 * 1000;
 const characterDetailCache = new Map();
+const characterDetailInFlight = new Map();
 
 const DETAIL_TABS = [
   { key: "profile", label: "프로필" },
@@ -57,40 +59,46 @@ export default function CharacterDetailModal({ characterName, onClose, styles })
     setActiveTab("profile");
     setErrorMessage("");
 
-    if (cachedDetail?.version === CHARACTER_DETAIL_CACHE_VERSION) {
+    if (
+      cachedDetail?.version === CHARACTER_DETAIL_CACHE_VERSION &&
+      Date.now() - cachedDetail.createdAt < CHARACTER_DETAIL_CACHE_TTL_MS
+    ) {
       setDetail(cachedDetail.detail);
       setIsLoading(false);
       return;
     }
 
-    if (cachedDetail) {
-      characterDetailCache.delete(cacheKey);
+    if (cachedDetail?.detail) {
+      setDetail(cachedDetail.detail);
+      setIsLoading(false);
+    } else {
+      setDetail(null);
     }
 
     const controller = new AbortController();
 
     async function loadCharacterDetail() {
-      setIsLoading(true);
+      if (!cachedDetail?.detail) {
+        setIsLoading(true);
+      }
 
       try {
-        const response = await fetch(`/api/lostark/characters/${encodeURIComponent(normalizedName)}`, {
+        const parsedDetail = await fetchCharacterDetail({
+          cacheKey,
+          characterName: normalizedName,
           signal: controller.signal,
         });
-        const payload = await readJsonSafely(response);
-
-        if (!response.ok) {
-          throw new Error(buildErrorMessage(payload, response.status));
-        }
-
-        const parsedDetail = normalizeCharacterDetail(payload);
         characterDetailCache.set(cacheKey, {
+          createdAt: Date.now(),
           version: CHARACTER_DETAIL_CACHE_VERSION,
           detail: parsedDetail,
         });
         setDetail(parsedDetail);
       } catch (error) {
         if (controller.signal.aborted) return;
-        setDetail(null);
+        if (!cachedDetail?.detail) {
+          setDetail(null);
+        }
         setErrorMessage(error instanceof Error ? error.message : String(error));
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -201,5 +209,34 @@ async function readJsonSafely(response) {
     return JSON.parse(text);
   } catch {
     return { error: text };
+  }
+}
+
+async function fetchCharacterDetail({ cacheKey, characterName, signal }) {
+  if (characterDetailInFlight.has(cacheKey)) {
+    return characterDetailInFlight.get(cacheKey);
+  }
+
+  const promise = (async () => {
+    const response = await fetch(`/api/lostark/characters/${encodeURIComponent(characterName)}`, {
+      signal,
+    });
+    const payload = await readJsonSafely(response);
+
+    if (!response.ok) {
+      throw new Error(buildErrorMessage(payload, response.status));
+    }
+
+    return normalizeCharacterDetail(payload);
+  })();
+
+  characterDetailInFlight.set(cacheKey, promise);
+
+  try {
+    return await promise;
+  } finally {
+    if (characterDetailInFlight.get(cacheKey) === promise) {
+      characterDetailInFlight.delete(cacheKey);
+    }
   }
 }

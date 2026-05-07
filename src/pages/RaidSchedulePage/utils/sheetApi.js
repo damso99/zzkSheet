@@ -12,54 +12,132 @@ const SHEET_GIDS = {
 
 const SHEET_NAMES = {
   setting: "SETTING",
-  raidCalendar: "\ub808\uc774\ub4dc\uce98\ub9b0\ub354",
+  raidCalendar: "레이드캘린더",
 };
 
-export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, targetGid = DEFAULT_TARGET_GID } = {}) {
+const SHEET_CACHE_TTL_MS = 60 * 1000;
+const sheetRowsCache = new Map();
+const sheetRowsInFlight = new Map();
+const bundleCache = new Map();
+const bundleInFlight = new Map();
+
+export async function loadRaidSheetBundle({
+  sheetUrl = DEFAULT_SHEET_URL,
+  targetGid = DEFAULT_TARGET_GID,
+  forceRefresh = false,
+  signal,
+} = {}) {
   const targetSheetUrl = ensureGid(sheetUrl, targetGid);
+  const cacheKey = `${targetSheetUrl}:${targetGid}`;
+  const cachedBundle = getFreshCacheEntry(bundleCache, cacheKey, SHEET_CACHE_TTL_MS);
+  if (!forceRefresh && cachedBundle) {
+    return cachedBundle;
+  }
 
-  const [raidCalendarSheet, settingSheet] = await Promise.all([
-    fetchSheetRows({
-      sheetUrl: targetSheetUrl,
-      gid: SHEET_GIDS.raidCalendar,
-      sheetName: SHEET_NAMES.raidCalendar,
-    }),
-    fetchSheetRows({
-      sheetUrl: targetSheetUrl,
-      gid: SHEET_GIDS.setting,
-      sheetName: SHEET_NAMES.setting,
-    }),
-  ]);
+  if (!forceRefresh && bundleInFlight.has(cacheKey)) {
+    return bundleInFlight.get(cacheKey);
+  }
 
-  const raidCalendarRows = raidCalendarSheet.rows || [];
-  const raidCalendarCols = raidCalendarSheet.cols || [];
+  const promise = (async () => {
+    const [raidCalendarSheet, settingSheet] = await Promise.all([
+      fetchSheetRows({
+        sheetUrl: targetSheetUrl,
+        gid: SHEET_GIDS.raidCalendar,
+        sheetName: SHEET_NAMES.raidCalendar,
+        signal,
+      }),
+      fetchSheetRows({
+        sheetUrl: targetSheetUrl,
+        gid: SHEET_GIDS.setting,
+        sheetName: SHEET_NAMES.setting,
+        signal,
+      }),
+    ]);
 
-  return {
-    fetchedAt: formatLocalDateTime(new Date()),
-    raidCalendarCols,
-    raidCalendarRows,
-    settingRows: settingSheet.rows || [],
-    sourceUrl: targetSheetUrl,
-    targetGid,
-  };
+    const payload = {
+      fetchedAt: formatLocalDateTime(new Date()),
+      raidCalendarCols: raidCalendarSheet.cols || [],
+      raidCalendarRows: raidCalendarSheet.rows || [],
+      settingRows: settingSheet.rows || [],
+      sourceUrl: targetSheetUrl,
+      targetGid,
+    };
+
+    setCacheEntry(bundleCache, cacheKey, payload);
+    return payload;
+  })();
+
+  bundleInFlight.set(cacheKey, promise);
+
+  try {
+    return await promise;
+  } finally {
+    if (bundleInFlight.get(cacheKey) === promise) {
+      bundleInFlight.delete(cacheKey);
+    }
+  }
 }
 
-async function fetchSheetRows({ sheetUrl, gid, sheetName }) {
+async function fetchSheetRows({ sheetUrl, gid, sheetName, signal }) {
   const params = new URLSearchParams({ url: sheetUrl });
   if (gid) params.set("gid", gid);
   if (sheetName) params.set("sheet", sheetName);
-  const response = await fetch(`/api/raid-sheet?${params.toString()}`);
-  const payload = await response.json();
 
-  if (!response.ok) {
-    throw new Error(payload?.detail || payload?.error || "시트를 불러오지 못했습니다.");
+  const cacheKey = params.toString();
+  const cachedRows = getFreshCacheEntry(sheetRowsCache, cacheKey, SHEET_CACHE_TTL_MS);
+  if (cachedRows) {
+    return cachedRows;
   }
 
-  return payload;
+  if (sheetRowsInFlight.has(cacheKey)) {
+    return sheetRowsInFlight.get(cacheKey);
+  }
+
+  const promise = (async () => {
+    const response = await fetch(`/api/raid-sheet?${cacheKey}`, { signal });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload?.detail || payload?.error || "시트를 불러오지 못했습니다.");
+    }
+
+    setCacheEntry(sheetRowsCache, cacheKey, payload);
+    return payload;
+  })();
+
+  sheetRowsInFlight.set(cacheKey, promise);
+
+  try {
+    return await promise;
+  } catch (error) {
+    sheetRowsCache.delete(cacheKey);
+    throw error;
+  } finally {
+    if (sheetRowsInFlight.get(cacheKey) === promise) {
+      sheetRowsInFlight.delete(cacheKey);
+    }
+  }
 }
 
 function ensureGid(sheetUrl, gid) {
   if (!gid) return sheetUrl;
   if (sheetUrl.includes("gid=")) return sheetUrl;
   return `${sheetUrl}${sheetUrl.includes("?") ? "&" : "?"}gid=${gid}`;
+}
+
+function getFreshCacheEntry(cache, key, ttlMs) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.createdAt > ttlMs) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function setCacheEntry(cache, key, value) {
+  cache.set(key, {
+    createdAt: Date.now(),
+    value,
+  });
 }

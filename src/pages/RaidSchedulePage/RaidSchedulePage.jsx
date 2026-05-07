@@ -31,6 +31,7 @@ export default function RaidSchedulePage() {
 
   useEffect(() => {
     let ignore = false;
+    const controller = new AbortController();
 
     async function loadSchedule() {
       setIsLoading(true);
@@ -38,6 +39,7 @@ export default function RaidSchedulePage() {
 
       try {
         const bundle = await loadRaidSheetBundle({
+          signal: controller.signal,
           sheetUrl: DEFAULT_SHEET_URL,
           targetGid: DEFAULT_TARGET_GID,
         });
@@ -73,6 +75,7 @@ export default function RaidSchedulePage() {
     loadSchedule();
 
     return () => {
+      controller.abort();
       ignore = true;
     };
   }, [todayIsoDate]);
