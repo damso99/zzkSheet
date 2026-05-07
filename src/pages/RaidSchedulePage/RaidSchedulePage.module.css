@@ -760,6 +760,7 @@
 /* Participant table */
 .participantTableWrap {
   overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid rgba(104, 150, 255, 0.16);
   border-radius: 18px;
   background: rgba(2, 7, 18, 0.34);
@@ -812,14 +813,30 @@
 
 .participantTable tr.participantHighlight td:first-child {
   border-left: 1px solid rgba(251, 191, 36, 0.42) !important;
-  border-top-left-radius: 14px;
-  border-bottom-left-radius: 14px;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
 }
 
 .participantTable tr.participantHighlight td:last-child {
   border-right: 1px solid rgba(251, 191, 36, 0.42) !important;
-  border-top-right-radius: 14px;
-  border-bottom-right-radius: 14px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.participantTable tbody tr.participantHighlight:first-child td:first-child {
+  border-top-left-radius: 18px;
+}
+
+.participantTable tbody tr.participantHighlight:first-child td:last-child {
+  border-top-right-radius: 18px;
+}
+
+.participantTable tbody tr.participantHighlight:last-child td:first-child {
+  border-bottom-left-radius: 18px;
+}
+
+.participantTable tbody tr.participantHighlight:last-child td:last-child {
+  border-bottom-right-radius: 18px;
 }
 
 .participantTable tr:last-child td {
