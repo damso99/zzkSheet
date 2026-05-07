@@ -1,4 +1,4 @@
-import { formatLocalDateTime } from "./dateUtils.js";
+import { formatLocalDateTime, normalizeSheetDateValue } from "./dateUtils.js";
 
 export const DEFAULT_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/1pn-86CBr_9TzKI1zncCXpo3Ge0rKjg8zA99v6twX_gA/edit?gid=57930127#gid=57930127";
@@ -10,26 +10,59 @@ const SHEET_GIDS = {
   raidCalendar: "57930127",
 };
 
+const SHEET_NAMES = {
+  setting: "SETTING",
+  raidCalendar: "\ub808\uc774\ub4dc\uce98\ub9b0\ub354",
+};
+
 export async function loadRaidSheetBundle({ sheetUrl = DEFAULT_SHEET_URL, targetGid = DEFAULT_TARGET_GID } = {}) {
   const targetSheetUrl = ensureGid(sheetUrl, targetGid);
 
   const [raidCalendarSheet, settingSheet] = await Promise.all([
-    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.raidCalendar }),
-    fetchSheetRows({ sheetUrl: targetSheetUrl, gid: SHEET_GIDS.setting }),
+    fetchSheetRows({
+      sheetUrl: targetSheetUrl,
+      gid: SHEET_GIDS.raidCalendar,
+      sheetName: SHEET_NAMES.raidCalendar,
+    }),
+    fetchSheetRows({
+      sheetUrl: targetSheetUrl,
+      gid: SHEET_GIDS.setting,
+      sheetName: SHEET_NAMES.setting,
+    }),
   ]);
+
+  const raidCalendarRows = raidCalendarSheet.rows || [];
+  const raidCalendarCols = raidCalendarSheet.cols || [];
+  const maxColLength = Math.max(0, ...raidCalendarRows.map((row) => row.length));
+  const saturdayRows = raidCalendarRows
+    .map((row, index) => ({
+      aValue: row?.[0] ?? "",
+      normalizedDate: normalizeSheetDateValue(row?.[0]),
+      rowLength: row.length,
+      rowNumber: index + 1,
+      tailPreview: row.slice(Math.max(0, row.length - 6)),
+    }))
+    .filter((entry) => entry.normalizedDate === "2026-05-09");
+
+  console.log("[calendar raw rows]", raidCalendarRows.length);
+  console.log("[calendar max columns]", maxColLength);
+  console.log("[calendar fetch source]", raidCalendarSheet.sourceUrl || targetSheetUrl);
+  console.log("[saturday raw check]", saturdayRows);
 
   return {
     fetchedAt: formatLocalDateTime(new Date()),
-    raidCalendarCols: raidCalendarSheet.cols || [],
-    raidCalendarRows: raidCalendarSheet.rows || [],
+    raidCalendarCols,
+    raidCalendarRows,
     settingRows: settingSheet.rows || [],
     sourceUrl: targetSheetUrl,
     targetGid,
   };
 }
 
-async function fetchSheetRows({ sheetUrl, gid }) {
-  const params = new URLSearchParams({ url: sheetUrl, gid });
+async function fetchSheetRows({ sheetUrl, gid, sheetName }) {
+  const params = new URLSearchParams({ url: sheetUrl });
+  if (gid) params.set("gid", gid);
+  if (sheetName) params.set("sheet", sheetName);
   const response = await fetch(`/api/raid-sheet?${params.toString()}`);
   const payload = await response.json();
 
