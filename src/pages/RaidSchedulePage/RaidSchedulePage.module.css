@@ -1340,13 +1340,11 @@
 }
 
 .searchInlineField strong {
-  color: #fcd34d;
   font-size: 0.94rem;
   font-weight: 900;
 }
 
 .searchResults .searchCharacterButton {
-  color: #fcd34d !important;
   text-decoration-color: rgba(251, 191, 36, 0.32);
   text-shadow: none !important;
 }
