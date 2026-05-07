@@ -14,6 +14,7 @@ const KNOWN_RAID_TITLES = [
   "\uc9c0\ud3c9",
   "\uc9c0\ud33d\ub9c9\uac78\ub9ac",
   "\uc544\ub974\ubaa8\uccb4",
+  "\uc775\uc2a4\ud2b8\ub9bc \uc5d0\uae30\ub974",
 ];
 
 export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], raidCalendarCols = [] } = {}) {
@@ -32,14 +33,14 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
       const resolvedRaidName =
-        findRaidTitle({
+        findRaidTitleByPosition({
           endCol: raid.endCol,
           raidNameLookup,
-          rowIndex: raid.startRow,
+          rowIndex: raid.titleLookupRow ?? raid.startRow,
           rows: raidCalendarRows,
           settingLookup,
           startCol: raid.startCol,
-        }) || raid.raidName;
+        }) || "미지정";
       const item = {
         blockTime: raid.blockTime,
         date: raid.date,
@@ -161,6 +162,10 @@ function collectRaidsForBlock({
 
     const members = extractMembersFromRow(row, block.startCol, block.endCol, settingLookup);
     for (const member of members) {
+      if (currentParty.members.length === 0) {
+        currentParty.titleLookupRow = rowIndex;
+      }
+
       const normalized = normalizeKey(member);
       if (seenMembers.has(normalized)) continue;
       seenMembers.add(normalized);
@@ -187,6 +192,7 @@ function createParty({ blockTime = "", date, raidName, startCol, endCol, startRo
     startCol,
     startRow,
     time: blockTime || "",
+    titleLookupRow: startRow,
   };
 }
 
@@ -281,7 +287,14 @@ function findRaidHeaderInBlock(row, block, raidNameLookup) {
   return "";
 }
 
-function findRaidTitle({ rows = [], rowIndex = 0, startCol = 0, endCol = 0, settingLookup = new Map(), raidNameLookup = new Set() } = {}) {
+function findRaidTitleByPosition({
+  rows = [],
+  rowIndex = 0,
+  startCol = 0,
+  endCol = 0,
+  settingLookup = new Map(),
+  raidNameLookup = new Set(),
+} = {}) {
   for (let currentRowIndex = rowIndex; currentRowIndex >= 0; currentRowIndex -= 1) {
     const row = rows[currentRowIndex] || [];
 
