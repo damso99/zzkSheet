@@ -3,9 +3,9 @@
   --bg-0: var(--bg);
   --bg-1: var(--bg-elevated);
   --bg-2: var(--card);
-  --panel: rgba(25, 16, 46, 0.84);
-  --panel-strong: rgba(33, 20, 58, 0.94);
-  --line: rgba(64, 36, 114, 0.72);
+  --panel: rgba(34, 26, 54, 0.84);
+  --panel-strong: rgba(43, 33, 66, 0.94);
+  --line: var(--border);
   --text: var(--text);
   --muted: var(--text-muted);
   --blue: var(--primary);
@@ -20,7 +20,7 @@
   overflow-x: hidden;
   color: var(--text);
   background:
-    linear-gradient(180deg, rgba(11, 11, 18, 0.12), rgba(11, 11, 18, 0.82)),
+    linear-gradient(180deg, rgba(18, 18, 26, 0.08), rgba(18, 18, 26, 0.76)),
     linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-2) 100%);
 }
 

@@ -1,25 +1,27 @@
 :root {
-  --bg: #0b0b12;
-  --bg-elevated: #140d24;
-  --card: #19102e;
-  --card-strong: #21143a;
-  --primary: #be8aef;
-  --secondary: #7d58b1;
+  --bg: #12121a;
+  --bg-elevated: #181824;
+  --card: #221a36;
+  --card-strong: #2b2142;
+  --primary: #cfa4ff;
+  --primary-strong: #be8aef;
+  --secondary: #9b73d9;
   --glow: #e9ccfb;
-  --border: #402472;
-  --border-soft: rgba(190, 138, 239, 0.22);
-  --text: #f5f5f5;
-  --text-muted: rgba(255, 255, 255, 0.7);
+  --border: rgba(207, 164, 255, 0.28);
+  --border-strong: rgba(207, 164, 255, 0.45);
+  --border-soft: rgba(207, 164, 255, 0.22);
+  --text: #f7f2ff;
+  --text-muted: rgba(247, 242, 255, 0.68);
   --shadow-glow:
-    0 0 8px rgba(190, 138, 239, 0.6),
-    0 0 20px rgba(125, 88, 177, 0.4);
+    0 0 8px rgba(207, 164, 255, 0.36),
+    0 0 20px rgba(155, 115, 217, 0.22);
 
   font-family: "SUIT Variable", "Pretendard", "Noto Sans KR", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(190, 138, 239, 0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(125, 88, 177, 0.1), transparent 24%),
-    linear-gradient(180deg, #0b0b12 0%, #100917 44%, #171021 100%);
+    radial-gradient(circle at top left, rgba(207, 164, 255, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(155, 115, 217, 0.1), transparent 24%),
+    linear-gradient(180deg, #12121a 0%, #171722 44%, #1d1a2a 100%);
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
@@ -40,9 +42,9 @@ body {
   min-height: 100vh;
   color: var(--text);
   background:
-    radial-gradient(circle at 12% 8%, rgba(190, 138, 239, 0.12), transparent 24%),
-    radial-gradient(circle at 88% 12%, rgba(125, 88, 177, 0.12), transparent 28%),
-    linear-gradient(180deg, var(--bg) 0%, #100917 100%);
+    radial-gradient(circle at 12% 8%, rgba(207, 164, 255, 0.11), transparent 24%),
+    radial-gradient(circle at 88% 12%, rgba(155, 115, 217, 0.1), transparent 28%),
+    linear-gradient(180deg, var(--bg) 0%, #1a1725 100%);
 }
 
 body,
@@ -65,7 +67,7 @@ input {
 }
 
 ::selection {
-  color: #0b0b12;
+  color: #12121a;
   background: rgba(233, 204, 251, 0.92);
 }
 
@@ -81,12 +83,12 @@ body::-webkit-scrollbar-thumb,
 #root::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(190, 138, 239, 0.92), rgba(125, 88, 177, 0.9));
+  background: linear-gradient(180deg, rgba(207, 164, 255, 0.92), rgba(155, 115, 217, 0.84));
   background-clip: padding-box;
 }
 
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track,
 #root::-webkit-scrollbar-track {
-  background: rgba(25, 16, 46, 0.48);
+  background: rgba(34, 26, 54, 0.44);
 }
