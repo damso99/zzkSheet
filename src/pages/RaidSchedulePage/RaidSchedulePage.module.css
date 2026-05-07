@@ -1076,22 +1076,13 @@
   border-radius: 18px;
   overflow: hidden;
   isolation: isolate;
-  background: var(--card);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+  background: var(--card) !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .searchResultCard::before {
-  position: absolute;
-  inset: -30%;
-  z-index: 0;
-  content: "";
-  pointer-events: none;
-  opacity: 0.78;
-  filter: blur(42px);
-  background:
-    radial-gradient(circle at top left, var(--glow-red), transparent 42%),
-    radial-gradient(circle at center right, var(--glow-amber), transparent 48%),
-    radial-gradient(circle at bottom right, var(--glow-gold), transparent 52%);
+  display: none;
 }
 
 .searchResultCard > * {
@@ -1119,9 +1110,9 @@
   align-items: center;
   min-height: 40px;
   padding: 8px 12px;
-  border: 1px solid rgba(104, 150, 255, 0.18);
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
-  background: rgba(2, 7, 18, 0.32);
+  background: rgba(16, 21, 34, 0.42);
 }
 
 .searchInlineField span {
@@ -1131,9 +1122,23 @@
 }
 
 .searchInlineField strong {
-  color: #ffffff;
+  color: #fcd34d;
   font-size: 0.94rem;
   font-weight: 900;
+}
+
+.searchResults .searchCharacterButton {
+  color: #fcd34d !important;
+  text-decoration-color: rgba(251, 191, 36, 0.32);
+  text-shadow: none !important;
+}
+
+.searchResults .searchCharacterButton:hover {
+  color: #fff7d6 !important;
+  text-decoration-color: rgba(251, 191, 36, 0.48);
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* Character detail modal */
