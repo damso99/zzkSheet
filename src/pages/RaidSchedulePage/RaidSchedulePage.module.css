@@ -1130,21 +1130,54 @@
 .weeklySearchResult strong,
 .weeklySearchResult .ownerName,
 .weeklySearchResult .characterName,
-.weeklySearchResult .searchCharacterButton {
-  color: #fbbf24 !important;
+.weeklySearchResult .participantName,
+.weeklySearchResult .raidName,
+.weeklySearchResult .searchCharacterButton,
+.weeklySearchResult .searchResultCard h3,
+.weeklySearchResult .searchInlineField strong {
+  color: #7cb8ff !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.weeklySearchResult a,
+.weeklySearchResult button {
+  text-decoration: none !important;
+  border-bottom: none !important;
 }
 
 .weeklySearchResult .searchCharacterButton {
   text-shadow: none !important;
-  text-decoration-color: rgba(251, 191, 36, 0.32) !important;
+  text-decoration-color: transparent !important;
 }
 
 .weeklySearchResult .searchCharacterButton:hover {
-  color: #fff7d6 !important;
+  color: #a9d4ff !important;
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
   transform: none !important;
+  text-decoration: none !important;
+}
+
+.weeklySearchResult .participantBadge,
+.weeklySearchResult .ownerBadge,
+.weeklySearchResult .characterBadge,
+.weeklySearchResult .pill,
+.weeklySearchResult .chip {
+  background: rgba(124, 184, 255, 0.1) !important;
+  border: 1px solid rgba(124, 184, 255, 0.24) !important;
+  color: #f5faff !important;
+  box-shadow: none !important;
+}
+
+.weeklySearchResult .participantBadge strong,
+.weeklySearchResult .ownerBadge strong,
+.weeklySearchResult .characterBadge strong,
+.weeklySearchResult .pill strong,
+.weeklySearchResult .chip strong {
+  color: #7cb8ff !important;
+  text-decoration: none !important;
 }
 
 .searchResultCard {
