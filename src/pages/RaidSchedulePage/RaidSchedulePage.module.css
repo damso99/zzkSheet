@@ -299,6 +299,10 @@
   box-shadow: 0 0 12px rgba(124, 184, 255, 0.36);
 }
 
+.connectionStatus::before {
+  display: none;
+}
+
 .connectionStatus {
   min-height: 30px;
   padding: 6px 12px;
