@@ -229,6 +229,7 @@ function findBlockTimeFromColumnA(rows, dateRow, nextDateRow) {
 }
 
 function collectRaidColumnBlocks(cols = [], rows = []) {
+  const detectedEndCol = getDetectedEndCol(rows);
   const labeledColumns = cols
     .map((col, index) => ({
       index,
@@ -241,7 +242,7 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
       .map(({ index, label }, currentIndex) => {
         const nextIndex = labeledColumns[currentIndex + 1]?.index;
         return {
-          endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
+          endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
           raidName: normalizeRaidName(label),
           startCol: index,
         };
@@ -259,7 +260,7 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
     .map(({ index, raidName }, currentIndex) => {
       const nextIndex = fallbackColumns[currentIndex + 1]?.index;
       return {
-        endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : index,
+        endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
         raidName,
         startCol: index,
       };
@@ -327,6 +328,30 @@ function extractMembersFromRow(row, startCol, endCol, settingLookup) {
   }
 
   return members;
+}
+
+function getDetectedEndCol(rows = []) {
+  let detectedEndCol = 0;
+
+  rows.forEach((row) => {
+    const currentEndCol = findLastMeaningfulColumnIndex(row);
+    if (currentEndCol > detectedEndCol) {
+      detectedEndCol = currentEndCol;
+    }
+  });
+
+  return detectedEndCol;
+}
+
+function findLastMeaningfulColumnIndex(row = []) {
+  for (let columnIndex = row.length - 1; columnIndex >= 0; columnIndex -= 1) {
+    const value = cleanText(row[columnIndex]);
+    if (value) {
+      return columnIndex;
+    }
+  }
+
+  return 0;
 }
 
 function parseSettingRows(rows) {
