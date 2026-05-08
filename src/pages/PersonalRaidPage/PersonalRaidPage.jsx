@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./PersonalRaidPage.module.css";
 import { DEFAULT_SHEET_URL, loadSheetRowsByName } from "../RaidSchedulePage/utils/sheetApi.js";
 
-const PERSONAL_RAID_SHEET_NAME = "레이드 참여 현황";
+const PERSONAL_RAID_SHEET_NAME = "개인레이드";
 const OWNER_COLUMN_INDEX = 1;
 const CHARACTER_COLUMN_INDEX = 3;
 const LEVEL_COLUMN_INDEX = 4;
