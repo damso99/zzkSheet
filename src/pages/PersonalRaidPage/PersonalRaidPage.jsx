@@ -72,7 +72,7 @@ export default function PersonalRaidPage({ embedded = false }) {
         <div className={styles.panelHeader}>
           <div>
             <h2 className={styles.panelTitle}>이름 검색</h2>
-            <p className={styles.panelSubtitle}>이름을 부분 검색하면 참여 체크된 캐릭터만 카드로 보여줍니다.</p>
+            <p className={styles.panelSubtitle}>이름을 검색하면 보유중인 캐릭터의 레이드 참여 현황을 보여줍니다.</p>
           </div>
         </div>
 
