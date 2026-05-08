@@ -146,7 +146,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         <header className={styles.hero}>
           <div>
             <p className={styles.eyebrow}>LostArk Weekly Planner</p>
-            <h1>레이드 일정</h1>
+            <h1>Stick Over Flow</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
               <span
