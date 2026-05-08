@@ -398,9 +398,9 @@
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  align-items: center;
+  align-items: flex-start;
   margin-top: 18px;
-  min-height: 56px;
+  min-height: 72px;
   padding: 0 0 8px;
 }
 
@@ -462,6 +462,13 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+  min-height: 52px;
+  min-width: 364px;
+}
+
+.summaryChipsPlaceholder {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .chip {
@@ -2895,6 +2902,7 @@
 
   .summaryChips {
     justify-content: flex-start;
+    min-width: 0;
   }
 
   .profileHero {

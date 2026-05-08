@@ -34,6 +34,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
   const deferredSearchQuery = useDeferredValue(searchQuery.trim());
   const todayIsoDate = useMemo(() => getTodayIsoDate(), []);
+  const showOverviewStats = activeTab === "today" || activeTab === "week";
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -179,8 +180,12 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             ))}
           </div>
 
-          {(activeTab === "today" || activeTab === "week") ? (
-            <div className={styles.summaryChips}>
+          <div
+            className={`${styles.summaryChips} ${showOverviewStats ? "" : styles.summaryChipsPlaceholder}`}
+            aria-hidden={!showOverviewStats}
+          >
+            {showOverviewStats ? (
+              <>
               <div className={styles.chip}>
                 <span>금일 일정</span>
                 <strong>{todayRaids.length}개</strong>
@@ -193,8 +198,9 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                 <span>전체 캐릭</span>
                 <strong>{countUniqueCharacters(raids)}명</strong>
               </div>
-            </div>
-          ) : null}
+              </>
+            ) : null}
+          </div>
         </section>
 
         {isLoading && (activeTab === "today" || activeTab === "week") ? (
