@@ -153,7 +153,6 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   }, [deferredSearchQuery, raids]);
 
   const searchGroups = useMemo(() => groupItemsByDate(searchResults), [searchResults]);
-
   const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
 
   return (
@@ -163,7 +162,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         <header className={styles.hero}>
           <div>
             <p className={styles.eyebrow}>LostArk Weekly Planner</p>
-            <h1>레이드 일정표</h1>
+            <h1>레이드 일정</h1>
             <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
               <span
@@ -194,25 +193,29 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             ))}
           </div>
 
-          <div className={styles.summaryChips}>
-            <div className={styles.chip}>
-              <span>금일 일정</span>
-              <strong>{todayRaids.length}개</strong>
+          {(activeTab === "today" || activeTab === "week") ? (
+            <div className={styles.summaryChips}>
+              <div className={styles.chip}>
+                <span>금일 일정</span>
+                <strong>{todayRaids.length}개</strong>
+              </div>
+              <div className={styles.chip}>
+                <span>전체 일정</span>
+                <strong>{raids.length}개</strong>
+              </div>
+              <div className={styles.chip}>
+                <span>전체 캐릭</span>
+                <strong>{countUniqueCharacters(raids)}명</strong>
+              </div>
             </div>
-            <div className={styles.chip}>
-              <span>전체 일정</span>
-              <strong>{raids.length}개</strong>
-            </div>
-            <div className={styles.chip}>
-              <span>전체 캐릭</span>
-              <strong>{countUniqueCharacters(raids)}명</strong>
-            </div>
-          </div>
+          ) : null}
         </section>
 
-        {isLoading && <StatePanel styles={styles} message="레이드 일정을 불러오는 중입니다." />}
+        {isLoading && (activeTab === "today" || activeTab === "week") ? (
+          <StatePanel styles={styles} message="레이드 일정을 불러오는 중입니다." />
+        ) : null}
 
-        {!isLoading && errorMessage ? (
+        {!isLoading && errorMessage && (activeTab === "today" || activeTab === "week") ? (
           <div className={styles.errorBanner} role="alert">
             {errorMessage}
           </div>
@@ -297,7 +300,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                 </button>
                               </div>
                               <div className={styles.searchInlineField}>
-                                <span>주인</span>
+                                <span>이름</span>
                                 <strong>{item.ownerName}</strong>
                               </div>
                             </div>
@@ -339,7 +342,6 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         ) : null}
 
         {activeTab === "personal" ? <PersonalSchedulePage embedded /> : null}
-
         {activeTab === "personalRaid" ? <PersonalRaidPage embedded /> : null}
       </div>
 

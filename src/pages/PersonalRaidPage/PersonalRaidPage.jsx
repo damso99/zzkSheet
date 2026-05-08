@@ -13,7 +13,7 @@ const RAID_START_COLUMN_INDEX = 9;
 
 export default function PersonalRaidPage({ embedded = false }) {
   const [rows, setRows] = useState([]);
-  const [query, setQuery] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -33,10 +33,7 @@ export default function PersonalRaidPage({ embedded = false }) {
 
         setRows(Array.isArray(payload?.rows) ? payload.rows : []);
       } catch (error) {
-        if (error?.name === "AbortError") {
-          return;
-        }
-
+        if (error?.name === "AbortError") return;
         setErrorMessage(error?.message || "개인레이드 데이터를 불러오지 못했습니다.");
       } finally {
         if (!controller.signal.aborted) {
@@ -51,31 +48,18 @@ export default function PersonalRaidPage({ embedded = false }) {
   }, []);
 
   const parsedCharacters = useMemo(() => parsePersonalRaidRows(rows), [rows]);
+  const hasKeyword = searchKeyword.trim().length > 0;
+
   const filteredCharacters = useMemo(() => {
-    const normalizedKeyword = normalize(cleanText(query));
-    const matchedCharacters = normalizedKeyword
-      ? parsedCharacters.filter((item) => normalize(cleanText(item.owner)).includes(normalizedKeyword))
-      : parsedCharacters;
+    const keyword = normalize(cleanText(searchKeyword));
+    const matchedCharacters = keyword
+      ? parsedCharacters.filter((item) => normalize(cleanText(item.owner)).includes(keyword))
+      : [];
 
     return [...matchedCharacters].sort((left, right) => right.levelValue - left.levelValue);
-  }, [parsedCharacters, query]);
-
-  const totalOwners = useMemo(
-    () => new Set(parsedCharacters.map((item) => cleanText(item.owner)).filter(Boolean)).size,
-    [parsedCharacters],
-  );
+  }, [parsedCharacters, searchKeyword]);
 
   useEffect(() => {
-    if (!rows.length) return;
-
-    console.group("[PersonalRaid] Raw sheet data");
-    console.table(rows);
-    console.groupEnd();
-  }, [rows]);
-
-  useEffect(() => {
-    if (!parsedCharacters.length) return;
-
     console.group("[PersonalRaid] Parsed characters");
     console.table(
       parsedCharacters.map((item) => ({
@@ -95,65 +79,47 @@ export default function PersonalRaidPage({ embedded = false }) {
     console.group("[PersonalRaid] Search debug");
     console.table(
       filteredCharacters.map((item) => ({
-        keyword: cleanText(query),
+        keyword: cleanText(searchKeyword),
         owner: cleanText(item.owner),
-        matched: normalize(cleanText(item.owner)).includes(normalize(cleanText(query))),
+        matched: normalize(cleanText(item.owner)).includes(normalize(cleanText(searchKeyword))),
         characterName: cleanText(item.characterName),
       })),
     );
     console.groupEnd();
-  }, [filteredCharacters, query]);
+  }, [filteredCharacters, searchKeyword]);
 
   const content = (
     <>
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>Personal Raid Search</span>
-          <h1 className={styles.title}>{cleanText(PERSONAL_RAID_SHEET_NAME)}</h1>
-          <p className={styles.description}>
-            {cleanText("주인 이름 검색으로 참여 체크된 캐릭터와 참여 레이드 목록을 한 번에 확인합니다.")}
-          </p>
+          <span className={styles.eyebrow}>Personal Raid</span>
+          <h1 className={styles.title}>{PERSONAL_RAID_SHEET_NAME}</h1>
+          <p className={styles.description}>이름 검색으로 참여 체크된 캐릭터와 참여 레이드 목록을 한 번에 확인합니다.</p>
         </div>
       </section>
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <div>
-            <h2 className={styles.panelTitle}>{cleanText("이름 검색")}</h2>
-            <p className={styles.panelSubtitle}>
-              {cleanText("주인 이름을 부분 검색하면 참여 체크된 캐릭터만 카드로 보여줍니다.")}
-            </p>
-          </div>
-          <div className={styles.summaryPills}>
-            <div className={styles.summaryPill}>
-              <span>{cleanText("참여 캐릭터")}</span>
-              <strong>{parsedCharacters.length}명</strong>
-            </div>
-            <div className={styles.summaryPill}>
-              <span>{cleanText("주인 그룹")}</span>
-              <strong>{totalOwners}명</strong>
-            </div>
-            <div className={styles.summaryPill}>
-              <span>{cleanText("검색 결과")}</span>
-              <strong>{filteredCharacters.length}개</strong>
-            </div>
+            <h2 className={styles.panelTitle}>이름 검색</h2>
+            <p className={styles.panelSubtitle}>이름을 부분 검색하면 참여 체크된 캐릭터만 카드로 보여줍니다.</p>
           </div>
         </div>
 
         <label className={styles.searchField}>
-          <span>{cleanText("주인 이름 검색")}</span>
+          <span>이름 검색</span>
           <input
             type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={cleanText("예: 리아, 성태, 민지")}
+            value={searchKeyword}
+            onChange={(event) => setSearchKeyword(event.target.value)}
+            placeholder="예: 리아, 성태, 민지"
           />
         </label>
       </section>
 
       {isLoading ? (
         <section className={styles.emptyState}>
-          <p>{cleanText("개인레이드 데이터를 불러오는 중입니다.")}</p>
+          <p>개인레이드 데이터를 불러오는 중입니다.</p>
         </section>
       ) : null}
 
@@ -165,58 +131,63 @@ export default function PersonalRaidPage({ embedded = false }) {
 
       {!isLoading && !errorMessage && parsedCharacters.length === 0 ? (
         <section className={styles.emptyState}>
-          <p>{cleanText("참여 중인 캐릭터가 없습니다.")}</p>
+          <p>참여 중인 캐릭터가 없습니다.</p>
         </section>
       ) : null}
 
-      {!isLoading && !errorMessage && parsedCharacters.length > 0 && filteredCharacters.length === 0 ? (
+      {!isLoading && !errorMessage && !hasKeyword ? (
         <section className={styles.emptyState}>
-          <p>{cleanText("검색 결과가 없습니다")}</p>
+          <p>이름을 검색하면 참여 캐릭터가 표시됩니다.</p>
         </section>
       ) : null}
 
-      {!isLoading && !errorMessage && filteredCharacters.length > 0 ? (
-        <section className={styles.cardGrid}>
+      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length > 0 && filteredCharacters.length === 0 ? (
+        <section className={styles.emptyState}>
+          <p>검색 결과가 없습니다.</p>
+        </section>
+      ) : null}
+
+      {!isLoading && !errorMessage && hasKeyword && filteredCharacters.length > 0 ? (
+        <section className={styles.cardList}>
           {filteredCharacters.map((item) => (
             <article key={item.id} className={styles.characterCard}>
               <div className={styles.cardGlow} />
-              <header className={styles.cardHeader}>
-                <div className={styles.cardTitleGroup}>
-                  <span className={styles.ownerName}>{cleanText(item.owner)}</span>
-                  <h3 className={styles.characterName}>{cleanText(item.characterName)}</h3>
-                </div>
-                <span className={styles.classBadge}>{cleanText(item.className || "클래스 없음")}</span>
-              </header>
 
-              <div className={styles.statGrid}>
-                <div className={styles.statItem}>
-                  <span>{cleanText("레벨")}</span>
-                  <strong>{item.level || "-"}</strong>
-                </div>
-                <div className={styles.statItem}>
-                  <span>{cleanText("전투력")}</span>
-                  <strong>{item.power || "-"}</strong>
+              <div className={styles.cardMain}>
+                <header className={styles.cardHeader}>
+                  <span className={styles.ownerName}>{cleanText(item.owner)}</span>
+                  <span className={styles.classBadge}>{cleanText(item.className || "클래스 없음")}</span>
+                </header>
+
+                <h3 className={styles.characterName}>{cleanText(item.characterName)}</h3>
+
+                <div className={styles.cardFooter}>
+                  <div className={styles.statGrid}>
+                    <div className={styles.statItem}>
+                      <span>레벨</span>
+                      <strong>{item.level || "-"}</strong>
+                    </div>
+                    <div className={styles.statItem}>
+                      <span>전투력</span>
+                      <strong>{item.power || "-"}</strong>
+                    </div>
+                  </div>
+
+                  <section className={styles.raidSection}>
+                    {item.raids.length ? (
+                      <div className={styles.raidPills}>
+                        {item.raids.map((raid, index) => (
+                          <span key={`${item.id}-${raid}-${index}`} className={styles.raidPill}>
+                            {cleanText(raid)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={styles.emptyRaidText}>참여 레이드 없음</p>
+                    )}
+                  </section>
                 </div>
               </div>
-
-              <section className={styles.raidSection}>
-                <div className={styles.raidSectionHeader}>
-                  <span>{cleanText("참여 레이드")}</span>
-                  <strong>{item.raids.length}개</strong>
-                </div>
-
-                {item.raids.length ? (
-                  <div className={styles.raidPills}>
-                    {item.raids.map((raid, index) => (
-                      <span key={`${item.id}-${raid}-${index}`} className={styles.raidPill}>
-                        {cleanText(raid)}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className={styles.emptyRaidText}>{cleanText("참여 레이드 없음")}</p>
-                )}
-              </section>
             </article>
           ))}
         </section>
@@ -276,27 +247,47 @@ function parsePersonalRaidRows(rows) {
         owner,
         characterName,
         level,
-        levelValue: parseNumericValue(level),
         power,
         className,
         joined,
         raids,
+        levelValue: parseLevelValue(level),
       };
     })
     .filter(Boolean);
 }
 
+function parseJoinedValue(value) {
+  if (value === true) return true;
+  if (value === false) return false;
+
+  const text = cleanText(value).toLowerCase();
+  return ["1", "true", "checked", "참여", "✓", "✔", "☑"].includes(text);
+}
+
+function parseLevelValue(value) {
+  const numeric = Number(String(value ?? "").replace(/,/g, "").trim());
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function isRaidEntry(value) {
+  if (!value) return false;
+  if (value === "0") return false;
+  if (/^\d+(\.\d+)?$/.test(value)) return false;
+  return /[A-Za-z가-힣]/.test(value);
+}
+
 function decodeUnicodeEscapes(value) {
   if (value == null) return "";
-
   const stringValue = String(value);
+
   if (!/\\u[0-9a-fA-F]{4}/.test(stringValue)) {
     return stringValue;
   }
 
   try {
     return stringValue.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
-      String.fromCharCode(Number.parseInt(hex, 16)),
+      String.fromCharCode(parseInt(hex, 16)),
     );
   } catch {
     return stringValue;
@@ -304,41 +295,9 @@ function decodeUnicodeEscapes(value) {
 }
 
 function cleanText(value) {
-  return decodeUnicodeEscapes(value).replace(/^['"]|['"]$/g, "").replace(/\s+/g, " ").trim();
+  return decodeUnicodeEscapes(value).replace(/^['"]|['"]$/g, "").trim();
 }
 
 function normalize(value) {
   return cleanText(value).toLowerCase();
-}
-
-function parseJoinedValue(value) {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  if (typeof value === "number") {
-    return value === 1;
-  }
-
-  const normalized = normalize(value);
-  return ["true", "1", "checked", "check", "y", "yes", "v", "✓", "✔", "☑", "참여"].some((token) =>
-    normalized.includes(token.toLowerCase()),
-  );
-}
-
-function isRaidEntry(value) {
-  if (!value || value === "0") {
-    return false;
-  }
-
-  if (/^\d+(\.\d+)?$/.test(value)) {
-    return false;
-  }
-
-  return /[가-힣a-z]/i.test(value);
-}
-
-function parseNumericValue(value) {
-  const numeric = Number.parseFloat(String(value ?? "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(numeric) ? numeric : 0;
 }

@@ -1,4 +1,9 @@
-export default function RaidParticipantTable({ participants, styles, onCharacterClick, selectedOwnerName = "" }) {
+export default function RaidParticipantTable({
+  participants,
+  styles,
+  onCharacterClick,
+  selectedOwnerName = "",
+}) {
   if (!participants.length) {
     return <p className={styles.emptyParticipants}>참여 정보가 없습니다.</p>;
   }
@@ -18,7 +23,10 @@ export default function RaidParticipantTable({ participants, styles, onCharacter
           </thead>
           <tbody>
             {participants.map((participant, index) => {
-              const isSelected = isSelectedOwner(participant, selectedOwnerName);
+              const isSelected = isSelectedOwner(
+                participant,
+                selectedOwnerName,
+              );
 
               return (
                 <tr
@@ -59,7 +67,7 @@ export default function RaidParticipantTable({ participants, styles, onCharacter
                 className: styles.mobileCharacterNameButton,
               })}
               <p>
-                <span>주인 {participant.ownerName}</span>
+                <span>이름 {participant.ownerName}</span>
                 <span>Lv.{participant.level}</span>
                 <span>전투력 {participant.power}</span>
               </p>
@@ -72,14 +80,30 @@ export default function RaidParticipantTable({ participants, styles, onCharacter
 }
 
 function isSelectedOwner(participant, selectedOwnerName) {
-  return Boolean(selectedOwnerName) && participant.ownerName === selectedOwnerName;
+  return (
+    Boolean(selectedOwnerName) && participant.ownerName === selectedOwnerName
+  );
 }
 
-function renderCharacterName({ characterName, onCharacterClick, styles, className = styles.characterNameButton }) {
-  if (!onCharacterClick) return <strong className={styles.mobileCharacterNameText}>{characterName}</strong>;
+function renderCharacterName({
+  characterName,
+  onCharacterClick,
+  styles,
+  className = styles.characterNameButton,
+}) {
+  if (!onCharacterClick)
+    return (
+      <strong className={styles.mobileCharacterNameText}>
+        {characterName}
+      </strong>
+    );
 
   return (
-    <button type="button" className={className} onClick={() => onCharacterClick(characterName)}>
+    <button
+      type="button"
+      className={className}
+      onClick={() => onCharacterClick(characterName)}
+    >
       {characterName}
     </button>
   );

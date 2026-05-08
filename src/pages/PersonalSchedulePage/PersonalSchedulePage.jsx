@@ -23,7 +23,10 @@ export default function PersonalSchedulePage({ embedded = false }) {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const sortedItems = useMemo(() => sortPersonalSchedules(items, sortMode), [items, sortMode]);
+  const sortedItems = useMemo(
+    () => sortPersonalSchedules(items, sortMode),
+    [items, sortMode],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -39,21 +42,29 @@ export default function PersonalSchedulePage({ embedded = false }) {
     }
 
     try {
-      const response = await fetch(`${PERSONAL_SCHEDULE_API_URL}?type=personal`, {
-        method: "GET",
-        signal,
-      });
+      const response = await fetch(
+        `${PERSONAL_SCHEDULE_API_URL}?type=personal`,
+        {
+          method: "GET",
+          signal,
+        },
+      );
       const payload = await readJsonSafely(response);
 
       if (!response.ok) {
-        throw new Error(payload?.message || payload?.error || "개인일정 목록을 불러오지 못했습니다.");
+        throw new Error(
+          payload?.message ||
+            payload?.error ||
+            "개인일정 목록을 불러오지 못했습니다.",
+        );
       }
 
       setItems(normalizePersonalSchedules(payload));
     } catch (error) {
       if (error?.name === "AbortError") return;
       console.error("[personal schedule] failed to load schedules", error);
-      if (!silent) setErrorMessage(error instanceof Error ? error.message : String(error));
+      if (!silent)
+        setErrorMessage(error instanceof Error ? error.message : String(error));
     } finally {
       if (!signal?.aborted && !silent) setIsLoading(false);
     }
@@ -89,13 +100,20 @@ export default function PersonalSchedulePage({ embedded = false }) {
       const responsePayload = await readJsonSafely(response);
 
       if (!response.ok || responsePayload?.success === false) {
-        throw new Error(responsePayload?.message || responsePayload?.error || "개인일정 등록에 실패했습니다.");
+        throw new Error(
+          responsePayload?.message ||
+            responsePayload?.error ||
+            "개인일정 등록에 실패했습니다.",
+        );
       }
 
       setMessage("등록 완료");
       setForm(createInitialForm());
       setItems((currentItems) => [
-        normalizePersonalScheduleItem({ ...payload, createdAt: formatLocalDateTime(new Date()) }, currentItems.length),
+        normalizePersonalScheduleItem(
+          { ...payload, createdAt: formatLocalDateTime(new Date()) },
+          currentItems.length,
+        ),
         ...currentItems,
       ]);
       await loadPersonalSchedules({ silent: true });
@@ -127,12 +145,15 @@ export default function PersonalSchedulePage({ embedded = false }) {
         <header className={styles.hero}>
           {!embedded ? (
             <a className={styles.backLink} href="/">
-              레이드 일정표로 돌아가기
+              레이드 일정으로 돌아가기
             </a>
           ) : null}
           <p className={styles.eyebrow}>Personal Schedule</p>
           <h1>개인 일정</h1>
-          <p>개인 참여가 필요한 날짜와 사유를 Google Sheet 개인일정 탭에 기록합니다.</p>
+          <p>
+            개인 참여가 필요한 날짜와 사유를 Google Sheet 개인일정 탭에
+            기록합니다.
+          </p>
         </header>
 
         <section className={styles.panel}>
@@ -159,7 +180,12 @@ export default function PersonalSchedulePage({ embedded = false }) {
                 popperClassName={styles.datePickerPopper}
                 calendarClassName={styles.datePickerCalendar}
                 wrapperClassName={styles.datePickerControl}
-                customInput={<DatePickerButton isOpen={isFormCalendarOpen} placeholder="날짜 선택" />}
+                customInput={
+                  <DatePickerButton
+                    isOpen={isFormCalendarOpen}
+                    placeholder="날짜 선택"
+                  />
+                }
               />
             </label>
             <label>
@@ -178,7 +204,7 @@ export default function PersonalSchedulePage({ embedded = false }) {
                 type="text"
                 value={form.reason}
                 required
-                placeholder="예) 회식, 출장, 병원"
+                placeholder="예: 회식, 약속, 장례식은 미리말하기..."
                 onChange={(event) => updateField("reason", event.target.value)}
               />
             </label>
@@ -205,7 +231,10 @@ export default function PersonalSchedulePage({ embedded = false }) {
               <label className={styles.sortSelect}>
                 <span>정렬</span>
                 <span className={styles.selectShell}>
-                  <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+                  <select
+                    value={sortMode}
+                    onChange={(event) => setSortMode(event.target.value)}
+                  >
                     {Object.entries(SORT_OPTIONS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -219,12 +248,16 @@ export default function PersonalSchedulePage({ embedded = false }) {
           </div>
 
           {isLoading ? (
-            <div className={styles.emptyState}>개인일정을 불러오는 중입니다.</div>
+            <div className={styles.emptyState}>
+              개인일정을 불러오는 중입니다.
+            </div>
           ) : sortedItems.length ? (
             <div className={styles.scheduleList}>
               {sortedItems.map((item) => (
                 <article key={item.id} className={styles.scheduleCard}>
-                  <time dateTime={formatScheduleDateTimeValue(item.date)}>{formatScheduleDateLabel(item.date)}</time>
+                  <time dateTime={formatScheduleDateTimeValue(item.date)}>
+                    {formatScheduleDateLabel(item.date)}
+                  </time>
                   <strong>{item.name || "이름 없음"}</strong>
                   <p>{item.reason || "사유 없음"}</p>
                 </article>
@@ -242,7 +275,11 @@ export default function PersonalSchedulePage({ embedded = false }) {
 function normalizePersonalSchedules(payload) {
   const rawItems = Array.isArray(payload)
     ? payload
-    : payload?.items || payload?.schedules || payload?.rows || payload?.data || [];
+    : payload?.items ||
+      payload?.schedules ||
+      payload?.rows ||
+      payload?.data ||
+      [];
 
   return rawItems
     .map((item, index) => normalizePersonalScheduleItem(item, index))
@@ -261,11 +298,15 @@ function normalizePersonalScheduleItem(item, index) {
   }
 
   return {
-    id: String(item?.id || `${item?.date || "date"}-${item?.name || "name"}-${index}`),
+    id: String(
+      item?.id || `${item?.date || "date"}-${item?.name || "name"}-${index}`,
+    ),
     date: normalizeDate(item?.date || item?.날짜),
     name: String(item?.name || item?.이름 || "").trim(),
     reason: String(item?.reason || item?.사유 || "").trim(),
-    createdAt: normalizeDateTime(item?.createdAt || item?.registeredAt || item?.등록시간),
+    createdAt: normalizeDateTime(
+      item?.createdAt || item?.registeredAt || item?.등록시간,
+    ),
   };
 }
 
@@ -289,7 +330,9 @@ function sortPersonalSchedules(items, sortMode) {
       );
     }
 
-    return `${right.createdAt || right.date || ""}`.localeCompare(`${left.createdAt || left.date || ""}`);
+    return `${right.createdAt || right.date || ""}`.localeCompare(
+      `${left.createdAt || left.date || ""}`,
+    );
   });
 }
 
@@ -330,7 +373,12 @@ function formatLocalDateTime(date) {
 }
 
 function formatScheduleDateLabel(dateString) {
-  return normalizePersonalDate(dateString) || "날짜 확인 필요";
+  const parsed = parsePersonalDateParts(dateString);
+  if (!parsed) return "날짜 확인 필요";
+
+  const localDate = new Date(parsed.year, parsed.month - 1, parsed.day);
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  return `${parsed.month}월 ${parsed.day}일 (${weekdays[localDate.getDay()]})`;
 }
 
 function formatScheduleDateTimeValue(dateString) {
@@ -360,7 +408,11 @@ function parsePersonalDateParts(value) {
   if (value == null || value === "") return null;
 
   if (value instanceof Date) {
-    return getValidDateParts(value.getFullYear(), value.getMonth() + 1, value.getDate());
+    return getValidDateParts(
+      value.getFullYear(),
+      value.getMonth() + 1,
+      value.getDate(),
+    );
   }
 
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -374,17 +426,27 @@ function parsePersonalDateParts(value) {
     /^Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,\d{1,2},\d{1,2},\d{1,2})?\)$/,
   );
   if (gvizMatch) {
-    return getValidDateParts(Number(gvizMatch[1]), Number(gvizMatch[2]) + 1, Number(gvizMatch[3]));
+    return getValidDateParts(
+      Number(gvizMatch[1]),
+      Number(gvizMatch[2]) + 1,
+      Number(gvizMatch[3]),
+    );
   }
 
   const isoTimestampMatch = text.match(/^\d{4}-\d{1,2}-\d{1,2}T/);
   if (isoTimestampMatch) {
     const date = new Date(text);
     if (Number.isNaN(date.getTime())) return null;
-    return getValidDateParts(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    return getValidDateParts(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      date.getDate(),
+    );
   }
 
-  const yearFirstMatch = text.match(/^(\d{4})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})\.?$/);
+  const yearFirstMatch = text.match(
+    /^(\d{4})[./-]\s*(\d{1,2})[./-]\s*(\d{1,2})\.?$/,
+  );
   if (yearFirstMatch) {
     return getValidDateParts(
       Number(yearFirstMatch[1]),
@@ -393,7 +455,9 @@ function parsePersonalDateParts(value) {
     );
   }
 
-  const koreanDateMatch = text.match(/^(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?$/);
+  const koreanDateMatch = text.match(
+    /^(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?$/,
+  );
   if (koreanDateMatch) {
     return getValidDateParts(
       Number(koreanDateMatch[1]),
@@ -422,7 +486,11 @@ function parsePersonalDateParts(value) {
 function serialDateToParts(serialNumber) {
   const date = new Date(1899, 11, 30);
   date.setDate(date.getDate() + Math.floor(serialNumber));
-  return getValidDateParts(date.getFullYear(), date.getMonth() + 1, date.getDate());
+  return getValidDateParts(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate(),
+  );
 }
 
 function getValidDateParts(year, month, day) {
@@ -445,7 +513,10 @@ function formatDateParts(year, month, day) {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-const DatePickerButton = forwardRef(function DatePickerButton({ value, onClick, isOpen, placeholder }, ref) {
+const DatePickerButton = forwardRef(function DatePickerButton(
+  { value, onClick, isOpen, placeholder },
+  ref,
+) {
   return (
     <button
       type="button"

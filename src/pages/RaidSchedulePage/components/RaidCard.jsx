@@ -47,7 +47,7 @@ export default function RaidCard({
                 toggleOpen();
               }}
             >
-              {isOpen ? "접기" : "상세 보기"}
+              {isOpen ? "닫기" : "상세 보기"}
             </button>
           ) : null}
         </div>
