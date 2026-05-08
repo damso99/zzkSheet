@@ -39,6 +39,7 @@
 html {
   min-width: 320px;
   overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 body {

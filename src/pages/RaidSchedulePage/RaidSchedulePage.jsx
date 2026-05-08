@@ -16,13 +16,6 @@ const TAB_LABELS = {
   personalRaid: "레이드 참여 현황",
 };
 
-const TAB_PATHS = {
-  today: "/",
-  week: "/",
-  personal: "/personal",
-  personalRaid: "/personal-raid",
-};
-
 export default function RaidSchedulePage({ initialTab = "today" }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [raids, setRaids] = useState([]);
@@ -43,15 +36,6 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
-
-  useEffect(() => {
-    const nextPath = TAB_PATHS[activeTab] || "/";
-    const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
-
-    if (currentPath !== nextPath) {
-      window.history.replaceState(null, "", nextPath);
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     let ignore = false;
@@ -222,7 +206,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         ) : null}
 
         {!isLoading && activeTab === "today" ? (
-          <section className={`${styles.section} ${styles.todaySchedule}`}>
+          <section className={`${styles.section} ${styles.pageSection} ${styles.todaySchedule}`}>
             <SectionHeading
               styles={styles}
               title={TAB_LABELS.today}
@@ -262,7 +246,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         ) : null}
 
         {!isLoading && activeTab === "week" ? (
-          <section className={styles.section}>
+          <section className={`${styles.section} ${styles.pageSection}`}>
             <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="요일별 레이드 일정" />
             <div className={styles.weekSearchBox}>
               <RaidSearch value={searchQuery} onChange={setSearchQuery} styles={styles} />
@@ -341,8 +325,16 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           </section>
         ) : null}
 
-        {activeTab === "personal" ? <PersonalSchedulePage embedded /> : null}
-        {activeTab === "personalRaid" ? <PersonalRaidPage embedded /> : null}
+        {activeTab === "personal" ? (
+          <section className={`${styles.section} ${styles.pageSection}`}>
+            <PersonalSchedulePage embedded />
+          </section>
+        ) : null}
+        {activeTab === "personalRaid" ? (
+          <section className={`${styles.section} ${styles.pageSection}`}>
+            <PersonalRaidPage embedded />
+          </section>
+        ) : null}
       </div>
 
       {selectedCharacterName ? (

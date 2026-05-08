@@ -48,6 +48,14 @@
   padding: 48px 20px 72px;
 }
 
+.pageSection {
+  width: 100%;
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  min-height: 680px;
+}
+
 /* Header */
 .hero {
   display: block;
@@ -400,12 +408,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: 22px;
+  align-items: center;
+  min-height: 44px;
 }
 
 .tab,
 .activeTab {
   position: relative;
-  padding: 10px 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  height: 44px;
+  padding: 0;
   color: var(--muted);
   font-weight: 800;
   text-decoration: none;
@@ -413,7 +427,7 @@
   transition:
     color 180ms ease,
     text-shadow 180ms ease,
-    transform 180ms ease;
+    box-shadow 180ms ease;
 }
 
 .tab::after,
@@ -477,11 +491,11 @@
 
 /* Section headings */
 .section {
-  margin-top: 42px;
+  margin-top: 24px;
 }
 
 .sectionHeading {
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .sectionHeadingTopRow {

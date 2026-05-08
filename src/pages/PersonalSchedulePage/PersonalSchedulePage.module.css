@@ -64,17 +64,17 @@
 
 .embeddedContent {
   width: 100%;
-  padding-top: 12px;
+  padding-top: 0;
 }
 
 .hero {
   display: block;
   padding-bottom: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 
 .sectionHeader {
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .sectionHeader h2 {
