@@ -57,22 +57,33 @@
 }
 
 .sectionHeader {
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 56px;
+  margin: 0 0 20px;
+  padding: 0;
 }
 
 .sectionHeader h2 {
   margin: 0;
+  padding: 0;
   color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.08;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
 .sectionHeader p {
-  margin: 7px 0 0;
+  margin: 0;
+  padding: 0;
   color: var(--muted);
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .pageTabs {
