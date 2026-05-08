@@ -69,12 +69,12 @@ export default function PersonalRaidPage({ embedded = false }) {
       </header>
 
       <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <div>
-            <h2 className={styles.panelTitle}>이름 검색</h2>
-            <p className={styles.panelSubtitle}>이름을 검색하면 보유중인 캐릭터의 레이드 참여 현황을 보여줍니다.</p>
-          </div>
-        </div>
+        {/*<div className={styles.panelHeader}>*/}
+        {/*  <div>*/}
+        {/*    <h2 className={styles.panelTitle}>이름 검색</h2>*/}
+        {/*    <p className={styles.panelSubtitle}>이름을 검색하면 보유중인 캐릭터의 레이드 참여 현황을 보여줍니다.</p>*/}
+        {/*  </div>*/}
+        {/*</div>*/}
 
         <label className={styles.searchField}>
           <span>이름 검색</span>
