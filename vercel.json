@@ -7,6 +7,14 @@
     {
       "source": "/personal/",
       "destination": "/index.html"
+    },
+    {
+      "source": "/personal-raid",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/personal-raid/",
+      "destination": "/index.html"
     }
   ]
 }
