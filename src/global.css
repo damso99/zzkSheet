@@ -13,7 +13,7 @@
   --glow: #e9ccfb;
   --border: #4d6488;
   --border-strong: rgba(124, 184, 255, 0.35);
-  --border-soft: rgba(124, 184, 255, 0.18);
+  --border-soft: #4d6488;
   --text: #f7f2ff;
   --text-muted: rgba(247, 242, 255, 0.68);
   --input-height: 40px;
