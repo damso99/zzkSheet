@@ -399,7 +399,7 @@
 }
 
 .raidPill {
-  display: flex;
+  flex-grow: 1;
   align-items: center;
   min-width: 0;
   max-width: 100%;
