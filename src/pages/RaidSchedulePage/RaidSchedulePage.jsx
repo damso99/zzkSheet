@@ -9,6 +9,8 @@ import { formatDateLabel, formatLocalDateTime, getTodayIsoDate } from "./utils/d
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
 
+const TAB_ORDER = ["today", "week", "personalRaid", "personal"];
+
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
@@ -163,7 +165,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
         <section className={styles.toolbar}>
           <div className={styles.tabs} role="tablist" aria-label="일정 보기 선택">
-            {Object.entries(TAB_LABELS).map(([tabKey, label]) => (
+            {TAB_ORDER.map((tabKey) => (
               <button
                 key={tabKey}
                 type="button"
@@ -172,7 +174,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                 className={activeTab === tabKey ? styles.activeTab : styles.tab}
                 onClick={() => setActiveTab(tabKey)}
               >
-                {label}
+                {TAB_LABELS[tabKey]}
               </button>
             ))}
           </div>
