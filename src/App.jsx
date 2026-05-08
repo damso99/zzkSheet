@@ -4,12 +4,12 @@ const RaidSchedulePage = lazy(() => import("./pages/RaidSchedulePage/RaidSchedul
 
 export default function App() {
   const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
-  // const initialTab =
-  //   currentPath === "/personal"
-  //     ? "personal"
-  //     : currentPath === "/personal-raid"
-  //       ? "personalRaid"
-  //       : "today";
+  const initialTab =
+    currentPath === "/personal"
+      ? "personal"
+      : currentPath === "/personal-raid"
+        ? "personalRaid"
+        : "today";
 
   return (
     <Suspense fallback={null}>
