@@ -13,7 +13,7 @@ const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
   personal: "개인 일정",
-  personalRaid: "개인레이드",
+  personalRaid: "레이드 참여 현황",
 };
 
 const TAB_PATHS = {

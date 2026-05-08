@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./PersonalRaidPage.module.css";
 import { DEFAULT_SHEET_URL, loadSheetRowsByName } from "../RaidSchedulePage/utils/sheetApi.js";
 
-const PERSONAL_RAID_SHEET_NAME = "개인레이드";
+const PERSONAL_RAID_SHEET_NAME = "레이드 참여 현황";
 const OWNER_COLUMN_INDEX = 1;
 const CHARACTER_COLUMN_INDEX = 3;
 const LEVEL_COLUMN_INDEX = 4;
@@ -34,7 +34,7 @@ export default function PersonalRaidPage({ embedded = false }) {
         setRows(Array.isArray(payload?.rows) ? payload.rows : []);
       } catch (error) {
         if (error?.name === "AbortError") return;
-        setErrorMessage(error?.message || "개인레이드 데이터를 불러오지 못했습니다.");
+        setErrorMessage(error?.message || "레이드 데이터를 불러오지 못했습니다.");
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -58,35 +58,6 @@ export default function PersonalRaidPage({ embedded = false }) {
 
     return [...matchedCharacters].sort((left, right) => right.levelValue - left.levelValue);
   }, [parsedCharacters, searchKeyword]);
-
-  useEffect(() => {
-    console.group("[PersonalRaid] Parsed characters");
-    console.table(
-      parsedCharacters.map((item) => ({
-        owner: cleanText(item.owner),
-        characterName: cleanText(item.characterName),
-        level: item.level,
-        power: item.power,
-        className: cleanText(item.className),
-        joined: item.joined,
-        raids: item.raids.map(cleanText).join(", "),
-      })),
-    );
-    console.groupEnd();
-  }, [parsedCharacters]);
-
-  useEffect(() => {
-    console.group("[PersonalRaid] Search debug");
-    console.table(
-      filteredCharacters.map((item) => ({
-        keyword: cleanText(searchKeyword),
-        owner: cleanText(item.owner),
-        matched: normalize(cleanText(item.owner)).includes(normalize(cleanText(searchKeyword))),
-        characterName: cleanText(item.characterName),
-      })),
-    );
-    console.groupEnd();
-  }, [filteredCharacters, searchKeyword]);
 
   const content = (
     <>
