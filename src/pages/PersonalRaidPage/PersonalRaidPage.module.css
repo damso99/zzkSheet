@@ -199,24 +199,26 @@
 .sectionSearchInput {
   width: 100%;
   min-width: 0;
-  height: 48px;
+  height: var(--input-height);
   margin-top: 10px;
   padding: 0 16px;
-  border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  background: rgba(16, 21, 34, 0.84);
-  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
+  color: var(--input-text);
   outline: none;
 }
 
 .sectionSearchInput::placeholder {
-  color: rgba(245, 250, 255, 0.42);
+  color: var(--input-placeholder);
 }
 
 .sectionSearchInput:focus {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow);
-  background: rgba(16, 21, 34, 0.94);
+  border-color: var(--input-border-focus);
+  box-shadow:
+    0 0 0 4px var(--input-focus-shadow),
+    0 0 22px rgba(124, 184, 255, 0.1);
+  background: var(--input-bg);
 }
 
 .sectionControlHint {

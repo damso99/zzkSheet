@@ -1197,13 +1197,13 @@
 .sectionSearchInput {
   width: 100%;
   min-width: 0;
-  height: 48px;
+  height: var(--input-height);
   padding: 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--input-text);
   outline: none;
-  background: var(--card-soft);
+  background: var(--input-bg);
   box-shadow: inset 0 0 18px rgba(76, 141, 255, 0.05);
   transition:
     border-color 180ms ease,
@@ -1212,13 +1212,13 @@
 }
 
 .sectionSearchInput::placeholder {
-  color: rgba(154, 168, 197, 0.72);
+  color: var(--input-placeholder);
 }
 
 .sectionSearchInput:focus {
-  border-color: rgba(124, 184, 255, 0.35);
+  border-color: var(--input-border-focus);
   box-shadow:
-    0 0 0 4px rgba(124, 184, 255, 0.12),
+    0 0 0 4px var(--input-focus-shadow),
     0 0 22px rgba(124, 184, 255, 0.1),
     inset 0 0 18px rgba(76, 141, 255, 0.06);
 }
