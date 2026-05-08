@@ -7,6 +7,11 @@ import styles from "./PersonalSchedulePage.module.css";
 registerLocale("ko", ko);
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
+const PAGE_TABS = [
+  { href: "/personal", label: "개인일정" },
+  { href: "/", label: "주간일정" },
+  { href: "/personal-raid", label: "개인레이드" },
+];
 
 const SORT_OPTIONS = {
   latest: "최신순",
@@ -125,6 +130,19 @@ export default function PersonalSchedulePage() {
       <div className={styles.backdrop} />
       <div className={styles.content}>
         <header className={styles.hero}>
+          <div className={styles.pageTabs} role="tablist" aria-label="페이지 이동">
+            {PAGE_TABS.map((tab) => (
+              <a
+                key={tab.href}
+                href={tab.href}
+                className={tab.href === "/personal" ? styles.activePageTab : styles.pageTab}
+                role="tab"
+                aria-selected={tab.href === "/personal"}
+              >
+                {tab.label}
+              </a>
+            ))}
+          </div>
           <a className={styles.backLink} href="/">
             레이드 일정표로 돌아가기
           </a>

@@ -12,6 +12,12 @@ const TAB_LABELS = {
   week: "주간 일정",
 };
 
+const PAGE_TABS = [
+  { href: "/personal", label: "개인일정" },
+  { href: "/", label: "주간일정" },
+  { href: "/personal-raid", label: "개인레이드" },
+];
+
 export default function RaidSchedulePage() {
   const [activeTab, setActiveTab] = useState("today");
   const [raids, setRaids] = useState([]);
@@ -137,6 +143,19 @@ export default function RaidSchedulePage() {
       <div className={styles.backdrop} />
       <div className={styles.content}>
         <header className={styles.hero}>
+          <div className={styles.pageTabs} role="tablist" aria-label="페이지 이동">
+            {PAGE_TABS.map((tab) => (
+              <a
+                key={tab.href}
+                href={tab.href}
+                className={tab.href === "/" ? styles.activePageTab : styles.pageTab}
+                role="tab"
+                aria-selected={tab.href === "/"}
+              >
+                {tab.label}
+              </a>
+            ))}
+          </div>
           <div>
             <p className={styles.eyebrow}>LostArk Weekly Planner</p>
             <h1>레이드 일정표</h1>
@@ -168,9 +187,6 @@ export default function RaidSchedulePage() {
                 {label}
               </button>
             ))}
-            <a className={styles.tab} href="/personal" role="tab" aria-selected="false">
-              개인 일정
-            </a>
           </div>
 
           <div className={styles.summaryChips}>

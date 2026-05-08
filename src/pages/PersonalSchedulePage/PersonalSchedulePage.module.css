@@ -64,6 +64,41 @@
   margin-bottom: 28px;
 }
 
+.pageTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.pageTab,
+.activePageTab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-decoration: none;
+  background: rgba(26, 34, 51, 0.78);
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.pageTab:hover,
+.activePageTab {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: rgba(33, 44, 66, 0.94);
+  box-shadow: var(--shadow);
+}
+
 /* Navy neon palette overrides */
 .page {
   --line: var(--border);
