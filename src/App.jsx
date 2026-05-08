@@ -1,6 +1,4 @@
-import { lazy, Suspense } from "react";
-
-const RaidSchedulePage = lazy(() => import("./pages/RaidSchedulePage/RaidSchedulePage.jsx"));
+import RaidSchedulePage from "./pages/RaidSchedulePage/RaidSchedulePage.jsx";
 
 export default function App() {
   const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
@@ -11,9 +9,5 @@ export default function App() {
         ? "personalRaid"
         : "today";
 
-  return (
-    <Suspense fallback={null}>
-      <RaidSchedulePage initialTab={initialTab} />
-    </Suspense>
-  );
+  return <RaidSchedulePage initialTab={initialTab} />;
 }
