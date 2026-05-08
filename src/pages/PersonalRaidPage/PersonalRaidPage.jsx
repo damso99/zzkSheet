@@ -68,23 +68,20 @@ export default function PersonalRaidPage({ embedded = false }) {
         </section>
       </header>
 
-      <section className={styles.panel}>
-        {/*<div className={styles.panelHeader}>*/}
-        {/*  <div>*/}
-        {/*    <h2 className={styles.panelTitle}>이름 검색</h2>*/}
-        {/*    <p className={styles.panelSubtitle}>이름을 검색하면 보유중인 캐릭터의 레이드 참여 현황을 보여줍니다.</p>*/}
-        {/*  </div>*/}
-        {/*</div>*/}
-
-        <label className={styles.searchField}>
-          <span>이름 검색</span>
+      <section className={styles.sectionControl}>
+        <label className={styles.sectionControlLabel}>
+          이름 검색
           <input
             type="search"
+            className={styles.sectionSearchInput}
             value={searchKeyword}
             onChange={(event) => setSearchKeyword(event.target.value)}
-            placeholder="예: 지훈, 지덩, jistick"
+            placeholder="검색할 이름을 입력하세요"
           />
         </label>
+        <p className={styles.sectionControlHint}>
+          이름을 검색하면 참여 체크된 캐릭터와 참여 레이드만 보여줍니다.
+        </p>
       </section>
 
       {isLoading ? (
