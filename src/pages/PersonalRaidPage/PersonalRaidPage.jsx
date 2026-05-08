@@ -82,7 +82,7 @@ export default function PersonalRaidPage({ embedded = false }) {
             type="search"
             value={searchKeyword}
             onChange={(event) => setSearchKeyword(event.target.value)}
-            placeholder="예: 리아, 성태, 민지"
+            placeholder="예: 지훈, 지덩, jistick"
           />
         </label>
       </section>
