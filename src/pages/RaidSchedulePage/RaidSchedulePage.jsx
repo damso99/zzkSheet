@@ -187,6 +187,9 @@ export default function RaidSchedulePage() {
                 {label}
               </button>
             ))}
+            <a className={styles.tab} href="/personal" role="tab" aria-selected="false">
+              개인일정
+            </a>
             <a className={styles.tab} href="/personal-raid" role="tab" aria-selected="false">
               개인레이드
             </a>
