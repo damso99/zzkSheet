@@ -239,7 +239,7 @@
 
 .cardList {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .characterCard {
@@ -247,15 +247,17 @@
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  padding: 20px 22px;
-  border-radius: 22px;
-  border: 1px solid var(--border-soft);
+  padding: 24px 26px;
+  border-radius: 28px;
+  border: 1px solid rgba(110, 160, 255, 0.22);
   background:
-    linear-gradient(180deg, rgba(26, 34, 51, 0.96), rgba(21, 28, 43, 0.94)),
+    linear-gradient(135deg, rgba(19, 28, 52, 0.96), rgba(11, 18, 36, 0.98)),
     var(--card);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.24);
+  box-shadow:
+    0 0 24px rgba(80, 120, 255, 0.08),
+    0 18px 36px rgba(0, 0, 0, 0.24);
   isolation: isolate;
-  min-height: 162px;
+  min-height: 190px;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -265,28 +267,30 @@
 .characterCard:hover {
   border-color: var(--border-strong);
   box-shadow:
-    0 20px 42px rgba(0, 0, 0, 0.26),
-    0 0 18px rgba(124, 184, 255, 0.08);
+    0 22px 42px rgba(0, 0, 0, 0.26),
+    0 0 26px rgba(124, 184, 255, 0.12);
 }
 
 .cardGlow {
   position: absolute;
-  inset: auto -10% -38% auto;
-  width: 180px;
-  height: 180px;
+  inset: auto -8% -34% auto;
+  width: 220px;
+  height: 220px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(124, 184, 255, 0.18), transparent 68%);
-  filter: blur(24px);
-  opacity: 0.7;
+  background:
+    radial-gradient(circle at center, rgba(124, 184, 255, 0.18), transparent 62%),
+    radial-gradient(circle at 30% 40%, rgba(224, 241, 255, 0.12), transparent 56%);
+  filter: blur(28px);
+  opacity: 0.78;
   z-index: -1;
   pointer-events: none;
 }
 
-.cardMain {
+.cardInner {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -294,8 +298,8 @@
 
 .cardHeader {
   display: flex;
-  gap: 14px;
-  align-items: center;
+  gap: 16px;
+  align-items: flex-start;
   justify-content: space-between;
   min-width: 0;
 }
@@ -311,33 +315,34 @@
 .characterName {
   margin: 0;
   color: var(--text);
-  font-size: 1.2rem;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
   word-break: keep-all;
-  margin-top: 2px;
 }
 
 .classBadge {
   flex-shrink: 0;
-  padding: 7px 12px;
+  padding: 9px 14px;
   border-radius: 999px;
   border: 1px solid rgba(124, 184, 255, 0.24);
-  background: rgba(124, 184, 255, 0.1);
+  background: rgba(28, 40, 74, 0.72);
   color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.cardFooter {
+.bottomRow {
   display: flex;
   flex: 1 1 auto;
   height: 100%;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
   gap: 18px;
   min-height: 0;
+  flex-wrap: wrap;
 }
 
 .statGrid {
@@ -348,23 +353,25 @@
 }
 
 .statItem {
-  min-width: 120px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--border-soft);
-  background: rgba(33, 44, 66, 0.68);
+  min-width: 132px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(120, 170, 255, 0.22);
+  background: rgba(28, 40, 74, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .statItem span {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   color: var(--text-muted);
   font-size: 0.72rem;
+  letter-spacing: 0.03em;
 }
 
 .statItem strong {
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 1.02rem;
 }
 
 .raidSection {
@@ -381,7 +388,7 @@
   display: flex;
   flex-wrap: wrap;
   flex: 1 1 auto;
-  gap: 8px;
+  gap: 12px;
   align-content: flex-start;
   align-items: flex-start;
   justify-content: flex-start;
@@ -393,14 +400,25 @@
   align-items: center;
   min-width: 0;
   max-width: 100%;
-  padding: 8px 12px;
+  min-height: 40px;
+  padding: 0 14px;
   border-radius: 999px;
   border: 1px solid rgba(124, 184, 255, 0.22);
-  background: rgba(124, 184, 255, 0.12);
+  background: rgba(28, 40, 74, 0.72);
   color: var(--text);
   font-size: 0.82rem;
   font-weight: 600;
   word-break: break-word;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.raidPill:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 16px rgba(124, 184, 255, 0.08);
 }
 
 .emptyRaidText,
@@ -445,7 +463,7 @@
     text-align: right;
   }
 
-  .cardFooter {
+  .bottomRow {
     align-items: stretch;
     flex-direction: column;
   }
@@ -457,5 +475,13 @@
   .statItem {
     flex: 1 1 140px;
     min-width: 0;
+  }
+
+  .characterName {
+    font-size: clamp(1.7rem, 9vw, 2.35rem);
+  }
+
+  .raidPills {
+    gap: 10px;
   }
 }

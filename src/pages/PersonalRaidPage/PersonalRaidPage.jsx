@@ -82,7 +82,7 @@ export default function PersonalRaidPage({ embedded = false }) {
             type="search"
             value={searchKeyword}
             onChange={(event) => setSearchKeyword(event.target.value)}
-            placeholder="예: 지우, 지현, jistick"
+            placeholder="예: 리아, 성태, 민지"
           />
         </label>
       </section>
@@ -122,8 +122,7 @@ export default function PersonalRaidPage({ embedded = false }) {
           {filteredCharacters.map((item) => (
             <article key={item.id} className={styles.characterCard}>
               <div className={styles.cardGlow} />
-
-              <div className={styles.cardMain}>
+              <div className={styles.cardInner}>
                 <header className={styles.cardHeader}>
                   <span className={styles.ownerName}>{cleanText(item.owner)}</span>
                   <span className={styles.classBadge}>{cleanText(item.className || "클래스 없음")}</span>
@@ -131,7 +130,7 @@ export default function PersonalRaidPage({ embedded = false }) {
 
                 <h3 className={styles.characterName}>{cleanText(item.characterName)}</h3>
 
-                <div className={styles.cardFooter}>
+                <div className={styles.bottomRow}>
                   <div className={styles.statGrid}>
                     <div className={styles.statItem}>
                       <span>레벨</span>
@@ -187,9 +186,7 @@ function parsePersonalRaidRows(rows) {
   return rows
     .map((row, index) => {
       const ownerCell = cleanText(row?.[OWNER_COLUMN_INDEX]);
-      if (ownerCell) {
-        currentOwner = ownerCell;
-      }
+      if (ownerCell) currentOwner = ownerCell;
 
       const owner = cleanText(currentOwner);
       const characterName = cleanText(row?.[CHARACTER_COLUMN_INDEX]);
