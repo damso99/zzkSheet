@@ -78,18 +78,39 @@ export async function loadRaidSheetBundle({
   }
 }
 
-async function fetchSheetRows({ sheetUrl, gid, sheetName, signal }) {
+export async function loadSheetRowsByName({
+  sheetUrl = DEFAULT_SHEET_URL,
+  sheetName,
+  gid = "",
+  forceRefresh = false,
+  signal,
+} = {}) {
+  if (!sheetName) {
+    throw new Error("sheetName is required.");
+  }
+
+  const targetSheetUrl = ensureGid(sheetUrl, gid || extractGidFromUrl(sheetUrl));
+  return fetchSheetRows({
+    sheetUrl: targetSheetUrl,
+    gid,
+    sheetName,
+    signal,
+    forceRefresh,
+  });
+}
+
+async function fetchSheetRows({ sheetUrl, gid, sheetName, signal, forceRefresh = false }) {
   const params = new URLSearchParams({ url: sheetUrl });
   if (gid) params.set("gid", gid);
   if (sheetName) params.set("sheet", sheetName);
 
   const cacheKey = params.toString();
-  const cachedRows = getFreshCacheEntry(sheetRowsCache, cacheKey, SHEET_CACHE_TTL_MS);
+  const cachedRows = forceRefresh ? null : getFreshCacheEntry(sheetRowsCache, cacheKey, SHEET_CACHE_TTL_MS);
   if (cachedRows) {
     return cachedRows;
   }
 
-  if (sheetRowsInFlight.has(cacheKey)) {
+  if (!forceRefresh && sheetRowsInFlight.has(cacheKey)) {
     return sheetRowsInFlight.get(cacheKey);
   }
 
@@ -123,6 +144,12 @@ function ensureGid(sheetUrl, gid) {
   if (!gid) return sheetUrl;
   if (sheetUrl.includes("gid=")) return sheetUrl;
   return `${sheetUrl}${sheetUrl.includes("?") ? "&" : "?"}gid=${gid}`;
+}
+
+function extractGidFromUrl(sheetUrl) {
+  if (!sheetUrl) return "";
+  const match = sheetUrl.match(/[?&#]gid=(\d+)/);
+  return match?.[1] || "";
 }
 
 function getFreshCacheEntry(cache, key, ttlMs) {
