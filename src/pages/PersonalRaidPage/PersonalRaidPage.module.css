@@ -25,6 +25,15 @@
   margin: 0 auto;
 }
 
+.embeddedPage {
+  width: 100%;
+}
+
+.embeddedContent {
+  width: 100%;
+  padding-top: 12px;
+}
+
 .hero {
   display: grid;
   gap: 16px;

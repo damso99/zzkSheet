@@ -3,6 +3,8 @@ import styles from "./RaidSchedulePage.module.css";
 import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import RaidCard from "./components/RaidCard.jsx";
 import RaidSearch from "./components/RaidSearch.jsx";
+import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
+import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
 import { formatDateLabel, formatLocalDateTime, getTodayIsoDate } from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
@@ -10,16 +12,19 @@ import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./ut
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
+  personal: "개인 일정",
+  personalRaid: "개인레이드",
 };
 
-const PAGE_TABS = [
-  { href: "/personal", label: "개인일정" },
-  { href: "/", label: "주간일정" },
-  { href: "/personal-raid", label: "개인레이드" },
-];
+const TAB_PATHS = {
+  today: "/",
+  week: "/",
+  personal: "/personal",
+  personalRaid: "/personal-raid",
+};
 
-export default function RaidSchedulePage() {
-  const [activeTab, setActiveTab] = useState("today");
+export default function RaidSchedulePage({ initialTab = "today" }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [raids, setRaids] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -34,6 +39,19 @@ export default function RaidSchedulePage() {
 
   const deferredSearchQuery = useDeferredValue(searchQuery.trim());
   const todayIsoDate = useMemo(() => getTodayIsoDate(), []);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    const nextPath = TAB_PATHS[activeTab] || "/";
+    const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
+
+    if (currentPath !== nextPath) {
+      window.history.replaceState(null, "", nextPath);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     let ignore = false;
@@ -143,19 +161,6 @@ export default function RaidSchedulePage() {
       <div className={styles.backdrop} />
       <div className={styles.content}>
         <header className={styles.hero}>
-          <div className={styles.pageTabs} role="tablist" aria-label="페이지 이동">
-            {PAGE_TABS.map((tab) => (
-              <a
-                key={tab.href}
-                href={tab.href}
-                className={tab.href === "/" ? styles.activePageTab : styles.pageTab}
-                role="tab"
-                aria-selected={tab.href === "/"}
-              >
-                {tab.label}
-              </a>
-            ))}
-          </div>
           <div>
             <p className={styles.eyebrow}>LostArk Weekly Planner</p>
             <h1>레이드 일정표</h1>
@@ -187,12 +192,6 @@ export default function RaidSchedulePage() {
                 {label}
               </button>
             ))}
-            <a className={styles.tab} href="/personal" role="tab" aria-selected="false">
-              개인일정
-            </a>
-            <a className={styles.tab} href="/personal-raid" role="tab" aria-selected="false">
-              개인레이드
-            </a>
           </div>
 
           <div className={styles.summaryChips}>
@@ -338,6 +337,10 @@ export default function RaidSchedulePage() {
             )}
           </section>
         ) : null}
+
+        {activeTab === "personal" ? <PersonalSchedulePage embedded /> : null}
+
+        {activeTab === "personalRaid" ? <PersonalRaidPage embedded /> : null}
       </div>
 
       {selectedCharacterName ? (

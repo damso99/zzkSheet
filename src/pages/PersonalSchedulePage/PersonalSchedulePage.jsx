@@ -7,18 +7,13 @@ import styles from "./PersonalSchedulePage.module.css";
 registerLocale("ko", ko);
 
 const PERSONAL_SCHEDULE_API_URL = "/api/personal-schedule";
-const PAGE_TABS = [
-  { href: "/personal", label: "개인일정" },
-  { href: "/", label: "주간일정" },
-  { href: "/personal-raid", label: "개인레이드" },
-];
 
 const SORT_OPTIONS = {
   latest: "최신순",
   date: "날짜순",
 };
 
-export default function PersonalSchedulePage() {
+export default function PersonalSchedulePage({ embedded = false }) {
   const [form, setForm] = useState(createInitialForm);
   const [items, setItems] = useState([]);
   const [sortMode, setSortMode] = useState("latest");
@@ -126,26 +121,15 @@ export default function PersonalSchedulePage() {
   }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.backdrop} />
-      <div className={styles.content}>
+    <main className={embedded ? styles.embeddedPage : styles.page}>
+      {!embedded ? <div className={styles.backdrop} /> : null}
+      <div className={embedded ? styles.embeddedContent : styles.content}>
         <header className={styles.hero}>
-          <div className={styles.pageTabs} role="tablist" aria-label="페이지 이동">
-            {PAGE_TABS.map((tab) => (
-              <a
-                key={tab.href}
-                href={tab.href}
-                className={tab.href === "/personal" ? styles.activePageTab : styles.pageTab}
-                role="tab"
-                aria-selected={tab.href === "/personal"}
-              >
-                {tab.label}
-              </a>
-            ))}
-          </div>
-          <a className={styles.backLink} href="/">
-            레이드 일정표로 돌아가기
-          </a>
+          {!embedded ? (
+            <a className={styles.backLink} href="/">
+              레이드 일정표로 돌아가기
+            </a>
+          ) : null}
           <p className={styles.eyebrow}>Personal Schedule</p>
           <h1>개인 일정</h1>
           <p>개인 참여가 필요한 날짜와 사유를 Google Sheet 개인일정 탭에 기록합니다.</p>
