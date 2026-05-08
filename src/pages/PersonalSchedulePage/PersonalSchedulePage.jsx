@@ -127,18 +127,15 @@ export default function PersonalSchedulePage({ embedded = false }) {
       {!embedded ? <div className={styles.backdrop} /> : null}
       <div className={embedded ? styles.embeddedContent : styles.content}>
         <header className={styles.hero}>
-          <div className={styles.heroCopy}>
-            {!embedded ? (
-              <a className={styles.backLink} href="/">
-                레이드 일정으로 돌아가기
-              </a>
-            ) : null}
-            <p className={styles.eyebrow}>Personal Schedule</p>
-            <h1 className={styles.title}>개인 일정</h1>
-            <p className={styles.description}>
-              개인 참여가 필요한 날짜와 사유를 Google Sheet 개인일정 탭에 기록합니다.
-            </p>
-          </div>
+          {!embedded ? (
+            <a className={styles.backLink} href="/">
+              레이드 일정으로 돌아가기
+            </a>
+          ) : null}
+          <section className={styles.sectionHeader}>
+            <h2>개인 일정</h2>
+            <p>개인 참여가 필요한 날짜와 사유를 기록합니다.</p>
+          </section>
         </header>
 
         <section className={styles.panel}>

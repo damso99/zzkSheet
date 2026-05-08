@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./PersonalRaidPage.module.css";
-import {
-  DEFAULT_SHEET_URL,
-  loadSheetRowsByName,
-} from "../RaidSchedulePage/utils/sheetApi.js";
+import { DEFAULT_SHEET_URL, loadSheetRowsByName } from "../RaidSchedulePage/utils/sheetApi.js";
 
 const PERSONAL_RAID_SHEET_NAME = "개인레이드";
 const OWNER_COLUMN_INDEX = 1;
@@ -37,9 +34,7 @@ export default function PersonalRaidPage({ embedded = false }) {
         setRows(Array.isArray(payload?.rows) ? payload.rows : []);
       } catch (error) {
         if (error?.name === "AbortError") return;
-        setErrorMessage(
-          error?.message || "레이드 데이터를 불러오지 못했습니다.",
-        );
+        setErrorMessage(error?.message || "레이드 데이터를 불러오지 못했습니다.");
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -58,36 +53,26 @@ export default function PersonalRaidPage({ embedded = false }) {
   const filteredCharacters = useMemo(() => {
     const keyword = normalize(cleanText(searchKeyword));
     const matchedCharacters = keyword
-      ? parsedCharacters.filter((item) =>
-          normalize(cleanText(item.owner)).includes(keyword),
-        )
+      ? parsedCharacters.filter((item) => normalize(cleanText(item.owner)).includes(keyword))
       : [];
 
-    return [...matchedCharacters].sort(
-      (left, right) => right.levelValue - left.levelValue,
-    );
+    return [...matchedCharacters].sort((left, right) => right.levelValue - left.levelValue);
   }, [parsedCharacters, searchKeyword]);
 
   const content = (
     <>
-      <section className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>Personal Raid</span>
-          <h1 className={styles.title}>레이드 참여 현황</h1>
-          <p className={styles.description}>
-            이름 검색으로 참여 체크된 캐릭터와 참여 레이드 목록을 한 번에
-            확인합니다.
-          </p>
-        </div>
-      </section>
+      <header className={styles.hero}>
+        <section className={styles.sectionHeader}>
+          <h2>레이드 참여 현황</h2>
+          <p>이름 검색으로 참여 캐릭터와 참여 레이드를 확인합니다.</p>
+        </section>
+      </header>
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <div>
             <h2 className={styles.panelTitle}>이름 검색</h2>
-            <p className={styles.panelSubtitle}>
-              이름을 부분 검색하면 참여 체크된 캐릭터만 카드로 보여줍니다.
-            </p>
+            <p className={styles.panelSubtitle}>이름을 부분 검색하면 참여 체크된 캐릭터만 카드로 보여줍니다.</p>
           </div>
         </div>
 
@@ -97,7 +82,7 @@ export default function PersonalRaidPage({ embedded = false }) {
             type="search"
             value={searchKeyword}
             onChange={(event) => setSearchKeyword(event.target.value)}
-            placeholder="예: 지훈,지덩,jistick.."
+            placeholder="예: 지우, 지현, jistick"
           />
         </label>
       </section>
@@ -126,20 +111,13 @@ export default function PersonalRaidPage({ embedded = false }) {
         </section>
       ) : null}
 
-      {!isLoading &&
-      !errorMessage &&
-      hasKeyword &&
-      parsedCharacters.length > 0 &&
-      filteredCharacters.length === 0 ? (
+      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length > 0 && filteredCharacters.length === 0 ? (
         <section className={styles.emptyState}>
           <p>검색 결과가 없습니다.</p>
         </section>
       ) : null}
 
-      {!isLoading &&
-      !errorMessage &&
-      hasKeyword &&
-      filteredCharacters.length > 0 ? (
+      {!isLoading && !errorMessage && hasKeyword && filteredCharacters.length > 0 ? (
         <section className={styles.cardList}>
           {filteredCharacters.map((item) => (
             <article key={item.id} className={styles.characterCard}>
@@ -147,17 +125,11 @@ export default function PersonalRaidPage({ embedded = false }) {
 
               <div className={styles.cardMain}>
                 <header className={styles.cardHeader}>
-                  <span className={styles.ownerName}>
-                    {cleanText(item.owner)}
-                  </span>
-                  <span className={styles.classBadge}>
-                    {cleanText(item.className || "클래스 없음")}
-                  </span>
+                  <span className={styles.ownerName}>{cleanText(item.owner)}</span>
+                  <span className={styles.classBadge}>{cleanText(item.className || "클래스 없음")}</span>
                 </header>
 
-                <h3 className={styles.characterName}>
-                  {cleanText(item.characterName)}
-                </h3>
+                <h3 className={styles.characterName}>{cleanText(item.characterName)}</h3>
 
                 <div className={styles.cardFooter}>
                   <div className={styles.statGrid}>
@@ -175,10 +147,7 @@ export default function PersonalRaidPage({ embedded = false }) {
                     {item.raids.length ? (
                       <div className={styles.raidPills}>
                         {item.raids.map((raid, index) => (
-                          <span
-                            key={`${item.id}-${raid}-${index}`}
-                            className={styles.raidPill}
-                          >
+                          <span key={`${item.id}-${raid}-${index}`} className={styles.raidPill}>
                             {cleanText(raid)}
                           </span>
                         ))}
@@ -234,10 +203,7 @@ function parsePersonalRaidRows(rows) {
         return null;
       }
 
-      const raids = (row || [])
-        .slice(RAID_START_COLUMN_INDEX)
-        .map(cleanText)
-        .filter(isRaidEntry);
+      const raids = (row || []).slice(RAID_START_COLUMN_INDEX).map(cleanText).filter(isRaidEntry);
 
       const level = cleanText(row?.[LEVEL_COLUMN_INDEX]);
       const power = cleanText(row?.[POWER_COLUMN_INDEX]);
@@ -267,11 +233,7 @@ function parseJoinedValue(value) {
 }
 
 function parseLevelValue(value) {
-  const numeric = Number(
-    String(value ?? "")
-      .replace(/,/g, "")
-      .trim(),
-  );
+  const numeric = Number(String(value ?? "").replace(/,/g, "").trim());
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
@@ -300,9 +262,7 @@ function decodeUnicodeEscapes(value) {
 }
 
 function cleanText(value) {
-  return decodeUnicodeEscapes(value)
-    .replace(/^['"]|['"]$/g, "")
-    .trim();
+  return decodeUnicodeEscapes(value).replace(/^['"]|['"]$/g, "").trim();
 }
 
 function normalize(value) {
