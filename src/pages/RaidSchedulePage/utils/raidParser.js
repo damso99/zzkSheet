@@ -130,8 +130,28 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
     const blockStartRow = dateRow.index;
     const blockTime = findBlockTimeFromColumnA(rows, dateRow.index, nextDateRow?.index);
     const blockEndRow = (nextDateRow?.index ?? rows.length) - 1;
-    const dateScopedBlocks =
-      collectRaidColumnBlocksForDateBlock(rows, blockStartRow - 1) || raidBlocks;
+    const headerRowIndex = blockStartRow - 1;
+    const dateScopedBlocksRaw = collectRaidColumnBlocksForDateBlock(rows, headerRowIndex) || raidBlocks;
+    const dateScopedBlocks = dateScopedBlocksRaw.map((block) => {
+      const directTitle =
+        resolveRaidTitleFromRows({
+          raid: {
+            ...block,
+            endRow: blockEndRow,
+            startRow: headerRowIndex,
+            titleLookupRow: headerRowIndex,
+          },
+          raidCalendarRows: rows,
+          raidNameLookup,
+        }) || "";
+
+      return directTitle && directTitle !== "일정없음"
+        ? {
+            ...block,
+            raidName: directTitle,
+          }
+        : block;
+    });
 
     dateScopedBlocks.forEach((block) => {
       raids.push(

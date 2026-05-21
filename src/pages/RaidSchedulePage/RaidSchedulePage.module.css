@@ -1531,6 +1531,7 @@
   min-width: 0;
   padding: 12px;
   align-content: start;
+  grid-auto-rows: min-content;
   border: 1px solid var(--border);
   border-radius: 22px;
   background:
@@ -1595,6 +1596,7 @@
   align-content: start;
   margin-top: 0;
   justify-items: stretch;
+  align-self: start;
 }
 
 .weekCalendarDayEmpty {
