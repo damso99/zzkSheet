@@ -11,7 +11,6 @@ import {
   getScheduleStartAt,
   getTodayIsoDate,
   isInScheduleRange,
-  isStartingSoon,
 } from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
@@ -121,22 +120,27 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const groupedRaids = useMemo(() => groupItemsByDate(raids), [raids]);
   const todayStartTime = useMemo(() => {
     const now = new Date();
-    const nextRaid =
-      todayRaids
-        .map((raid) => ({
-          startAt: raid.startAt || getScheduleStartAt(raid.date, raid.time || raid.blockTime),
-          time: String(raid.time || raid.blockTime || "").trim(),
-        }))
-        .filter((raid) => raid.time && raid.startAt instanceof Date && !Number.isNaN(raid.startAt.getTime()) && raid.startAt >= now)
-        .sort((left, right) => left.startAt.getTime() - right.startAt.getTime())[0] || null;
+    const raidsWithStart = todayRaids
+      .map((raid) => ({
+        startAt: raid.startAt || getScheduleStartAt(raid.date, raid.time || raid.blockTime),
+        time: String(raid.time || raid.blockTime || "").trim(),
+      }))
+      .filter((raid) => raid.time && raid.startAt instanceof Date && !Number.isNaN(raid.startAt.getTime()))
+      .sort((left, right) => left.startAt.getTime() - right.startAt.getTime());
 
-    if (!nextRaid) {
-      return { isStartingSoon: false, value: "예정된 일정 없음" };
+    if (raidsWithStart.length === 0) {
+      return { status: "none", value: "예정된 일정 없음" };
     }
 
+    const nextRaid = raidsWithStart.find((raid) => raid.startAt >= now);
+    const currentRaid = nextRaid || raidsWithStart[raidsWithStart.length - 1];
+    const status = getStartTimeStatus(currentRaid.startAt, now);
+
     return {
-      isStartingSoon: isStartingSoon(nextRaid.startAt, now),
-      value: nextRaid.time,
+      isStartingSoon: status === "soon",
+      status,
+      statusLabel: getStartTimeStatusLabel(status),
+      value: currentRaid.time,
     };
   }, [todayRaids]);
   const deferredSearchQuery = selectedWeeklyParticipant;
@@ -519,7 +523,7 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
             </svg>
           </span>
           <strong>{value.value}</strong>
-          {value.isStartingSoon ? <span className={styles.startTimeCompactSoonBadge}>곧 시작</span> : null}
+          {value.statusLabel ? <span className={styles.startTimeCompactSoonBadge}>{value.statusLabel}</span> : null}
         </div>
       </div>
     );
@@ -550,7 +554,8 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
 function StartTimeSpotlight({ raid, styles }) {
   const displayTime = String(raid?.time || raid?.blockTime || "").trim();
   const startAt = displayTime ? raid.startAt || getScheduleStartAt(raid.date, displayTime) : null;
-  const showStartingSoon = displayTime && startAt ? isStartingSoon(startAt) : false;
+  const status = displayTime && startAt ? getStartTimeStatus(startAt) : "none";
+  const statusLabel = getStartTimeStatusLabel(status);
 
   return (
     <section className={styles.startTimeSpotlight} aria-label="시작시간">
@@ -577,7 +582,7 @@ function StartTimeSpotlight({ raid, styles }) {
         </div>
         <div className={styles.startTimeSpotlightMain}>
           <strong className={styles.startTimeSpotlightValue}>{displayTime || "예정된 일정 없음"}</strong>
-          {showStartingSoon ? <span className={styles.startTimeSoonBadge}>곧 시작</span> : null}
+          {statusLabel ? <span className={styles.startTimeSoonBadge}>{statusLabel}</span> : null}
         </div>
       </div>
     </section>
@@ -668,5 +673,28 @@ function formatGroupTime(group) {
 function formatFetchedAt(value) {
   if (!value) return "-";
   return String(value);
+}
+
+function getStartTimeStatus(startAt, now = new Date()) {
+  if (!(startAt instanceof Date) || Number.isNaN(startAt.getTime())) return "none";
+  if (!(now instanceof Date) || Number.isNaN(now.getTime())) return "none";
+
+  const diffMinutes = (startAt.getTime() - now.getTime()) / 1000 / 60;
+  if (diffMinutes < 0) return "general";
+  if (diffMinutes <= 60) return "soon";
+  return "scheduled";
+}
+
+function getStartTimeStatusLabel(status) {
+  switch (status) {
+    case "soon":
+      return "곧 시작";
+    case "general":
+      return "일반";
+    case "scheduled":
+      return "예정";
+    default:
+      return "";
+  }
 }
 
