@@ -34,22 +34,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     settingLookup,
   });
 
-  const mondayParsedRaids = parsedRaids.filter((raid) => raid.date === "2026-05-25");
-  if (mondayParsedRaids.length > 0) {
-    console.log("[RaidSchedule][Monday][parsed]", mondayParsedRaids.map((raid) => ({
-      blockTime: raid.blockTime,
-      date: raid.date,
-      endCol: raid.endCol,
-      endRow: raid.endRow,
-      members: raid.members,
-      raidName: raid.raidName,
-      startCol: raid.startCol,
-      startRow: raid.startRow,
-      titleLookupRow: raid.titleLookupRow,
-      titleOverride: raid.titleOverride || "",
-    })));
-  }
-
   const normalizedRaids = parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
@@ -102,20 +86,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         startRow: raid.startRow,
         time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
       };
-
-      if (item.date === "2026-05-25") {
-        console.log("[RaidSchedule][Monday][normalized]", {
-          blockTime: item.blockTime,
-          date: item.date,
-          endCol: item.endCol,
-          endRow: item.endRow,
-          participantCount: item.participantCount,
-          raidName: item.raidName,
-          startCol: item.startCol,
-          startRow: item.startRow,
-          time: item.time,
-        });
-      }
 
       return item;
     })
