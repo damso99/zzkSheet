@@ -57,7 +57,10 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       );
       const cachedFinalRaidName = titleCache.get(titleCacheKey);
       const fallbackRaidName = normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정";
-      const canonicalRaidTitle = raid.titleOverride || directRaidTitle || (isRaidTitle(resolvedRaidName) ? resolvedRaidName : "");
+      const canonicalRaidTitle =
+        raid.titleOverride ||
+        directRaidTitle ||
+        (isRaidTitle(resolvedRaidName) && !isSkippedRaidTitle(resolvedRaidName) ? resolvedRaidName : "");
       const finalRaidName =
         cachedFinalRaidName ||
         canonicalRaidTitle ||
@@ -458,6 +461,7 @@ function findRaidTitleByPosition({
       if (!value) continue;
       if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
       if (isCharacterValue(value, settingLookup)) continue;
+      if (isSkippedRaidTitle(value)) continue;
 
       const normalized = normalizeKey(value);
       if (raidNameLookup.has(normalized)) {
@@ -472,6 +476,7 @@ function findRaidTitleByPosition({
     if (!value) continue;
     if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
     if (isCharacterValue(value, settingLookup)) continue;
+    if (isSkippedRaidTitle(value)) continue;
 
     const canonical = getCanonicalRaidTitle(value);
     if (canonical) {
