@@ -213,14 +213,16 @@ async function readJsonSafely(response) {
 }
 
 async function fetchCharacterDetail({ cacheKey, characterName, signal }) {
+  if (signal?.aborted) {
+    throw new DOMException("The operation was aborted.", "AbortError");
+  }
+
   if (characterDetailInFlight.has(cacheKey)) {
-    return characterDetailInFlight.get(cacheKey);
+    return withAbortSignal(characterDetailInFlight.get(cacheKey), signal);
   }
 
   const promise = (async () => {
-    const response = await fetch(`/api/lostark/characters/${encodeURIComponent(characterName)}`, {
-      signal,
-    });
+    const response = await fetch(`/api/lostark/characters/${encodeURIComponent(characterName)}`);
     const payload = await readJsonSafely(response);
 
     if (!response.ok) {
@@ -233,10 +235,36 @@ async function fetchCharacterDetail({ cacheKey, characterName, signal }) {
   characterDetailInFlight.set(cacheKey, promise);
 
   try {
-    return await promise;
+    return await withAbortSignal(promise, signal);
   } finally {
     if (characterDetailInFlight.get(cacheKey) === promise) {
       characterDetailInFlight.delete(cacheKey);
     }
   }
+}
+
+function withAbortSignal(promise, signal) {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(new DOMException("The operation was aborted.", "AbortError"));
+  }
+
+  return new Promise((resolve, reject) => {
+    const handleAbort = () => {
+      reject(new DOMException("The operation was aborted.", "AbortError"));
+    };
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", handleAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", handleAbort);
+        reject(error);
+      },
+    );
+  });
 }
