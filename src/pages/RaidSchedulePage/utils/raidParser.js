@@ -39,6 +39,12 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
       const titleSearchRow = raid.titleLookupRow ?? raid.startRow;
       const titleCacheKey = `${titleSearchRow}:${raid.startCol}:${raid.endCol}`;
+      const directRaidTitle = resolveRaidTitleFromRows({
+        raid,
+        raidCalendarRows,
+        raidNameLookup,
+        settingLookup,
+      });
       const resolvedRaidName = normalizeRaidNameToCanonicalRaidName(
         findRaidTitleByPosition({
           endCol: raid.endCol,
@@ -50,11 +56,12 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         }) || "미지정",
       );
       const cachedFinalRaidName = titleCache.get(titleCacheKey);
+      const fallbackRaidName = normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정";
+      const canonicalRaidTitle = raid.titleOverride || directRaidTitle || (isRaidTitle(resolvedRaidName) ? resolvedRaidName : "");
       const finalRaidName =
         cachedFinalRaidName ||
-        (raid.titleOverride || isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "일정없음"
-          ? raid.titleOverride || resolvedRaidName
-          : normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정");
+        canonicalRaidTitle ||
+        (normalizeRaidName(resolvedRaidName) === "일정없음" ? resolvedRaidName : fallbackRaidName);
       if (!cachedFinalRaidName) {
         titleCache.set(titleCacheKey, finalRaidName);
       }
@@ -150,7 +157,9 @@ function collectRaidsForBlock({
   raidNameLookup,
   settingLookup,
 }) {
-  if (isSkippedRaidTitle(block.raidName)) {
+  const scanStartRow = Math.max(0, blockStartRow - 1);
+  const hasCanonicalTitleInBlock = hasCanonicalRaidTitleInRange(rows, scanStartRow, blockEndRow, block, raidNameLookup);
+  if (isSkippedRaidTitle(block.raidName) && !hasCanonicalTitleInBlock) {
     return [];
   }
 
@@ -165,7 +174,7 @@ function collectRaidsForBlock({
   });
   let seenMembers = new Set();
 
-  for (let rowIndex = blockStartRow; rowIndex <= blockEndRow; rowIndex += 1) {
+  for (let rowIndex = scanStartRow; rowIndex <= blockEndRow; rowIndex += 1) {
     const row = rows[rowIndex] || [];
     const canonicalRaidTitle = findCanonicalRaidTitleInRow(row, block, raidNameLookup);
     if (canonicalRaidTitle) {
@@ -174,6 +183,10 @@ function collectRaidsForBlock({
     const header = findRaidHeaderInBlock(row, block, raidNameLookup);
 
     if (header) {
+      if (header === "일정없음" && hasCanonicalTitleInBlock) {
+        continue;
+      }
+
       if (currentParty.members.length > 0) {
         currentParty.endRow = rowIndex - 1;
         raids.push(currentParty);
@@ -211,6 +224,39 @@ function collectRaidsForBlock({
   }
 
   return raids;
+}
+
+function hasCanonicalRaidTitleInRange(rows, startRow, endRow, block, raidNameLookup) {
+  for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
+    const row = rows[rowIndex] || [];
+    if (findCanonicalRaidTitleInRow(row, block, raidNameLookup)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function resolveRaidTitleFromRows({ raid, raidCalendarRows, raidNameLookup }) {
+  const startRow = Math.max(0, (raid.titleLookupRow ?? raid.startRow ?? 0) - 1);
+  const endRow = Math.min(
+    raidCalendarRows.length - 1,
+    Math.max(raid.endRow ?? raid.startRow ?? 0, raid.startRow ?? 0) + 2,
+  );
+  const block = {
+    endCol: raid.endCol ?? 0,
+    startCol: raid.startCol ?? 0,
+  };
+
+  for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
+    const row = raidCalendarRows[rowIndex] || [];
+    const canonicalRaidTitle = findCanonicalRaidTitleInRow(row, block, raidNameLookup);
+    if (canonicalRaidTitle) {
+      return canonicalRaidTitle;
+    }
+  }
+
+  return "";
 }
 
 function createParty({ blockTime = "", date, raidName, startCol, endCol, startRow }) {
