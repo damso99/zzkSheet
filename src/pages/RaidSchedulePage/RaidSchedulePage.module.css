@@ -1464,6 +1464,217 @@
   margin: 22px 20px 22px;
 }
 
+.weekViewToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid rgba(105, 230, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(8, 14, 30, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.weekViewToggleButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.weekViewToggleButton:hover {
+  color: #ffffff;
+  border-color: rgba(124, 184, 255, 0.26);
+  background: rgba(124, 184, 255, 0.08);
+}
+
+.weekViewToggleButtonActive {
+  color: #f5faff;
+  border-color: rgba(124, 184, 255, 0.34);
+  background: linear-gradient(135deg, rgba(124, 184, 255, 0.16), rgba(76, 141, 255, 0.28));
+  box-shadow:
+    0 0 14px rgba(124, 184, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.weekCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.weekCalendarDay {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(43, 53, 78, 0.58), rgba(26, 34, 51, 0.78)),
+    var(--panel);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.weekCalendarDayHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.weekCalendarDayLabel {
+  display: block;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.weekCalendarDayDate {
+  display: block;
+  margin-top: 4px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.weekCalendarDayCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid rgba(124, 184, 255, 0.24);
+  border-radius: 999px;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+  background: rgba(124, 184, 255, 0.08);
+}
+
+.weekCalendarDayList {
+  display: grid;
+  gap: 10px;
+}
+
+.weekCalendarDayEmpty {
+  margin: 0;
+  padding: 16px 12px;
+  border: 1px dashed rgba(124, 184, 255, 0.18);
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: center;
+  background: rgba(2, 7, 18, 0.22);
+}
+
+.weekCalendarDayCard {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(104, 150, 255, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(24, 35, 70, 0.66), rgba(6, 11, 25, 0.76)),
+    rgba(8, 14, 30, 0.72);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.weekCalendarDayCardHighlighted {
+  border-color: rgba(251, 191, 36, 0.32);
+  background:
+    linear-gradient(180deg, rgba(48, 51, 45, 0.8), rgba(26, 30, 30, 0.88)),
+    rgba(8, 14, 30, 0.72);
+}
+
+.weekCalendarDayCardTop {
+  display: grid;
+  gap: 6px;
+}
+
+.weekCalendarDayCardTime {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #f2fbff;
+  font-size: 0.73rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  background: rgba(124, 184, 255, 0.12);
+}
+
+.weekCalendarDayCardTitle {
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 950;
+  line-height: 1.35;
+}
+
+.weekCalendarDayCardMeta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.weekCalendarDayCardParticipants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.weekCalendarParticipantButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(124, 184, 255, 0.22);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 900;
+  background: rgba(124, 184, 255, 0.08);
+  cursor: pointer;
+}
+
+.weekCalendarParticipantButton:hover {
+  color: #ffffff;
+  border-color: rgba(124, 184, 255, 0.34);
+  background: rgba(124, 184, 255, 0.14);
+}
+
+.weekCalendarMoreCount {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 /* Search */
 .sectionControl {
   width: min(520px, 100%);
@@ -3286,6 +3497,10 @@
     min-width: 0;
   }
 
+  .weekCalendarGrid {
+    grid-template-columns: repeat(7, minmax(160px, 1fr));
+  }
+
   .profileHero {
     grid-template-columns: 1fr;
   }
@@ -3517,5 +3732,9 @@
 
   .tripodList {
     padding-left: 18px;
+  }
+
+  .weekCalendarGrid {
+    grid-template-columns: repeat(7, minmax(150px, 1fr));
   }
 }

@@ -6,6 +6,7 @@ import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
 import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
 import {
   formatDateLabel,
+  formatLocalDate,
   formatLocalDateTime,
   getScheduleDateKey,
   getScheduleStartAt,
@@ -26,6 +27,7 @@ const TAB_LABELS = {
 
 export default function RaidSchedulePage({ initialTab = "today" }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [weeklyViewMode, setWeeklyViewMode] = useState("list");
   const [raids, setRaids] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -185,6 +187,10 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
     return Array.from(groupedResults.values());
   }, [raids, selectedWeeklyParticipant]);
   const weeklySelectedGroups = useMemo(() => groupItemsByDate(weeklySelectedResults), [weeklySelectedResults]);
+  const weeklyCalendarDays = useMemo(
+    () => buildWeeklyCalendarDays(raids, todayIsoDate, selectedWeeklyParticipant),
+    [raids, todayIsoDate, selectedWeeklyParticipant],
+  );
   const searchGroups = weeklySelectedGroups;
   const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
 
@@ -302,7 +308,14 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
         {!isLoading && activeTab === "week" ? (
           <section className={`${styles.section} ${styles.pageSection}`}>
-            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="요일별 레이드 일정" />
+            <SectionHeading
+              styles={styles}
+              title={TAB_LABELS.week}
+              subtitle="요일별 레이드 일정"
+              meta={
+                <WeekViewToggle styles={styles} value={weeklyViewMode} onChange={setWeeklyViewMode} />
+              }
+            />
             <WeeklyParticipantList
               ownerNames={weeklyParticipantNames}
               selectedOwnerName={selectedWeeklyParticipant}
@@ -310,7 +323,72 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
               styles={styles}
             />
 
-            {deferredSearchQuery ? (
+            {weeklyViewMode === "calendar" ? (
+              weeklyCalendarDays.some((day) => day.items.length > 0) ? (
+                <div className={styles.weekCalendarGrid}>
+                  {weeklyCalendarDays.map((day) => (
+                    <section key={day.dateKey} className={styles.weekCalendarDay}>
+                      <header className={styles.weekCalendarDayHeader}>
+                        <div>
+                          <span className={styles.weekCalendarDayLabel}>{day.label}</span>
+                          <strong className={styles.weekCalendarDayDate}>{day.dateLabel}</strong>
+                        </div>
+                        <span className={styles.weekCalendarDayCount}>{day.items.length}개</span>
+                      </header>
+                      {day.items.length ? (
+                        <div className={styles.weekCalendarDayList}>
+                          {day.items.map((raid) => {
+                            const isHighlighted =
+                              Boolean(selectedWeeklyParticipant) &&
+                              raid.participants.some(
+                                (participant) => participant.ownerName === selectedWeeklyParticipant,
+                              );
+
+                            return (
+                              <article
+                                key={raid.id}
+                                className={`${styles.weekCalendarDayCard} ${
+                                  isHighlighted ? styles.weekCalendarDayCardHighlighted : ""
+                                }`}
+                              >
+                                <div className={styles.weekCalendarDayCardTop}>
+                                  <span className={styles.weekCalendarDayCardTime}>{raid.time || "시간 미정"}</span>
+                                  <strong className={styles.weekCalendarDayCardTitle}>{raid.raidName}</strong>
+                                </div>
+                                <p className={styles.weekCalendarDayCardMeta}>
+                                  {raid.participants.length}명 참여
+                                </p>
+                                <div className={styles.weekCalendarDayCardParticipants}>
+                                  {raid.participants.slice(0, 3).map((participant) => (
+                                    <button
+                                      key={`${raid.id}-${participant.characterName}`}
+                                      type="button"
+                                      className={styles.weekCalendarParticipantButton}
+                                      onClick={() => setSelectedCharacterName(participant.characterName)}
+                                    >
+                                      {participant.ownerName}
+                                    </button>
+                                  ))}
+                                  {raid.participants.length > 3 ? (
+                                    <span className={styles.weekCalendarMoreCount}>
+                                      +{raid.participants.length - 3}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className={styles.weekCalendarDayEmpty}>일정 없음</p>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <StatePanel styles={styles} message="이번 주 일정이 없습니다." />
+              )
+            ) : deferredSearchQuery ? (
               searchGroups.length === 0 ? (
                 <StatePanel styles={styles} message="검색 결과가 없습니다." />
               ) : (
@@ -590,6 +668,27 @@ function StartTimeSpotlight({ raid, styles }) {
   );
 }
 
+function WeekViewToggle({ styles, value, onChange }) {
+  return (
+    <div className={styles.weekViewToggle} role="group" aria-label="주간 보기 모드">
+      <button
+        type="button"
+        className={`${styles.weekViewToggleButton} ${value === "list" ? styles.weekViewToggleButtonActive : ""}`}
+        onClick={() => onChange("list")}
+      >
+        지금 상태
+      </button>
+      <button
+        type="button"
+        className={`${styles.weekViewToggleButton} ${value === "calendar" ? styles.weekViewToggleButtonActive : ""}`}
+        onClick={() => onChange("calendar")}
+      >
+        캘린더모드
+      </button>
+    </div>
+  );
+}
+
 function StatePanel({ styles, message }) {
   return (
     <div className={styles.statePanel}>
@@ -698,4 +797,61 @@ function getStartTimeStatusLabel(status) {
       return "";
   }
 }
+
+function buildWeeklyCalendarDays(raids, todayIsoDate, selectedWeeklyParticipant) {
+  const weekStart = getWeekStartDate(todayIsoDate);
+  const filteredRaids = selectedWeeklyParticipant
+    ? raids.filter((raid) =>
+        raid.participants.some((participant) => participant.ownerName === selectedWeeklyParticipant),
+      )
+    : raids;
+
+  const raidsByDateKey = new Map();
+
+  filteredRaids.forEach((raid) => {
+    const dateKey = getScheduleDateKey(raid.startAt || raid.date, raid.time || raid.blockTime);
+    if (!dateKey) return;
+
+    if (!raidsByDateKey.has(dateKey)) {
+      raidsByDateKey.set(dateKey, []);
+    }
+
+    raidsByDateKey.get(dateKey).push(raid);
+  });
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(date.getDate() + index);
+    const dateKey = formatLocalDate(date);
+    const items = (raidsByDateKey.get(dateKey) || []).slice().sort(compareRaidOrder);
+
+    return {
+      dateKey,
+      dateLabel: `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`,
+      items,
+      label: WEEKDAY_LABELS[date.getDay()],
+    };
+  });
+}
+
+function getWeekStartDate(dateValue) {
+  const baseDate = parseIsoDateToLocalDate(dateValue) || new Date();
+  const day = baseDate.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const weekStart = new Date(baseDate);
+  weekStart.setDate(baseDate.getDate() + diffToMonday);
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
+}
+
+function parseIsoDateToLocalDate(dateValue) {
+  const text = String(dateValue || "").trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
