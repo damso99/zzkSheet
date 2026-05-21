@@ -466,6 +466,23 @@ function findRaidTitleByPosition({
     }
   }
 
+  const fullRow = rows[rowIndex] || [];
+  for (let columnIndex = 0; columnIndex < fullRow.length; columnIndex += 1) {
+    const value = cleanText(fullRow[columnIndex]);
+    if (!value) continue;
+    if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
+    if (isCharacterValue(value, settingLookup)) continue;
+
+    const canonical = getCanonicalRaidTitle(value);
+    if (canonical) {
+      return canonical;
+    }
+
+    if (raidNameLookup.has(normalizeKey(value))) {
+      return normalizeRaidNameToCanonicalRaidName(value);
+    }
+  }
+
   return "";
 }
 
