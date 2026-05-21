@@ -1479,8 +1479,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 30px;
-  padding: 0 12px;
+  min-width: 36px;
+  min-height: 34px;
+  padding: 0 10px;
   border: 1px solid transparent;
   border-radius: 999px;
   color: var(--muted);
@@ -1510,6 +1511,12 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.weekViewToggleIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
 .weekCalendarGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1520,9 +1527,9 @@
 
 .weekCalendarDay {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: 22px;
   background:
@@ -1557,12 +1564,12 @@
   font-weight: 900;
 }
 
-.weekCalendarDayCount {
+.weekCalendarDayStartTime {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 26px;
-  padding: 4px 8px;
+  padding: 4px 9px;
   border: 1px solid rgba(124, 184, 255, 0.24);
   border-radius: 999px;
   color: var(--primary);
@@ -1574,7 +1581,7 @@
 
 .weekCalendarDayList {
   display: grid;
-  gap: 10px;
+  gap: 2px;
 }
 
 .weekCalendarDayEmpty {
@@ -1590,8 +1597,8 @@
 
 .weekCalendarDayCard {
   display: grid;
-  gap: 8px;
-  padding: 12px;
+  gap: 4px;
+  padding: 8px 10px;
   border: 1px solid rgba(104, 150, 255, 0.16);
   border-radius: 18px;
   background:
@@ -1611,21 +1618,7 @@
 
 .weekCalendarDayCardTop {
   display: grid;
-  gap: 6px;
-}
-
-.weekCalendarDayCardTime {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 24px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  color: #f2fbff;
-  font-size: 0.73rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  background: rgba(124, 184, 255, 0.12);
+  gap: 0;
 }
 
 .weekCalendarDayCardTitle {
@@ -1633,46 +1626,6 @@
   font-size: 0.92rem;
   font-weight: 950;
   line-height: 1.35;
-}
-
-.weekCalendarDayCardMeta {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.weekCalendarDayCardParticipants {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
-.weekCalendarParticipantButton {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 8px;
-  border: 1px solid rgba(124, 184, 255, 0.22);
-  border-radius: 999px;
-  color: var(--text);
-  font-size: 0.72rem;
-  font-weight: 900;
-  background: rgba(124, 184, 255, 0.08);
-  cursor: pointer;
-}
-
-.weekCalendarParticipantButton:hover {
-  color: #ffffff;
-  border-color: rgba(124, 184, 255, 0.34);
-  background: rgba(124, 184, 255, 0.14);
-}
-
-.weekCalendarMoreCount {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
 }
 
 /* Search */

@@ -333,7 +333,11 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                           <span className={styles.weekCalendarDayLabel}>{day.label}</span>
                           <strong className={styles.weekCalendarDayDate}>{day.dateLabel}</strong>
                         </div>
-                        <span className={styles.weekCalendarDayCount}>{day.items.length}개</span>
+                        {day.startTime ? (
+                          <span className={styles.weekCalendarDayStartTime}>{day.startTime}</span>
+                        ) : (
+                          <span className={styles.weekCalendarDayStartTime}>시간 미정</span>
+                        )}
                       </header>
                       {day.items.length ? (
                         <div className={styles.weekCalendarDayList}>
@@ -352,28 +356,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                 }`}
                               >
                                 <div className={styles.weekCalendarDayCardTop}>
-                                  <span className={styles.weekCalendarDayCardTime}>{raid.time || "시간 미정"}</span>
                                   <strong className={styles.weekCalendarDayCardTitle}>{raid.raidName}</strong>
-                                </div>
-                                <p className={styles.weekCalendarDayCardMeta}>
-                                  {raid.participants.length}명 참여
-                                </p>
-                                <div className={styles.weekCalendarDayCardParticipants}>
-                                  {raid.participants.slice(0, 3).map((participant) => (
-                                    <button
-                                      key={`${raid.id}-${participant.characterName}`}
-                                      type="button"
-                                      className={styles.weekCalendarParticipantButton}
-                                      onClick={() => setSelectedCharacterName(participant.characterName)}
-                                    >
-                                      {participant.ownerName}
-                                    </button>
-                                  ))}
-                                  {raid.participants.length > 3 ? (
-                                    <span className={styles.weekCalendarMoreCount}>
-                                      +{raid.participants.length - 3}
-                                    </span>
-                                  ) : null}
                                 </div>
                               </article>
                             );
@@ -674,16 +657,48 @@ function WeekViewToggle({ styles, value, onChange }) {
       <button
         type="button"
         className={`${styles.weekViewToggleButton} ${value === "list" ? styles.weekViewToggleButtonActive : ""}`}
+        aria-label="리스트 모드"
+        title="리스트 모드"
         onClick={() => onChange("list")}
       >
-        지금 상태
+        <svg
+          aria-hidden="true"
+          className={styles.weekViewToggleIcon}
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M8 6H20M8 12H20M8 18H20M4 6H4.01M4 12H4.01M4 18H4.01"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
       <button
         type="button"
         className={`${styles.weekViewToggleButton} ${value === "calendar" ? styles.weekViewToggleButtonActive : ""}`}
+        aria-label="캘린더 모드"
+        title="캘린더 모드"
         onClick={() => onChange("calendar")}
       >
-        캘린더모드
+        <svg
+          aria-hidden="true"
+          className={styles.weekViewToggleIcon}
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M7 3V5M17 3V5M4.5 9H19.5M6 7H18C19.1046 7 20 7.89543 20 9V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19V9C4 7.89543 4.89543 7 6 7Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     </div>
   );
@@ -828,6 +843,7 @@ function buildWeeklyCalendarDays(raids, todayIsoDate, selectedWeeklyParticipant)
     return {
       dateKey,
       dateLabel: `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`,
+      startTime: resolveGroupBlockTime(items),
       items,
       label: WEEKDAY_LABELS[date.getDay()],
     };
