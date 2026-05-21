@@ -188,8 +188,8 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   }, [raids, selectedWeeklyParticipant]);
   const weeklySelectedGroups = useMemo(() => groupItemsByDate(weeklySelectedResults), [weeklySelectedResults]);
   const weeklyCalendarDays = useMemo(
-    () => buildWeeklyCalendarDays(raids, todayIsoDate, selectedWeeklyParticipant),
-    [raids, todayIsoDate, selectedWeeklyParticipant],
+    () => buildWeeklyCalendarDays(raids, todayIsoDate),
+    [raids, todayIsoDate],
   );
   const searchGroups = weeklySelectedGroups;
   const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
@@ -813,17 +813,12 @@ function getStartTimeStatusLabel(status) {
   }
 }
 
-function buildWeeklyCalendarDays(raids, todayIsoDate, selectedWeeklyParticipant) {
+function buildWeeklyCalendarDays(raids, todayIsoDate) {
   const weekStart = getWeekStartDate(todayIsoDate);
-  const filteredRaids = selectedWeeklyParticipant
-    ? raids.filter((raid) =>
-        raid.participants.some((participant) => participant.ownerName === selectedWeeklyParticipant),
-      )
-    : raids;
 
   const raidsByDateKey = new Map();
 
-  filteredRaids.forEach((raid) => {
+  raids.forEach((raid) => {
     const dateKey = getScheduleDateKey(raid.startAt || raid.date, raid.time || raid.blockTime);
     if (!dateKey) return;
 
