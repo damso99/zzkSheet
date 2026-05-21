@@ -73,8 +73,9 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       );
       const cachedFinalRaidName = titleCache.get(titleCacheKey);
       const fallbackRaidName = normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정";
+      const titleOverrideRaidName = isSkippedRaidTitle(raid.titleOverride) ? "" : raid.titleOverride;
       const canonicalRaidTitle =
-        raid.titleOverride ||
+        titleOverrideRaidName ||
         directRaidTitle ||
         (isRaidTitle(resolvedRaidName) && !isSkippedRaidTitle(resolvedRaidName) ? resolvedRaidName : "");
       const resolvedFallbackRaidName = isSkippedRaidTitle(resolvedRaidName) ? "" : resolvedRaidName;
