@@ -61,10 +61,12 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         raid.titleOverride ||
         directRaidTitle ||
         (isRaidTitle(resolvedRaidName) && !isSkippedRaidTitle(resolvedRaidName) ? resolvedRaidName : "");
+      const resolvedFallbackRaidName = isSkippedRaidTitle(resolvedRaidName) ? "" : resolvedRaidName;
       const finalRaidName =
         cachedFinalRaidName ||
         canonicalRaidTitle ||
-        (normalizeRaidName(resolvedRaidName) === "일정없음" ? resolvedRaidName : fallbackRaidName);
+        resolvedFallbackRaidName ||
+        fallbackRaidName;
       if (!cachedFinalRaidName) {
         titleCache.set(titleCacheKey, finalRaidName);
       }
