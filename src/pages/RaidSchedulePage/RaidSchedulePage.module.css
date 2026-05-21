@@ -1757,6 +1757,30 @@
   line-height: 1.2;
 }
 
+.searchRaidList {
+  display: flex;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchRaidPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid rgba(124, 184, 255, 0.24);
+  border-radius: 14px;
+  background: rgba(124, 184, 255, 0.1);
+  color: #f5faff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .searchResults .searchCharacterButton {
   text-decoration-color: rgba(251, 191, 36, 0.32);
   text-shadow: none !important;

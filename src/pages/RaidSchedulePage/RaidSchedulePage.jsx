@@ -150,22 +150,36 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const weeklySelectedResults = useMemo(() => {
     if (!selectedWeeklyParticipant) return [];
 
-    return raids.flatMap((raid) =>
+    const groupedResults = new Map();
+
+    raids.forEach((raid) => {
       raid.participants
         .filter((participant) => participant.ownerName === selectedWeeklyParticipant)
-        .map((participant) => ({
-          date: raid.date,
-          id: `${raid.id}-${participant.characterName}`,
-          ownerName: participant.ownerName,
-          raidName: raid.raidName,
-          characterName: participant.characterName,
-          level: participant.level,
-          power: participant.power,
-          startCol: raid.startCol,
-          startRow: raid.startRow,
-          time: raid.time,
-        })),
-    );
+        .forEach((participant) => {
+          const groupKey = `${raid.date}-${participant.ownerName}-${participant.characterName}`;
+          const existing = groupedResults.get(groupKey);
+
+          if (existing) {
+            if (!existing.raids.includes(raid.raidName)) {
+              existing.raids.push(raid.raidName);
+            }
+            return;
+          }
+
+          groupedResults.set(groupKey, {
+            date: raid.date,
+            id: `${raid.date}-${participant.ownerName}-${participant.characterName}`,
+            ownerName: participant.ownerName,
+            characterName: participant.characterName,
+            raids: [raid.raidName],
+            startCol: raid.startCol,
+            startRow: raid.startRow,
+            time: raid.time,
+          });
+        });
+    });
+
+    return Array.from(groupedResults.values());
   }, [raids, selectedWeeklyParticipant]);
   const weeklySelectedGroups = useMemo(() => groupItemsByDate(weeklySelectedResults), [weeklySelectedResults]);
   const searchGroups = weeklySelectedGroups;
@@ -326,15 +340,12 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                 <strong>{item.ownerName}</strong>
                               </div>
                             </div>
-                            <div className={styles.searchResultStats}>
-                              <div className={styles.searchResultStat}>
-                                <span>레벨</span>
-                                <strong>{item.level || "-"}</strong>
-                              </div>
-                              <div className={styles.searchResultStat}>
-                                <span>전투력</span>
-                                <strong>{item.power || "-"}</strong>
-                              </div>
+                            <div className={styles.searchRaidList}>
+                              {item.raids?.map((raidName) => (
+                                <span key={`${item.id}-${raidName}`} className={styles.searchRaidPill}>
+                                  {raidName}
+                                </span>
+                              ))}
                             </div>
                           </article>
                         ))}
