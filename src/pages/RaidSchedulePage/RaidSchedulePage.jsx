@@ -1,8 +1,7 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./RaidSchedulePage.module.css";
 import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import RaidCard from "./components/RaidCard.jsx";
-import RaidSearch from "./components/RaidSearch.jsx";
 import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
 import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
 import {
@@ -33,14 +32,13 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [selectedCharacterName, setSelectedCharacterName] = useState("");
   const [selectedOwnerName, setSelectedOwnerName] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedWeeklyParticipant, setSelectedWeeklyParticipant] = useState("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
     fetchedAt: "",
     sourceUrl: DEFAULT_SHEET_URL,
   });
 
-  const deferredSearchQuery = useDeferredValue(searchQuery.trim());
   const todayIsoDate = useMemo(() => getTodayIsoDate(), []);
   const showOverviewStats = activeTab === "today" || activeTab === "week";
 
@@ -121,53 +119,36 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   }, [todayRaids]);
 
   const groupedRaids = useMemo(() => groupItemsByDate(raids), [raids]);
-  const todayGroup = useMemo(
-    () => groupedRaids.find((group) => group.date === todayIsoDate),
-    [groupedRaids, todayIsoDate],
-  );
-  const todayStartTime = useMemo(
-    () => todayGroup?.blockTime || todayGroup?.time || todayRaids?.[0]?.blockTime || todayRaids?.[0]?.time || "",
-    [todayGroup, todayRaids],
-  );
-
-  const searchResults = useMemo(() => {
-    if (!deferredSearchQuery) return [];
-
-    const loweredQuery = deferredSearchQuery.toLowerCase();
-
-    return raids.flatMap((raid) =>
-      raid.participants
-        .filter(
-          (participant) =>
-            participant.ownerName.toLowerCase().includes(loweredQuery) ||
-            participant.characterName.toLowerCase().includes(loweredQuery),
-        )
-        .map((participant) => ({
-          date: raid.date,
-          id: `${raid.id}-${participant.characterName}`,
-          ownerName: participant.ownerName,
-          raidName: raid.raidName,
-          characterName: participant.characterName,
-          startCol: raid.startCol,
-          startRow: raid.startRow,
-          time: raid.time,
-        })),
-    );
-  }, [deferredSearchQuery, raids]);
-
-  const searchGroups = useMemo(() => groupItemsByDate(searchResults), [searchResults]);
-  const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
-  const nextTodayRaid = useMemo(() => {
+  const todayStartTime = useMemo(() => {
     const now = new Date();
+    const nextRaid =
+      todayRaids
+        .map((raid) => ({
+          startAt: raid.startAt || getScheduleStartAt(raid.date, raid.time || raid.blockTime),
+          time: String(raid.time || raid.blockTime || "").trim(),
+        }))
+        .filter((raid) => raid.time && raid.startAt instanceof Date && !Number.isNaN(raid.startAt.getTime()) && raid.startAt >= now)
+        .sort((left, right) => left.startAt.getTime() - right.startAt.getTime())[0] || null;
 
-    return todayRaids
-      .map((raid) => ({
-        ...raid,
-        startAt: raid.startAt || getScheduleStartAt(raid.date, raid.time || raid.blockTime),
-      }))
-      .filter((raid) => raid.startAt instanceof Date && !Number.isNaN(raid.startAt.getTime()) && raid.startAt >= now)
-      .sort((left, right) => left.startAt.getTime() - right.startAt.getTime())[0] || null;
+    if (!nextRaid) {
+      return { isStartingSoon: false, value: "예정된 일정 없음" };
+    }
+
+    return {
+      isStartingSoon: isStartingSoon(nextRaid.startAt, now),
+      value: nextRaid.time,
+    };
   }, [todayRaids]);
+  const deferredSearchQuery = "";
+  const searchGroups = [];
+  const weeklyParticipantNames = useMemo(() => {
+    const names = raids.flatMap((raid) =>
+      raid.participants.map((participant) => participant.ownerName?.trim()).filter(Boolean),
+    );
+
+    return [...new Set(names)].sort((left, right) => left.localeCompare(right, "ko"));
+  }, [raids]);
+  const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
 
   return (
     <div className={styles.page}>
@@ -248,7 +229,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
               subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
               meta={todayRaids.length ? <TimeMetaBadge styles={styles} value={todayStartTime || "시간 미정"} /> : ""}
             />
-            <StartTimeSpotlight raid={nextTodayRaid} styles={styles} />
+            
             <TodayParticipantList
               ownerNames={todayOwnerNames}
               selectedOwnerName={selectedOwnerName}
@@ -284,9 +265,12 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         {!isLoading && activeTab === "week" ? (
           <section className={`${styles.section} ${styles.pageSection}`}>
             <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="요일별 레이드 일정" />
-            <div className={styles.weekSearchBox}>
-              <RaidSearch value={searchQuery} onChange={setSearchQuery} styles={styles} />
-            </div>
+            <WeeklyParticipantList
+              ownerNames={weeklyParticipantNames}
+              selectedOwnerName={selectedWeeklyParticipant}
+              onSelectOwnerName={setSelectedWeeklyParticipant}
+              styles={styles}
+            />
 
             {deferredSearchQuery ? (
               searchGroups.length === 0 ? (
@@ -345,14 +329,24 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                       </span>
                     </summary>
                     <div className={styles.cardGrid}>
-                      {group.items.map((raid) => (
-                        <RaidCard
-                          key={raid.id}
-                          raid={raid}
-                          styles={styles}
-                          onCharacterClick={setSelectedCharacterName}
-                        />
-                      ))}
+                      {group.items.map((raid) => {
+                        const isHighlighted =
+                          Boolean(selectedWeeklyParticipant) &&
+                          raid.participants.some(
+                            (participant) => participant.ownerName === selectedWeeklyParticipant,
+                          );
+
+                        return (
+                          <RaidCard
+                            key={raid.id}
+                            raid={raid}
+                            styles={styles}
+                            onCharacterClick={setSelectedCharacterName}
+                            isHighlighted={isHighlighted}
+                            selectedOwnerName={selectedWeeklyParticipant}
+                          />
+                        );
+                      })}
                     </div>
                   </details>
                 ))}
@@ -413,12 +407,48 @@ function TodayParticipantList({ ownerNames, selectedOwnerName, onSelectOwnerName
   );
 }
 
+function WeeklyParticipantList({ ownerNames, selectedOwnerName, onSelectOwnerName, styles }) {
+  return (
+    <section className={styles.todayParticipantPanel} aria-labelledby="weekly-participant-title">
+      <div className={styles.todayParticipantHeader}>
+        <h3 id="weekly-participant-title">주간 참여자 인원</h3>
+        <span>{ownerNames.length}명</span>
+      </div>
+      {ownerNames.length ? (
+        <div className={styles.todayParticipantBadges}>
+          <button
+            type="button"
+            className={`${styles.todayParticipantBadge} ${selectedOwnerName ? "" : styles.activeTodayParticipantBadge}`}
+            onClick={() => onSelectOwnerName("")}
+          >
+            전체
+          </button>
+          {ownerNames.map((ownerName) => (
+            <button
+              key={ownerName}
+              type="button"
+              className={`${styles.todayParticipantBadge} ${
+                selectedOwnerName === ownerName ? styles.activeTodayParticipantBadge : ""
+              }`}
+              onClick={() => onSelectOwnerName(selectedOwnerName === ownerName ? "" : ownerName)}
+            >
+              {ownerName}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className={styles.todayParticipantEmpty}>주간 참여자가 없습니다.</p>
+      )}
+    </section>
+  );
+}
+
 function SectionHeading({ styles, title, subtitle, meta = "" }) {
   return (
     <header className={styles.sectionHeading}>
       <div className={styles.sectionHeadingTopRow}>
         <h2>{title}</h2>
-        {meta ? <span className={styles.sectionHeadingMeta}>{meta}</span> : null}
+        {meta ? (typeof meta === "string" ? <span className={styles.sectionHeadingMeta}>{meta}</span> : meta) : null}
       </div>
       <p className={styles.sectionHeadingDescription}>{subtitle}</p>
     </header>
@@ -426,6 +456,52 @@ function SectionHeading({ styles, title, subtitle, meta = "" }) {
 }
 
 function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta }) {
+  if (value && typeof value === "object") {
+    return (
+      <div className={styles.startTimeCompact}>
+        <div className={styles.startTimeCompactLabel}>
+          <svg
+            aria-hidden="true"
+            className={styles.startTimeCompactMiniIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.05 3.05L4.22 5.88M16.95 3.05L19.78 5.88M12 8.25C8.82 8.25 6.25 10.82 6.25 14C6.25 17.18 8.82 19.75 12 19.75C15.18 19.75 17.75 17.18 17.75 14C17.75 10.82 15.18 8.25 12 8.25ZM12 11.25V14.1L14.15 15.55M8.25 20.95L7.15 22.05M15.75 20.95L16.85 22.05"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+          <span>시작시간</span>
+        </div>
+        <div className={styles.startTimeCompactValue}>
+          <span className={styles.startTimeCompactIcon}>
+            <svg
+              aria-hidden="true"
+              className={styles.startTimeCompactMainIcon}
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.05 3.05L4.22 5.88M16.95 3.05L19.78 5.88M12 8.25C8.82 8.25 6.25 10.82 6.25 14C6.25 17.18 8.82 19.75 12 19.75C15.18 19.75 17.75 17.18 17.75 14C17.75 10.82 15.18 8.25 12 8.25ZM12 11.25V14.1L14.15 15.55M8.25 20.95L7.15 22.05M15.75 20.95L16.85 22.05"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+              />
+            </svg>
+          </span>
+          <strong>{value.value}</strong>
+          {value.isStartingSoon ? <span className={styles.startTimeCompactSoonBadge}>곧 시작</span> : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <span className={className}>
       <svg

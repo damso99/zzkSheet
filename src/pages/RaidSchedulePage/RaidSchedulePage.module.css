@@ -551,6 +551,91 @@
     0 8px 20px rgba(8, 20, 40, 0.24);
 }
 
+.startTimeCompact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(43, 53, 78, 0.72), rgba(26, 34, 51, 0.82)),
+    var(--card);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.startTimeCompactLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.startTimeCompactMiniIcon {
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.startTimeCompactValue {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.startTimeCompactIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(124, 184, 255, 0.26);
+  border-radius: 12px;
+  background: rgba(124, 184, 255, 0.1);
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.startTimeCompactMainIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.startTimeCompactValue strong {
+  color: var(--text);
+  font-size: clamp(1.4rem, 2vw, 1.75rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.startTimeCompactSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid rgba(124, 184, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(124, 184, 255, 0.12);
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .sectionHeadingDescription {
   margin: 0;
   padding: 0;
