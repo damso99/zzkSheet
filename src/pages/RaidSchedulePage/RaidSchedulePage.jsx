@@ -138,7 +138,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
     return {
       isStartingSoon: status === "soon",
       status,
-      statusLabel: getStartTimeStatusLabel(status),
+      statusLabel: status === "general" ? "" : getStartTimeStatusLabel(status),
       value: currentRaid.time,
     };
   }, [todayRaids]);
@@ -556,7 +556,7 @@ function StartTimeSpotlight({ raid, styles }) {
   const displayTime = String(raid?.time || raid?.blockTime || "").trim();
   const startAt = displayTime ? raid.startAt || getScheduleStartAt(raid.date, displayTime) : null;
   const status = displayTime && startAt ? getStartTimeStatus(startAt) : "none";
-  const statusLabel = getStartTimeStatusLabel(status);
+  const statusLabel = status === "general" ? "" : getStartTimeStatusLabel(status);
 
   return (
     <section className={styles.startTimeSpotlight} aria-label="시작시간">
