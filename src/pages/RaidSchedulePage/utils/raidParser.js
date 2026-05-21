@@ -1,4 +1,4 @@
-import {
+﻿import {
   formatDateLabel,
   getScheduleStartAt,
   normalizeSheetDateValue,
@@ -7,7 +7,7 @@ import {
 } from "./dateUtils.js";
 
 const DEFAULT_FALLBACK_TIME = "";
-const DEFAULT_OWNER_NAME = "미정";
+const DEFAULT_OWNER_NAME = "미지정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
 const KNOWN_RAID_TITLES = [
   "\uce74\uc81c\ub85c\uc2a4",
@@ -16,6 +16,7 @@ const KNOWN_RAID_TITLES = [
   "\uc9c0\ud33d\ub9c9\uac78\ub9ac",
   "\uc544\ub974\ubaa8\uccb4",
   "익스트림 아브렐슈드",
+  "EX 아브렐슈드",
   "\uc775\uc2a4\ud2b8\ub9bc \uc5d0\uae30\ub974",
   "\uc77c\uc815\uc5c6\uc74c",
 ];
@@ -38,7 +39,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
       const titleSearchRow = raid.titleLookupRow ?? raid.startRow;
       const titleCacheKey = `${titleSearchRow}:${raid.startCol}:${raid.endCol}`;
-      const resolvedRaidName =
+      const resolvedRaidName = normalizeRaidNameToCanonicalRaidName(
         findRaidTitleByPosition({
           endCol: raid.endCol,
           raidNameLookup,
@@ -46,13 +47,14 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
           rows: raidCalendarRows,
           settingLookup,
           startCol: raid.startCol,
-        }) || "미지정";
+        }) || "미지정",
+      );
       const cachedFinalRaidName = titleCache.get(titleCacheKey);
       const finalRaidName =
         cachedFinalRaidName ||
-        (isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "\uc77c\uc815\uc5c6\uc74c"
-          ? resolvedRaidName
-          : normalizeRaidName(raid.raidName) || "\ubbf8\uc9c0\uc815");
+        (raid.titleOverride || isRaidTitle(resolvedRaidName) || normalizeRaidName(resolvedRaidName) === "일정없음"
+          ? raid.titleOverride || resolvedRaidName
+          : normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정");
       if (!cachedFinalRaidName) {
         titleCache.set(titleCacheKey, finalRaidName);
       }
@@ -165,6 +167,10 @@ function collectRaidsForBlock({
 
   for (let rowIndex = blockStartRow; rowIndex <= blockEndRow; rowIndex += 1) {
     const row = rows[rowIndex] || [];
+    const canonicalRaidTitle = findCanonicalRaidTitleInRow(row, block, raidNameLookup);
+    if (canonicalRaidTitle) {
+      currentParty.titleOverride = canonicalRaidTitle;
+    }
     const header = findRaidHeaderInBlock(row, block, raidNameLookup);
 
     if (header) {
@@ -181,6 +187,7 @@ function collectRaidsForBlock({
         startCol: block.startCol,
         startRow: rowIndex,
       });
+      currentParty.titleOverride = canonicalRaidTitle || currentParty.titleOverride || "";
       seenMembers = new Set();
       continue;
     }
@@ -331,11 +338,44 @@ function buildRaidNameLookup(raidBlocks) {
 }
 
 function isRaidTitle(value) {
-  return KNOWN_RAID_TITLES.includes(normalizeRaidName(value));
+  return Boolean(getCanonicalRaidTitle(value));
+}
+
+function getCanonicalRaidTitle(value) {
+  const normalized = normalizeRaidName(value);
+  if (
+    normalized === "익스트림 아브렐슈드" ||
+    normalized === "익스트림아브렐슈드" ||
+    normalized === "EX 아브렐슈드" ||
+    normalized === "EX아브렐슈드"
+  ) {
+    return "EX 아브렐슈드";
+  }
+
+  return KNOWN_RAID_TITLES.includes(normalized) ? normalized : "";
 }
 
 function isSkippedRaidTitle(value) {
-  return normalizeRaidName(value) === "\uc77c\uc815\uc5c6\uc74c";
+  return normalizeRaidName(value) === "일정없음";
+}
+
+function findCanonicalRaidTitleInRow(row, block, raidNameLookup) {
+  for (let columnIndex = block.startCol; columnIndex <= block.endCol && columnIndex < row.length; columnIndex += 1) {
+    const value = cleanText(row[columnIndex]);
+    if (!value) continue;
+    if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
+
+    const canonical = getCanonicalRaidTitle(value);
+    if (canonical) {
+      return canonical;
+    }
+
+    if (raidNameLookup.has(normalizeKey(value))) {
+      return normalizeRaidNameToCanonicalRaidName(value);
+    }
+  }
+
+  return "";
 }
 
 function findRaidHeaderInBlock(row, block, raidNameLookup) {
@@ -346,7 +386,7 @@ function findRaidHeaderInBlock(row, block, raidNameLookup) {
 
     const normalized = normalizeKey(value);
     if (raidNameLookup.has(normalized)) {
-      return normalizeRaidName(value);
+      return normalizeRaidNameToCanonicalRaidName(value);
     }
   }
 
@@ -457,7 +497,7 @@ function parseSettingRows(rows) {
   const headerRowIndex = rows.findIndex((row) =>
     row.some((cell) => {
       const text = normalizeKey(cell);
-      return text === "character" || text === "charactername" || text === "캐릭터";
+      return text === "character" || text === "charactername" || text === "charactername";
     }),
   );
 
@@ -549,10 +589,24 @@ function normalizeRaidName(value) {
   return cleanText(value).replace(/\s+/g, " ").trim();
 }
 
+function normalizeRaidNameToCanonicalRaidName(value) {
+  const normalized = normalizeRaidName(value);
+  if (
+    normalized === "익스트림 아브렐슈드" ||
+    normalized === "익스트림아브렐슈드" ||
+    normalized === "EX 아브렐슈드" ||
+    normalized === "EX아브렐슈드"
+  ) {
+    return "EX 아브렐슈드";
+  }
+
+  return normalized;
+}
+
 function slugify(value) {
   return cleanText(value)
     .replace(/\s+/g, "-")
-    .replace(/[^0-9a-zA-Z가-힣-]/g, "")
+    .replace(/[^0-9A-Za-z가-힣-]/g, "")
     .toLowerCase();
 }
 
@@ -590,3 +644,13 @@ function cleanText(value) {
 function normalizeKey(value) {
   return cleanText(value).replace(/\s+/g, "").toLowerCase();
 }
+
+
+
+
+
+
+
+
+
+

@@ -1586,13 +1586,12 @@
 
 .weekCalendarDayEmpty {
   margin: 0;
+  padding-top: 18px;
   color: var(--muted);
   font-size: 0.84rem;
   text-align: center;
   min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  align-self: start;
 }
 
 .weekCalendarDayCard {

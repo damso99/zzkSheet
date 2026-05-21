@@ -848,9 +848,9 @@ function buildWeeklyCalendarDays(raids, todayIsoDate) {
 function getWeekStartDate(dateValue) {
   const baseDate = parseIsoDateToLocalDate(dateValue) || new Date();
   const day = baseDate.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const diffToWednesday = -((day - 3 + 7) % 7);
   const weekStart = new Date(baseDate);
-  weekStart.setDate(baseDate.getDate() + diffToMonday);
+  weekStart.setDate(baseDate.getDate() + diffToWednesday);
   weekStart.setHours(0, 0, 0, 0);
   return weekStart;
 }
