@@ -487,9 +487,6 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
   if (value && typeof value === "object") {
     return (
       <div className={styles.startTimeCompact}>
-        <div className={styles.startTimeCompactLabel}>
-          <span>시작시간</span>
-        </div>
         <div className={styles.startTimeCompactValue}>
           <span className={styles.startTimeCompactIcon}>
             <svg
@@ -508,6 +505,7 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
               />
             </svg>
           </span>
+          <span className={styles.startTimeCompactTextLabel}>시작시간</span>
           <strong>{value.value}</strong>
           {value.isStartingSoon ? <span className={styles.startTimeCompactSoonBadge}>곧 시작</span> : null}
         </div>

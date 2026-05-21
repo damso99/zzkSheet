@@ -554,7 +554,7 @@
 .startTimeCompact {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-height: 56px;
   padding: 10px 12px;
   border: 1px solid var(--border-soft);
@@ -565,22 +565,6 @@
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.startTimeCompactLabel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
-  font-size: 0.74rem;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.01em;
-  flex: 0 0 auto;
-  min-width: 56px;
-  text-align: center;
 }
 
 .startTimeCompactMiniIcon {
@@ -597,6 +581,14 @@
   flex-wrap: wrap;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.startTimeCompactTextLabel {
+  color: var(--text);
+  font-size: clamp(1.28rem, 1.7vw, 1.55rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .startTimeCompactIcon {
@@ -619,7 +611,7 @@
 
 .startTimeCompactValue strong {
   color: var(--text);
-  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  font-size: clamp(1.28rem, 1.7vw, 1.55rem);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -646,12 +638,6 @@
     align-items: flex-start;
     gap: 10px;
     min-height: 0;
-  }
-
-  .startTimeCompactLabel {
-    min-width: 0;
-    flex-direction: row;
-    text-align: left;
   }
 
   .startTimeCompactValue {
