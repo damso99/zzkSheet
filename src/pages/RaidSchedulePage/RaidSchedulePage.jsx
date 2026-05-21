@@ -19,10 +19,10 @@ import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./ut
 const TAB_ORDER = ["today", "week", "personalRaid", "personal"];
 
 const TAB_LABELS = {
-  today: "湲덉씪 ?쇱젙",
-  week: "二쇨컙 ?쇱젙",
-  personal: "媛쒖씤 ?쇱젙",
-  personalRaid: "?덉씠??李몄뿬 ?꾪솴",
+  today: "금일 일정",
+  week: "주간 일정",
+  personal: "개인 일정",
+  personalRaid: "레이드 참여 현황",
 };
 
 export default function RaidSchedulePage({ initialTab = "today" }) {
@@ -81,8 +81,8 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         });
         setErrorMessage(
           error instanceof Error
-            ? `?쒗듃 濡쒕뵫???ㅽ뙣?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂. ${error.message}`
-            : "?쒗듃 濡쒕뵫???ㅽ뙣?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.",
+            ? `시트 로딩에 실패했습니다. 잠시 후 다시 시도해주세요. ${error.message}`
+            : "시트 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.",
         );
       } finally {
         if (!ignore) setIsLoading(false);
@@ -131,7 +131,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         .sort((left, right) => left.startAt.getTime() - right.startAt.getTime())[0] || null;
 
     if (!nextRaid) {
-      return { isStartingSoon: false, value: "?덉젙???쇱젙 ?놁쓬" };
+      return { isStartingSoon: false, value: "예정된 일정 없음" };
     }
 
     return {
@@ -177,8 +177,8 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           <div>
             <p className={styles.eyebrow}>LostArk Weekly Planner</p>
             <h1>Stick Over Flow</h1>
-            <div className={styles.metaLine} aria-label="?곗씠??媛깆떊 ?곹깭">
-              <span>媛깆떊 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
+            <div className={styles.metaLine} aria-label="데이터 갱신 상태">
+              <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
               <span
                 className={`${styles.connectionStatus} ${
                   sourceMeta.isFallback ? styles.connectionOffline : styles.connectionOnline
@@ -192,7 +192,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         </header>
 
         <section className={styles.toolbar}>
-          <div className={styles.tabs} role="tablist" aria-label="?쇱젙 蹂닿린 ?좏깮">
+          <div className={styles.tabs} role="tablist" aria-label="일정 보기 선택">
             {TAB_ORDER.map((tabKey) => (
               <button
                 key={tabKey}
@@ -231,7 +231,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         </section>
 
         {isLoading && (activeTab === "today" || activeTab === "week") ? (
-          <StatePanel styles={styles} message="?덉씠???쇱젙??遺덈윭?ㅻ뒗 以묒엯?덈떎." />
+          <StatePanel styles={styles} message="레이드 일정을 불러오는 중입니다." />
         ) : null}
 
         {!isLoading && errorMessage && (activeTab === "today" || activeTab === "week") ? (
@@ -245,7 +245,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             <SectionHeading
               styles={styles}
               title={TAB_LABELS.today}
-              subtitle={`${formatDateLabel(todayIsoDate)} 湲곗? ?쇱젙`}
+              subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
               meta={<TimeMetaBadge styles={styles} value={todayStartTime} />}
             />
             
@@ -256,7 +256,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
               styles={styles}
             />
             {sortedTodayRaids.length === 0 ? (
-              <StatePanel styles={styles} message="湲덉씪 ?쇱젙???놁뒿?덈떎." />
+              <StatePanel styles={styles} message="금일 일정이 없습니다." />
             ) : (
               <div className={styles.cardGrid}>
                 {sortedTodayRaids.map((raid) => {
@@ -283,7 +283,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
         {!isLoading && activeTab === "week" ? (
           <section className={`${styles.section} ${styles.pageSection}`}>
-            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="?붿씪蹂??덉씠???쇱젙" />
+            <SectionHeading styles={styles} title={TAB_LABELS.week} subtitle="요일별 레이드 일정" />
             <WeeklyParticipantList
               ownerNames={weeklyParticipantNames}
               selectedOwnerName={selectedWeeklyParticipant}
@@ -293,7 +293,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
             {deferredSearchQuery ? (
               searchGroups.length === 0 ? (
-                <StatePanel styles={styles} message="寃??寃곌낵媛 ?놁뒿?덈떎." />
+                <StatePanel styles={styles} message="검색 결과가 없습니다." />
               ) : (
                 <div className={styles.weekStack}>
                   {searchGroups.map((group) => (
@@ -302,7 +302,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                         <span className={styles.dayTitle}>{group.label}</span>
                         <span className={styles.dayHeaderMeta}>
                           <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
-                          <span>{group.items.length}媛?寃곌낵</span>
+                          <span>{group.items.length}개 결과</span>
                         </span>
                       </summary>
                       <div className={`${styles.searchResults} ${styles.weeklySearchResult}`}>
@@ -332,7 +332,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                 </div>
               )
             ) : groupedRaids.length === 0 ? (
-              <StatePanel styles={styles} message="?쇱젙???놁뒿?덈떎." />
+              <StatePanel styles={styles} message="일정이 없습니다." />
             ) : (
               <div className={styles.weekStack}>
                 {groupedRaids.map((group) => (
@@ -341,7 +341,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                       <span className={styles.dayTitle}>{group.label}</span>
                       <span className={styles.dayHeaderMeta}>
                         <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
-                        <span>{group.items.length}媛??쇱젙</span>
+                        <span>{group.items.length}개 일정</span>
                       </span>
                     </summary>
                     <div className={styles.cardGrid}>
@@ -491,7 +491,7 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
               strokeWidth="1.8"
             />
           </svg>
-          <span>?쒖옉?쒓컙</span>
+          <span>시작시간</span>
         </div>
         <div className={styles.startTimeCompactValue}>
           <span className={styles.startTimeCompactIcon}>
@@ -512,7 +512,7 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
             </svg>
           </span>
           <strong>{value.value}</strong>
-          {value.isStartingSoon ? <span className={styles.startTimeCompactSoonBadge}>怨??쒖옉</span> : null}
+          {value.isStartingSoon ? <span className={styles.startTimeCompactSoonBadge}>곧 시작</span> : null}
         </div>
       </div>
     );
@@ -546,9 +546,9 @@ function StartTimeSpotlight({ raid, styles }) {
   const showStartingSoon = displayTime && startAt ? isStartingSoon(startAt) : false;
 
   return (
-    <section className={styles.startTimeSpotlight} aria-label="?쒖옉?쒓컙">
+    <section className={styles.startTimeSpotlight} aria-label="시작시간">
       <div className={styles.startTimeSpotlightHeader}>
-        <span className={styles.startTimeSpotlightLabel}>?쒖옉?쒓컙</span>
+        <span className={styles.startTimeSpotlightLabel}>시작시간</span>
       </div>
       <div className={styles.startTimeSpotlightContent}>
         <div className={styles.startTimeSpotlightIconShell}>
@@ -569,8 +569,8 @@ function StartTimeSpotlight({ raid, styles }) {
           </svg>
         </div>
         <div className={styles.startTimeSpotlightMain}>
-          <strong className={styles.startTimeSpotlightValue}>{displayTime || "?덉젙???쇱젙 ?놁쓬"}</strong>
-          {showStartingSoon ? <span className={styles.startTimeSoonBadge}>怨??쒖옉</span> : null}
+          <strong className={styles.startTimeSpotlightValue}>{displayTime || "예정된 일정 없음"}</strong>
+          {showStartingSoon ? <span className={styles.startTimeSoonBadge}>곧 시작</span> : null}
         </div>
       </div>
     </section>
@@ -598,7 +598,7 @@ function groupItemsByDate(items) {
         groups.set(dateKey, {
           date: dateKey,
           id: dateKey,
-          label: item.date ? formatDateLabel(item.date) : "?좎쭨 誘몄젙",
+          label: item.date ? formatDateLabel(item.date) : "날짜 미지정",
           time: "",
           items: [],
         });
@@ -620,7 +620,7 @@ function resolveGroupBlockTime(items = []) {
   const times = items
     .map((item) => item.time || item.blockTime || "")
     .map((value) => String(value || "").trim())
-    .filter((value) => Boolean(value) && value !== "?쒓컙 誘몄젙");
+    .filter((value) => Boolean(value) && value !== "시간 미정");
 
   if (!times.length) return "";
 
@@ -655,7 +655,7 @@ function compareRaidOrder(left, right) {
 }
 
 function formatGroupTime(group) {
-  return group.time || "?쒓컙 誘몄젙";
+  return group.time || "시간 미정";
 }
 
 function formatFetchedAt(value) {
