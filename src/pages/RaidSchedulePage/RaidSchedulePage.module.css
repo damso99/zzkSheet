@@ -1714,6 +1714,41 @@
   font-weight: 900;
 }
 
+.searchResultStats {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.searchResultStat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 88px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid rgba(124, 184, 255, 0.24);
+  border-radius: 14px;
+  background: rgba(124, 184, 255, 0.1);
+  text-align: right;
+}
+
+.searchResultStat span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.searchResultStat strong {
+  color: #7cb8ff;
+  font-size: 0.94rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
 .searchResults .searchCharacterButton {
   text-decoration-color: rgba(251, 191, 36, 0.32);
   text-shadow: none !important;

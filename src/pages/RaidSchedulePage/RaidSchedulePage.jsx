@@ -159,6 +159,8 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           ownerName: participant.ownerName,
           raidName: raid.raidName,
           characterName: participant.characterName,
+          level: participant.level,
+          power: participant.power,
           startCol: raid.startCol,
           startRow: raid.startRow,
           time: raid.time,
@@ -324,6 +326,16 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                 <strong>{item.ownerName}</strong>
                               </div>
                             </div>
+                            <div className={styles.searchResultStats}>
+                              <div className={styles.searchResultStat}>
+                                <span>레벨</span>
+                                <strong>{item.level || "-"}</strong>
+                              </div>
+                              <div className={styles.searchResultStat}>
+                                <span>전투력</span>
+                                <strong>{item.power || "-"}</strong>
+                              </div>
+                            </div>
                           </article>
                         ))}
                       </div>
@@ -476,21 +488,6 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
     return (
       <div className={styles.startTimeCompact}>
         <div className={styles.startTimeCompactLabel}>
-          <svg
-            aria-hidden="true"
-            className={styles.startTimeCompactMiniIcon}
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M7.05 3.05L4.22 5.88M16.95 3.05L19.78 5.88M12 8.25C8.82 8.25 6.25 10.82 6.25 14C6.25 17.18 8.82 19.75 12 19.75C15.18 19.75 17.75 17.18 17.75 14C17.75 10.82 15.18 8.25 12 8.25ZM12 11.25V14.1L14.15 15.55M8.25 20.95L7.15 22.05M15.75 20.95L16.85 22.05"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.8"
-            />
-          </svg>
           <span>시작시간</span>
         </div>
         <div className={styles.startTimeCompactValue}>
