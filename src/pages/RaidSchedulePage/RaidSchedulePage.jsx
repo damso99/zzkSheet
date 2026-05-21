@@ -132,8 +132,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
       return { status: "none", value: "예정된 일정 없음" };
     }
 
-    const nextRaid = raidsWithStart.find((raid) => raid.startAt >= now);
-    const currentRaid = nextRaid || raidsWithStart[raidsWithStart.length - 1];
+    const currentRaid = raidsWithStart[0];
     const status = getStartTimeStatus(currentRaid.startAt, now);
 
     return {
@@ -523,7 +522,9 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
             </svg>
           </span>
           <strong>{value.value}</strong>
-          {value.statusLabel ? <span className={styles.startTimeCompactSoonBadge}>{value.statusLabel}</span> : null}
+          {value.statusLabel && value.statusLabel !== "일반" ? (
+            <span className={styles.startTimeCompactSoonBadge}>{value.statusLabel}</span>
+          ) : null}
         </div>
       </div>
     );
@@ -582,7 +583,7 @@ function StartTimeSpotlight({ raid, styles }) {
         </div>
         <div className={styles.startTimeSpotlightMain}>
           <strong className={styles.startTimeSpotlightValue}>{displayTime || "예정된 일정 없음"}</strong>
-          {statusLabel ? <span className={styles.startTimeSoonBadge}>{statusLabel}</span> : null}
+          {statusLabel && statusLabel !== "일반" ? <span className={styles.startTimeSoonBadge}>{statusLabel}</span> : null}
         </div>
       </div>
     </section>
