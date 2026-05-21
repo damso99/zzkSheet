@@ -400,11 +400,29 @@ function collectRaidColumnBlocksForDateBlock(rows = [], headerRowIndex = -1) {
     });
   }
 
-  if (titleColumns.length === 0) {
-    return null;
-  }
+  if (titleColumns.length === 0 || titleColumns.every(({ raidName }) => isSkippedRaidTitle(raidName))) {
+    const fallbackRaidTitle = resolveRaidTitleFromRows({
+      raid: {
+        endCol: detectedEndCol,
+        endRow: Math.min(rows.length - 1, headerRowIndex + 3),
+        startCol: 0,
+        startRow: headerRowIndex,
+        titleLookupRow: headerRowIndex,
+      },
+      raidCalendarRows: rows,
+      raidNameLookup: buildRaidNameLookup([]),
+    });
 
-  if (titleColumns.every(({ raidName }) => isSkippedRaidTitle(raidName))) {
+    if (fallbackRaidTitle) {
+      return [
+        {
+          endCol: detectedEndCol,
+          raidName: fallbackRaidTitle,
+          startCol: 0,
+        },
+      ];
+    }
+
     return null;
   }
 
@@ -500,9 +518,14 @@ function findRaidTitleByPosition({
       if (isCharacterValue(value, settingLookup)) continue;
       if (isSkippedRaidTitle(value)) continue;
 
+      const canonical = getCanonicalRaidTitle(value);
+      if (canonical) {
+        return canonical;
+      }
+
       const normalized = normalizeKey(value);
       if (raidNameLookup.has(normalized)) {
-        return normalizeRaidName(value);
+        return normalizeRaidNameToCanonicalRaidName(value);
       }
     }
   }
