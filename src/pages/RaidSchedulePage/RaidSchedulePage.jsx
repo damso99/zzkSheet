@@ -312,6 +312,10 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                           <article key={item.id} className={styles.searchResultCard}>
                             <div className={styles.searchInlineMeta}>
                               <div className={styles.searchInlineField}>
+                                <span>참여 레이드</span>
+                                <strong>{item.raidName}</strong>
+                              </div>
+                              <div className={styles.searchInlineField}>
                                 <span>참여 캐릭터</span>
                                 <button
                                   type="button"
