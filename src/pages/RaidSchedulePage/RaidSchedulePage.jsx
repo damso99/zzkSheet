@@ -12,6 +12,7 @@ import {
   getScheduleStartAt,
   getTodayIsoDate,
   isInScheduleRange,
+  isStartingSoon,
 } from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
@@ -156,6 +157,17 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
   const searchGroups = useMemo(() => groupItemsByDate(searchResults), [searchResults]);
   const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
+  const nextTodayRaid = useMemo(() => {
+    const now = new Date();
+
+    return todayRaids
+      .map((raid) => ({
+        ...raid,
+        startAt: raid.startAt || getScheduleStartAt(raid.date, raid.time || raid.blockTime),
+      }))
+      .filter((raid) => raid.startAt instanceof Date && !Number.isNaN(raid.startAt.getTime()) && raid.startAt >= now)
+      .sort((left, right) => left.startAt.getTime() - right.startAt.getTime())[0] || null;
+  }, [todayRaids]);
 
   return (
     <div className={styles.page}>
@@ -236,6 +248,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
               subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
               meta={todayRaids.length ? <TimeMetaBadge styles={styles} value={todayStartTime || "시간 미정"} /> : ""}
             />
+            <StartTimeSpotlight raid={nextTodayRaid} styles={styles} />
             <TodayParticipantList
               ownerNames={todayOwnerNames}
               selectedOwnerName={selectedOwnerName}
@@ -432,6 +445,43 @@ function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta })
       </svg>
       <span>{value}</span>
     </span>
+  );
+}
+
+function StartTimeSpotlight({ raid, styles }) {
+  const displayTime = String(raid?.time || raid?.blockTime || "").trim();
+  const startAt = displayTime ? raid.startAt || getScheduleStartAt(raid.date, displayTime) : null;
+  const showStartingSoon = displayTime && startAt ? isStartingSoon(startAt) : false;
+
+  return (
+    <section className={styles.startTimeSpotlight} aria-label="시작시간">
+      <div className={styles.startTimeSpotlightHeader}>
+        <span className={styles.startTimeSpotlightLabel}>시작시간</span>
+      </div>
+      <div className={styles.startTimeSpotlightContent}>
+        <div className={styles.startTimeSpotlightIconShell}>
+          <svg
+            aria-hidden="true"
+            className={styles.startTimeSpotlightIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.05 3.05L4.22 5.88M16.95 3.05L19.78 5.88M12 8.25C8.82 8.25 6.25 10.82 6.25 14C6.25 17.18 8.82 19.75 12 19.75C15.18 19.75 17.75 17.18 17.75 14C17.75 10.82 15.18 8.25 12 8.25ZM12 11.25V14.1L14.15 15.55M8.25 20.95L7.15 22.05M15.75 20.95L16.85 22.05"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+        </div>
+        <div className={styles.startTimeSpotlightMain}>
+          <strong className={styles.startTimeSpotlightValue}>{displayTime || "예정된 일정 없음"}</strong>
+          {showStartingSoon ? <span className={styles.startTimeSoonBadge}>곧 시작</span> : null}
+        </div>
+      </div>
+    </section>
   );
 }
 
