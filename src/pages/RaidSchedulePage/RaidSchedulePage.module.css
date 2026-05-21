@@ -553,11 +553,10 @@
 
 .startTimeCompact {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  min-height: 64px;
-  padding: 10px 14px;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 12px;
   border: 1px solid var(--border-soft);
   border-radius: 18px;
   background:
@@ -569,14 +568,19 @@
 }
 
 .startTimeCompactLabel {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--text-muted);
   font-size: 0.74rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.01em;
+  flex: 0 0 auto;
+  min-width: 56px;
+  text-align: center;
 }
 
 .startTimeCompactMiniIcon {
@@ -589,17 +593,18 @@
 .startTimeCompactValue {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .startTimeCompactIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: 1px solid rgba(124, 184, 255, 0.26);
   border-radius: 12px;
   background: rgba(124, 184, 255, 0.1);
@@ -608,13 +613,13 @@
 }
 
 .startTimeCompactMainIcon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .startTimeCompactValue strong {
   color: var(--text);
-  font-size: clamp(1.4rem, 2vw, 1.75rem);
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -625,15 +630,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
-  padding: 5px 10px;
+  min-height: 24px;
+  padding: 4px 9px;
   border: 1px solid rgba(124, 184, 255, 0.28);
   border-radius: 999px;
   background: rgba(124, 184, 255, 0.12);
   color: var(--primary);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 900;
   line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .startTimeCompact {
+    align-items: flex-start;
+    gap: 10px;
+    min-height: 0;
+  }
+
+  .startTimeCompactLabel {
+    min-width: 0;
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .startTimeCompactValue {
+    width: 100%;
+  }
 }
 
 .sectionHeadingDescription {
