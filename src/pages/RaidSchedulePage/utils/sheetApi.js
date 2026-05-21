@@ -31,11 +31,11 @@ export async function loadRaidSheetBundle({
   const cacheKey = `${targetSheetUrl}:${targetGid}`;
   const cachedBundle = getFreshCacheEntry(bundleCache, cacheKey, SHEET_CACHE_TTL_MS);
   if (!forceRefresh && cachedBundle) {
-    return cachedBundle;
+    return withAbortSignal(Promise.resolve(cachedBundle), signal);
   }
 
   if (!forceRefresh && bundleInFlight.has(cacheKey)) {
-    return bundleInFlight.get(cacheKey);
+    return withAbortSignal(bundleInFlight.get(cacheKey), signal);
   }
 
   const promise = (async () => {
@@ -44,13 +44,11 @@ export async function loadRaidSheetBundle({
         sheetUrl: targetSheetUrl,
         gid: SHEET_GIDS.raidCalendar,
         sheetName: SHEET_NAMES.raidCalendar,
-        signal,
       }),
       fetchSheetRows({
         sheetUrl: targetSheetUrl,
         gid: SHEET_GIDS.setting,
         sheetName: SHEET_NAMES.setting,
-        signal,
       }),
     ]);
 
@@ -70,7 +68,7 @@ export async function loadRaidSheetBundle({
   bundleInFlight.set(cacheKey, promise);
 
   try {
-    return await promise;
+    return await withAbortSignal(promise, signal);
   } finally {
     if (bundleInFlight.get(cacheKey) === promise) {
       bundleInFlight.delete(cacheKey);
@@ -90,16 +88,18 @@ export async function loadSheetRowsByName({
   }
 
   const targetSheetUrl = ensureGid(sheetUrl, gid || extractGidFromUrl(sheetUrl));
-  return fetchSheetRows({
-    sheetUrl: targetSheetUrl,
-    gid,
-    sheetName,
+  return withAbortSignal(
+    fetchSheetRows({
+      sheetUrl: targetSheetUrl,
+      gid,
+      sheetName,
+      forceRefresh,
+    }),
     signal,
-    forceRefresh,
-  });
+  );
 }
 
-async function fetchSheetRows({ sheetUrl, gid, sheetName, signal, forceRefresh = false }) {
+async function fetchSheetRows({ sheetUrl, gid, sheetName, forceRefresh = false }) {
   const params = new URLSearchParams({ url: sheetUrl });
   if (gid) params.set("gid", gid);
   if (sheetName) params.set("sheet", sheetName);
@@ -115,7 +115,7 @@ async function fetchSheetRows({ sheetUrl, gid, sheetName, signal, forceRefresh =
   }
 
   const promise = (async () => {
-    const response = await fetch(`/api/raid-sheet?${cacheKey}`, { signal });
+    const response = await fetch(`/api/raid-sheet?${cacheKey}`);
     const payload = await response.json();
 
     if (!response.ok) {
@@ -138,6 +138,36 @@ async function fetchSheetRows({ sheetUrl, gid, sheetName, signal, forceRefresh =
       sheetRowsInFlight.delete(cacheKey);
     }
   }
+}
+
+function withAbortSignal(promise, signal) {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(createAbortError());
+  }
+
+  return new Promise((resolve, reject) => {
+    const handleAbort = () => reject(createAbortError());
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", handleAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", handleAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+function createAbortError() {
+  const error = new Error("Request aborted");
+  error.name = "AbortError";
+  return error;
 }
 
 function ensureGid(sheetUrl, gid) {
