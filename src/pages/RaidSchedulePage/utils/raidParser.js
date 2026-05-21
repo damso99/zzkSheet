@@ -16,7 +16,7 @@ const KNOWN_RAID_TITLES = [
   "\uc9c0\ud33d\ub9c9\uac78\ub9ac",
   "\uc544\ub974\ubaa8\uccb4",
   "익스트림 아브렐슈드",
-  "EX 아브렐슈드",
+  "EX아브렐슈드",
   "\uc775\uc2a4\ud2b8\ub9bc \uc5d0\uae30\ub974",
   "\uc77c\uc815\uc5c6\uc74c",
 ];
@@ -450,10 +450,9 @@ function getCanonicalRaidTitle(value) {
   if (
     normalized === "익스트림 아브렐슈드" ||
     normalized === "익스트림아브렐슈드" ||
-    normalized === "EX 아브렐슈드" ||
     normalized === "EX아브렐슈드"
   ) {
-    return "EX 아브렐슈드";
+    return "EX아브렐슈드";
   }
 
   return KNOWN_RAID_TITLES.includes(normalized) ? normalized : "";
@@ -722,10 +721,9 @@ function normalizeRaidNameToCanonicalRaidName(value) {
   if (
     normalized === "익스트림 아브렐슈드" ||
     normalized === "익스트림아브렐슈드" ||
-    normalized === "EX 아브렐슈드" ||
     normalized === "EX아브렐슈드"
   ) {
-    return "EX 아브렐슈드";
+    return "EX아브렐슈드";
   }
 
   return normalized;
