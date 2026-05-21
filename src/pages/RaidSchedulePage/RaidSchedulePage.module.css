@@ -567,6 +567,18 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+.startTimeCompactActive {
+  border-color: rgba(251, 191, 36, 0.42);
+  background:
+    linear-gradient(180deg, rgba(48, 51, 45, 0.84), rgba(26, 30, 30, 0.88)),
+    var(--card);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(251, 191, 36, 0.12),
+    0 0 18px rgba(251, 191, 36, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .startTimeCompactMiniIcon {
   width: 14px;
   height: 14px;
@@ -604,6 +616,12 @@
   flex: 0 0 auto;
 }
 
+.startTimeCompactActive .startTimeCompactIcon {
+  border-color: rgba(251, 191, 36, 0.28);
+  background: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
+}
+
 .startTimeCompactMainIcon {
   width: 16px;
   height: 16px;
@@ -616,6 +634,10 @@
   line-height: 1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
+}
+
+.startTimeCompactActive .startTimeCompactValue strong {
+  color: #fff3bf;
 }
 
 .startTimeCompactSoonBadge {
