@@ -21,7 +21,66 @@ export function formatDateLabel(dateValue) {
 }
 
 export function getTodayIsoDate() {
-  return formatLocalDate(new Date());
+  return getScheduleDateKey(new Date());
+}
+
+export function getScheduleDayRange(selectedDate) {
+  const baseDate = resolveScheduleBaseDate(selectedDate);
+  if (!baseDate) {
+    return { end: null, start: null };
+  }
+
+  const start = new Date(baseDate);
+  start.setHours(6, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  return { end, start };
+}
+
+export function getScheduleDateKey(value, timeValue = "") {
+  if (value instanceof Date) {
+    return deriveScheduleDateKey(value);
+  }
+
+  const startAt = getScheduleStartAt(value, timeValue);
+  if (startAt) {
+    return deriveScheduleDateKey(startAt);
+  }
+
+  return normalizeSheetDateValue(value);
+}
+
+export function getScheduleStartAt(dateValue, timeValue = "") {
+  const parts = parseLocalDateParts(dateValue);
+  if (!parts) return null;
+
+  const parsedTime = parseTimeParts(timeValue);
+  const hours = parsedTime?.hours ?? 12;
+  const minutes = parsedTime?.minutes ?? 0;
+
+  const localDate = new Date(parts.year, parts.month - 1, parts.day, hours, minutes, 0, 0);
+  return Number.isNaN(localDate.getTime()) ? null : localDate;
+}
+
+export function isInScheduleRange(scheduleStartAt, selectedDate) {
+  const target =
+    scheduleStartAt instanceof Date ? scheduleStartAt : getScheduleStartAt(scheduleStartAt);
+  if (!(target instanceof Date) || Number.isNaN(target.getTime())) return false;
+
+  const { start, end } = getScheduleDayRange(selectedDate);
+  if (!start || !end) return false;
+
+  return target >= start && target < end;
+}
+
+export function isStartingSoon(scheduleStartAt, now = new Date()) {
+  if (!(scheduleStartAt instanceof Date) || Number.isNaN(scheduleStartAt.getTime())) return false;
+  if (!(now instanceof Date) || Number.isNaN(now.getTime())) return false;
+
+  const diffMinutes = (scheduleStartAt.getTime() - now.getTime()) / 1000 / 60;
+  return diffMinutes >= 0 && diffMinutes <= 60;
 }
 
 export function parseSheetTime(value) {
@@ -142,6 +201,40 @@ function parseGvizDateParts(value) {
     month: Number(match[2]) + 1,
     seconds: Number(match[6] || 0),
     year: Number(match[1]),
+  };
+}
+
+function resolveScheduleBaseDate(value) {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : new Date(value);
+  }
+
+  const parts = parseLocalDateParts(value);
+  if (!parts) return null;
+
+  const localDate = new Date(parts.year, parts.month - 1, parts.day);
+  return Number.isNaN(localDate.getTime()) ? null : localDate;
+}
+
+function deriveScheduleDateKey(date) {
+  const adjusted = new Date(date);
+  if (adjusted.getHours() < 6) {
+    adjusted.setDate(adjusted.getDate() - 1);
+  }
+
+  return formatLocalDate(adjusted);
+}
+
+function parseTimeParts(value) {
+  const normalized = parseSheetTime(value);
+  if (!normalized) return null;
+
+  const match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+
+  return {
+    hours: Number(match[1]),
+    minutes: Number(match[2]),
   };
 }
 

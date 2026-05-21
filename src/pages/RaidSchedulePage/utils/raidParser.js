@@ -1,5 +1,6 @@
 import {
   formatDateLabel,
+  getScheduleStartAt,
   normalizeSheetDateValue,
   parseSheetDate,
   parseSheetTime,
@@ -64,6 +65,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         participantCount: participants.length,
         participants,
         raidName: finalRaidName,
+        startAt: getScheduleStartAt(raid.date, raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME),
         startCol: raid.startCol,
         startRow: raid.startRow,
         time: raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME,
@@ -96,6 +98,7 @@ export function buildFallbackRaidSchedule(todayIsoDate) {
         },
       ],
       raidName: "일정 없음",
+      startAt: getScheduleStartAt(normalizedDate, DEFAULT_FALLBACK_TIME),
       startCol: 0,
       startRow: 0,
       time: DEFAULT_FALLBACK_TIME,

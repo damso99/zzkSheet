@@ -533,6 +533,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 32px;
   padding: 6px 12px;
   border: 1px solid rgba(105, 230, 255, 0.34);
@@ -790,6 +791,36 @@
   justify-content: flex-end;
 }
 
+.startTimeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 14px;
+  background: rgba(34, 211, 238, 0.12);
+  color: #c9fbff;
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 10px 22px rgba(7, 29, 36, 0.2);
+  white-space: nowrap;
+}
+
+.startTimeIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: #22d3ee;
+  filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.2));
+}
+
 .cardHeader h3 {
   margin: 0;
   color: #ffffff;
@@ -801,6 +832,7 @@
 .statusBadge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 28px;
   padding: 5px 10px;
   border-radius: 999px;
@@ -825,6 +857,15 @@
   color: #101522;
   background: rgba(224, 241, 255, 0.18);
   border: 1px solid rgba(224, 241, 255, 0.36);
+}
+
+.startingSoonBadge {
+  color: #c9fbff;
+  background: rgba(34, 211, 238, 0.16);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 14px rgba(34, 211, 238, 0.14);
 }
 
 .participantSummary {
@@ -1158,6 +1199,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 32px;
   padding: 6px 12px;
   border: 1px solid rgba(96, 165, 250, 0.34);
@@ -1174,6 +1216,14 @@
     0 0 0 1px rgba(96, 165, 250, 0.08),
     0 8px 20px rgba(8, 20, 40, 0.24);
   white-space: nowrap;
+}
+
+.timeMetaIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: #22d3ee;
+  filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.2));
 }
 
 .dayGroup .cardGrid,

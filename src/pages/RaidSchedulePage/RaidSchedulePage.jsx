@@ -5,7 +5,14 @@ import RaidCard from "./components/RaidCard.jsx";
 import RaidSearch from "./components/RaidSearch.jsx";
 import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
 import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
-import { formatDateLabel, formatLocalDateTime, getTodayIsoDate } from "./utils/dateUtils.js";
+import {
+  formatDateLabel,
+  formatLocalDateTime,
+  getScheduleDateKey,
+  getScheduleStartAt,
+  getTodayIsoDate,
+  isInScheduleRange,
+} from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
 
@@ -92,7 +99,15 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   }, [todayIsoDate]);
 
   const todayRaids = useMemo(
-    () => raids.filter((raid) => raid.date === todayIsoDate),
+    () =>
+      raids.filter((raid) => {
+        const startAt = raid.startAt || getScheduleStartAt(raid.date, raid.time || raid.blockTime);
+        if (startAt) {
+          return isInScheduleRange(startAt, todayIsoDate);
+        }
+
+        return getScheduleDateKey(raid.date, raid.time || raid.blockTime) === todayIsoDate;
+      }),
     [raids, todayIsoDate],
   );
 
@@ -219,7 +234,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
               styles={styles}
               title={TAB_LABELS.today}
               subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
-              meta={todayRaids.length ? todayStartTime || "시간 미정" : ""}
+              meta={todayRaids.length ? <TimeMetaBadge styles={styles} value={todayStartTime || "시간 미정"} /> : ""}
             />
             <TodayParticipantList
               ownerNames={todayOwnerNames}
@@ -270,7 +285,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                       <summary className={styles.dayHeader}>
                         <span className={styles.dayTitle}>{group.label}</span>
                         <span className={styles.dayHeaderMeta}>
-                          <span className={styles.dayTimeBadge}>{formatGroupTime(group)}</span>
+                          <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
                           <span>{group.items.length}개 결과</span>
                         </span>
                       </summary>
@@ -312,7 +327,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                     <summary className={styles.dayHeader}>
                       <span className={styles.dayTitle}>{group.label}</span>
                       <span className={styles.dayHeaderMeta}>
-                        <span className={styles.dayTimeBadge}>{formatGroupTime(group)}</span>
+                        <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
                         <span>{group.items.length}개 일정</span>
                       </span>
                     </summary>
@@ -397,6 +412,29 @@ function SectionHeading({ styles, title, subtitle, meta = "" }) {
   );
 }
 
+function TimeMetaBadge({ styles, value, className = styles.sectionHeadingMeta }) {
+  return (
+    <span className={className}>
+      <svg
+        aria-hidden="true"
+        className={styles.timeMetaIcon}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M7.05 3.05L4.22 5.88M16.95 3.05L19.78 5.88M12 8.25C8.82 8.25 6.25 10.82 6.25 14C6.25 17.18 8.82 19.75 12 19.75C15.18 19.75 17.75 17.18 17.75 14C17.75 10.82 15.18 8.25 12 8.25ZM12 11.25V14.1L14.15 15.55M8.25 20.95L7.15 22.05M15.75 20.95L16.85 22.05"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+      </svg>
+      <span>{value}</span>
+    </span>
+  );
+}
+
 function StatePanel({ styles, message }) {
   return (
     <div className={styles.statePanel}>
@@ -412,7 +450,7 @@ function groupItemsByDate(items) {
     .slice()
     .sort(compareRaidOrder)
     .forEach((item) => {
-      const dateKey = item.date || "unscheduled";
+      const dateKey = getScheduleDateKey(item.startAt || item.date, item.time || item.blockTime) || "unscheduled";
 
       if (!groups.has(dateKey)) {
         groups.set(dateKey, {
