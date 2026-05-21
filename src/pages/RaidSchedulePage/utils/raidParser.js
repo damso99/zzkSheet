@@ -384,6 +384,10 @@ function collectRaidColumnBlocksForDateBlock(rows = [], headerRowIndex = -1) {
     return null;
   }
 
+  if (titleColumns.every(({ raidName }) => isSkippedRaidTitle(raidName))) {
+    return null;
+  }
+
   return titleColumns.map(({ index, raidName }, currentIndex) => {
     const nextIndex = titleColumns[currentIndex + 1]?.index;
     return {
