@@ -329,8 +329,10 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                   {weeklyCalendarDays.map((day) => (
                     <section key={day.dateKey} className={styles.weekCalendarDay}>
                       <header className={styles.weekCalendarDayHeader}>
-                        <span className={styles.weekCalendarDayLabel}>{day.label}</span>
-                        <strong className={styles.weekCalendarDayDate}>{day.dateLabel}</strong>
+                        <div className={styles.weekCalendarDayHeaderMain}>
+                          <span className={styles.weekCalendarDayLabel}>{day.label}</span>
+                          <strong className={styles.weekCalendarDayDate}>{day.dateLabel}</strong>
+                        </div>
                         {day.startTime ? (
                           <span className={styles.weekCalendarDayStartTime}>{day.startTime}</span>
                         ) : (

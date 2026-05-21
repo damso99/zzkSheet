@@ -67,7 +67,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         canonicalRaidTitle ||
         resolvedFallbackRaidName ||
         fallbackRaidName;
-      if (!cachedFinalRaidName) {
+      if (!cachedFinalRaidName && finalRaidName && finalRaidName !== "일정없음") {
         titleCache.set(titleCacheKey, finalRaidName);
       }
       const item = {
@@ -243,21 +243,32 @@ function hasCanonicalRaidTitleInRange(rows, startRow, endRow, block, raidNameLoo
 }
 
 function resolveRaidTitleFromRows({ raid, raidCalendarRows, raidNameLookup }) {
-  const startRow = Math.max(0, (raid.titleLookupRow ?? raid.startRow ?? 0) - 1);
+  const startRow = Math.max(0, (raid.titleLookupRow ?? raid.startRow ?? 0) - 2);
   const endRow = Math.min(
     raidCalendarRows.length - 1,
-    Math.max(raid.endRow ?? raid.startRow ?? 0, raid.startRow ?? 0) + 2,
+    Math.max(raid.endRow ?? raid.startRow ?? 0, raid.startRow ?? 0) + 3,
   );
-  const block = {
-    endCol: raid.endCol ?? 0,
-    startCol: raid.startCol ?? 0,
-  };
 
   for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
     const row = raidCalendarRows[rowIndex] || [];
+    const block = {
+      endCol: Math.max(row.length - 1, raid.endCol ?? 0),
+      startCol: 0,
+    };
+
     const canonicalRaidTitle = findCanonicalRaidTitleInRow(row, block, raidNameLookup);
     if (canonicalRaidTitle) {
       return canonicalRaidTitle;
+    }
+
+    for (let columnIndex = 0; columnIndex < row.length; columnIndex += 1) {
+      const value = cleanText(row[columnIndex]);
+      if (!value) continue;
+      if (isNoiseCell(value) || isColorCode(value) || parseSheetDate(value) || parseSheetTime(value)) continue;
+      const normalized = normalizeKey(value);
+      if (raidNameLookup.has(normalized)) {
+        return normalizeRaidNameToCanonicalRaidName(value);
+      }
     }
   }
 
