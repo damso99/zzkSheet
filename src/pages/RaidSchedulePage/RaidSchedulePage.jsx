@@ -411,6 +411,20 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                 </span>
                               ))}
                             </div>
+                            <div className={styles.searchMobileRaidRows}>
+                              {item.raids?.map((raidName) => (
+                                <div key={`${item.id}-mobile-${raidName}`} className={styles.searchMobileRaidRow}>
+                                  <button
+                                    type="button"
+                                    className={`${styles.searchCharacterButton} ${styles.searchMobileCharacterButton}`}
+                                    onClick={() => setSelectedCharacterName(item.characterName)}
+                                  >
+                                    {item.characterName}
+                                  </button>
+                                  <span className={styles.searchMobileRaidName}>{raidName}</span>
+                                </div>
+                              ))}
+                            </div>
                           </article>
                         ))}
                       </div>
