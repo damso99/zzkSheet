@@ -25,7 +25,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   const settingLookup = parseSettingRows(settingRows);
   const raidBlocks = collectRaidColumnBlocks(raidCalendarCols, raidCalendarRows);
   const raidNameLookup = buildRaidNameLookup(raidBlocks);
-  const titleCache = new Map();
 
   const parsedRaids = parseRaidCalendarRows({
     raidBlocks,
@@ -37,40 +36,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   const normalizedRaids = parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
-      const titleSearchRow = raid.titleLookupRow ?? raid.startRow;
-      const titleCacheKey = `${titleSearchRow}:${raid.startCol}:${raid.endCol}`;
-      const directRaidTitle = resolveRaidTitleFromRows({
-        raid,
-        raidCalendarRows,
-        raidNameLookup,
-        settingLookup,
-      });
-      const resolvedRaidName = normalizeRaidNameToCanonicalRaidName(
-        findRaidTitleByPosition({
-          endCol: raid.endCol,
-          raidNameLookup,
-          rowIndex: titleSearchRow,
-          rows: raidCalendarRows,
-          settingLookup,
-          startCol: raid.startCol,
-        }) || "미지정",
-      );
-      const cachedFinalRaidName = titleCache.get(titleCacheKey);
-      const fallbackRaidName = normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정";
-      const titleOverrideRaidName = isSkippedRaidTitle(raid.titleOverride) ? "" : raid.titleOverride;
-      const canonicalRaidTitle =
-        titleOverrideRaidName ||
-        directRaidTitle ||
-        (isRaidTitle(resolvedRaidName) && !isSkippedRaidTitle(resolvedRaidName) ? resolvedRaidName : "");
-      const resolvedFallbackRaidName = isSkippedRaidTitle(resolvedRaidName) ? "" : resolvedRaidName;
-      const finalRaidName =
-        cachedFinalRaidName ||
-        canonicalRaidTitle ||
-        resolvedFallbackRaidName ||
-        fallbackRaidName;
-      if (!cachedFinalRaidName && finalRaidName && finalRaidName !== "일정없음") {
-        titleCache.set(titleCacheKey, finalRaidName);
-      }
+      const finalRaidName = normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정";
       const item = {
         blockTime: raid.blockTime,
         date: raid.date,
@@ -90,37 +56,6 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
       return item;
     })
     .sort(compareRaidOrder);
-
-  console.log(
-    "[RaidSchedule][week][parsed]",
-    parsedRaids.map((raid) => ({
-      blockTime: raid.blockTime,
-      date: raid.date,
-      endCol: raid.endCol,
-      endRow: raid.endRow,
-      members: raid.members,
-      raidName: raid.raidName,
-      startCol: raid.startCol,
-      startRow: raid.startRow,
-      titleLookupRow: raid.titleLookupRow,
-      titleOverride: raid.titleOverride || "",
-    })),
-  );
-
-  console.log(
-    "[RaidSchedule][week][normalized]",
-    normalizedRaids.map((raid) => ({
-      blockTime: raid.blockTime,
-      date: raid.date,
-      endCol: raid.endCol,
-      endRow: raid.endRow,
-      participantCount: raid.participantCount,
-      raidName: raid.raidName,
-      startCol: raid.startCol,
-      startRow: raid.startRow,
-      time: raid.time,
-    })),
-  );
 
   return normalizedRaids;
 }
@@ -184,18 +119,6 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
             raidName: directTitle,
           }
         : block;
-    });
-
-    console.log("[RaidSchedule][week][date]", {
-      date: dateRow.date,
-      dateRowIndex,
-      blockStartRow,
-      blockEndRow,
-      blockTime,
-      headerRowIndex,
-      dateRow: rows[dateRow.index] || [],
-      headerRow: rows[headerRowIndex] || [],
-      dateScopedBlocks,
     });
 
     dateScopedBlocks.forEach((block) => {
