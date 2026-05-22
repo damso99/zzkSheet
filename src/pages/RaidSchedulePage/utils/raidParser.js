@@ -387,55 +387,67 @@ function collectRaidColumnBlocks(cols = [], rows = []) {
 function collectRaidColumnBlocksForDateBlock(rows = [], headerRowIndex = -1) {
   if (headerRowIndex < 0) return null;
 
-  const headerRow = rows[headerRowIndex] || [];
   const detectedEndCol = getDetectedEndCol(rows);
-  const titleColumns = [];
+  const candidateRowIndexes = [headerRowIndex, headerRowIndex + 1].filter(
+    (rowIndex) => rowIndex >= 0 && rowIndex < rows.length,
+  );
 
-  for (let columnIndex = 0; columnIndex <= detectedEndCol; columnIndex += 1) {
-    const rawValue = cleanText(headerRow[columnIndex]);
-    if (!rawValue) continue;
-    if (!isRaidTitle(rawValue)) continue;
+  for (const rowIndex of candidateRowIndexes) {
+    const row = rows[rowIndex] || [];
+    const titleColumns = [];
 
-    titleColumns.push({
-      index: columnIndex,
-      raidName: normalizeRaidName(rawValue),
-    });
-  }
+    for (let columnIndex = 0; columnIndex <= detectedEndCol; columnIndex += 1) {
+      const rawValue = cleanText(row[columnIndex]);
+      if (!rawValue) continue;
+      if (!isRaidTitle(rawValue)) continue;
 
-  if (titleColumns.length === 0 || titleColumns.every(({ raidName }) => isSkippedRaidTitle(raidName))) {
-    const fallbackRaidTitle = resolveRaidTitleFromRows({
-      raid: {
-        endCol: detectedEndCol,
-        endRow: Math.min(rows.length - 1, headerRowIndex + 3),
-        startCol: 0,
-        startRow: headerRowIndex,
-        titleLookupRow: headerRowIndex,
-      },
-      raidCalendarRows: rows,
-      raidNameLookup: buildRaidNameLookup([]),
-    });
-
-    if (fallbackRaidTitle) {
-      return [
-        {
-          endCol: detectedEndCol,
-          raidName: fallbackRaidTitle,
-          startCol: 0,
-        },
-      ];
+      titleColumns.push({
+        index: columnIndex,
+        raidName: normalizeRaidNameToCanonicalRaidName(rawValue),
+      });
     }
 
-    return null;
+    if (titleColumns.length === 0) {
+      continue;
+    }
+
+    if (titleColumns.every(({ raidName }) => isSkippedRaidTitle(raidName))) {
+      continue;
+    }
+
+    return titleColumns.map(({ index, raidName }, currentIndex) => {
+      const nextIndex = titleColumns[currentIndex + 1]?.index;
+      return {
+        endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
+        raidName,
+        startCol: index,
+      };
+    });
   }
 
-  return titleColumns.map(({ index, raidName }, currentIndex) => {
-    const nextIndex = titleColumns[currentIndex + 1]?.index;
-    return {
-      endCol: Number.isFinite(nextIndex) ? nextIndex - 1 : detectedEndCol,
-      raidName,
-      startCol: index,
-    };
+  const fallbackRaidTitle = resolveRaidTitleFromRows({
+    raid: {
+      endCol: detectedEndCol,
+      endRow: Math.min(rows.length - 1, headerRowIndex + 3),
+      startCol: 0,
+      startRow: headerRowIndex,
+      titleLookupRow: headerRowIndex,
+    },
+    raidCalendarRows: rows,
+    raidNameLookup: buildRaidNameLookup([]),
   });
+
+  if (fallbackRaidTitle) {
+    return [
+      {
+        endCol: detectedEndCol,
+        raidName: fallbackRaidTitle,
+        startCol: 0,
+      },
+    ];
+  }
+
+  return null;
 }
 
 function buildRaidNameLookup(raidBlocks) {
