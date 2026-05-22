@@ -3552,6 +3552,47 @@
     overflow-wrap: anywhere;
     white-space: normal;
   }
+
+  .weeklySearchResult .searchResultCard {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .weeklySearchResult .searchInlineMeta {
+    width: 100%;
+  }
+
+  .weeklySearchResult .searchOwnerField {
+    display: none !important;
+  }
+
+  .weeklySearchResult .searchCharacterField {
+    min-height: 0;
+    padding: 0;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .weeklySearchResult .searchCharacterField span {
+    display: none;
+  }
+
+  .weeklySearchResult .searchCharacterButton {
+    font-size: 1rem;
+    font-weight: 900;
+  }
+
+  .weeklySearchResult .searchRaidList {
+    width: 100%;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+  }
+
+  .weeklySearchResult .searchRaidPill {
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+  }
 }
 
 @media (max-width: 720px) {

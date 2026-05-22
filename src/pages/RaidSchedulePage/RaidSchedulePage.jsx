@@ -389,7 +389,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                         {group.items.map((item) => (
                           <article key={item.id} className={styles.searchResultCard}>
                             <div className={styles.searchInlineMeta}>
-                              <div className={styles.searchInlineField}>
+                              <div className={`${styles.searchInlineField} ${styles.searchCharacterField}`}>
                                 <span>참여 캐릭터</span>
                                 <button
                                   type="button"
@@ -399,7 +399,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                   {item.characterName}
                                 </button>
                               </div>
-                              <div className={styles.searchInlineField}>
+                              <div className={`${styles.searchInlineField} ${styles.searchOwnerField}`}>
                                 <span>이름</span>
                                 <strong>{item.ownerName}</strong>
                               </div>
