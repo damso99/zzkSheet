@@ -91,28 +91,36 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
     })
     .sort(compareRaidOrder);
 
-  parsedRaids
-    .filter((raid) => raid.date === "2026-05-25")
-    .forEach((raid) => {
-      console.log("[RaidSchedule][Monday][parsed]", {
-        blockTime: raid.blockTime,
-        date: raid.date,
-        endCol: raid.endCol,
-        endRow: raid.endRow,
-        members: raid.members,
-        raidName: raid.raidName,
-        startCol: raid.startCol,
-        startRow: raid.startRow,
-        titleLookupRow: raid.titleLookupRow,
-        titleOverride: raid.titleOverride || "",
-      });
-    });
+  console.log(
+    "[RaidSchedule][week][parsed]",
+    parsedRaids.map((raid) => ({
+      blockTime: raid.blockTime,
+      date: raid.date,
+      endCol: raid.endCol,
+      endRow: raid.endRow,
+      members: raid.members,
+      raidName: raid.raidName,
+      startCol: raid.startCol,
+      startRow: raid.startRow,
+      titleLookupRow: raid.titleLookupRow,
+      titleOverride: raid.titleOverride || "",
+    })),
+  );
 
-  normalizedRaids
-    .filter((raid) => raid.date === "2026-05-25")
-    .forEach((raid) => {
-      console.log("[RaidSchedule][Monday][normalized]", raid);
-    });
+  console.log(
+    "[RaidSchedule][week][normalized]",
+    normalizedRaids.map((raid) => ({
+      blockTime: raid.blockTime,
+      date: raid.date,
+      endCol: raid.endCol,
+      endRow: raid.endRow,
+      participantCount: raid.participantCount,
+      raidName: raid.raidName,
+      startCol: raid.startCol,
+      startRow: raid.startRow,
+      time: raid.time,
+    })),
+  );
 
   return normalizedRaids;
 }
@@ -178,16 +186,17 @@ function parseRaidCalendarRows({ rows = [], raidBlocks = [], raidNameLookup = ne
         : block;
     });
 
-    if (dateRow.date === "2026-05-25") {
-      console.log("[RaidSchedule][Monday][date]", {
-        blockStartRow,
-        blockEndRow,
-        blockTime,
-        dateRow: rows[dateRow.index] || [],
-        headerRow: rows[headerRowIndex] || [],
-        dateScopedBlocks,
-      });
-    }
+    console.log("[RaidSchedule][week][date]", {
+      date: dateRow.date,
+      dateRowIndex,
+      blockStartRow,
+      blockEndRow,
+      blockTime,
+      headerRowIndex,
+      dateRow: rows[dateRow.index] || [],
+      headerRow: rows[headerRowIndex] || [],
+      dateScopedBlocks,
+    });
 
     dateScopedBlocks.forEach((block) => {
       raids.push(
