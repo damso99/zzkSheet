@@ -8,22 +8,6 @@ const ITEM_PRICE_SHEET_URL =
   import.meta.env.VITE_ITEM_PRICE_SHEET_URL ||
   "https://docs.google.com/spreadsheets/d/1pn-86CBr_9TzKI1zncCXpo3Ge0rKjg8zA99v6twX_gA/edit?gid=1973331080#gid=1973331080";
 
-const CATEGORY_ORDER = ["engraving", "gem"];
-
-const CATEGORY_META = {
-  engraving: {
-    label: "각인서",
-  },
-  gem: {
-    label: "보석",
-  },
-};
-
-const SORT_OPTIONS = [
-  { label: "전일등락률 큰 순", value: "rate" },
-  { label: "오늘가 높은 순", value: "price" },
-];
-
 const COLUMN_INDEX = {
   baseDate: 0,
   updatedAt: 1,
@@ -40,34 +24,35 @@ const COLUMN_INDEX = {
   icon: 12,
 };
 
+const SORT_OPTIONS = [
+  { label: "전일등락률 큰 순", value: "rate" },
+  { label: "오늘가 높은 순", value: "price" },
+];
+
 export default function ItemPricePage({ embedded = false }) {
   const [rows, setRows] = useState([]);
-  const [categoryKey, setCategoryKey] = useState("engraving");
   const [sortKey, setSortKey] = useState("rate");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
-    loadSnapshot({ signal: controller.signal });
-
+    void loadSnapshot({ signal: controller.signal });
     return () => controller.abort();
   }, []);
 
   const parsedItems = useMemo(() => parseItemPriceRows(rows), [rows]);
-  const latestBaseDate = useMemo(
-    () => getLatestBaseDate(parsedItems, categoryKey),
-    [categoryKey, parsedItems],
-  );
+  const latestBaseDate = useMemo(() => getLatestBaseDate(parsedItems), [parsedItems]);
   const visibleItems = useMemo(
     () =>
       parsedItems
-        .filter((item) => item.categoryKey === categoryKey && item.baseDate === latestBaseDate)
+        .filter((item) => item.baseDate === latestBaseDate)
+        .filter((item) => item.grade === "유물")
+        .filter((item) => item.itemName.includes("각인서"))
         .slice()
         .sort((left, right) => compareItems(left, right, sortKey)),
-    [categoryKey, latestBaseDate, parsedItems, sortKey],
+    [latestBaseDate, parsedItems, sortKey],
   );
-
   const summary = useMemo(() => buildSummary(visibleItems), [visibleItems]);
   const latestUpdatedAt = useMemo(() => getLatestUpdatedAt(visibleItems), [visibleItems]);
 
@@ -79,9 +64,9 @@ export default function ItemPricePage({ embedded = false }) {
           <header className={styles.hero}>
             <div className={styles.heroText}>
               <p className={styles.eyebrow}>LostArk Market Snapshot</p>
-              <h2>아이템 시세</h2>
+              <h2>유물 각인서 시세</h2>
               <p className={styles.description}>
-                각인서와 보석만 모아서 오늘가, 어제가, 전일차이, 주간평균을 한 번에 확인합니다.
+                유물 등급 각인서만 보여줍니다. 오늘가, 어제가, 전일차이, 전일등락률만 핵심 위주로 확인할 수 있습니다.
               </p>
             </div>
 
@@ -95,27 +80,14 @@ export default function ItemPricePage({ embedded = false }) {
                 <strong>{latestUpdatedAt}</strong>
               </div>
               <div className={styles.metaCard}>
-                <span>총 항목</span>
+                <span>표시 항목</span>
                 <strong>{visibleItems.length}개</strong>
               </div>
             </div>
           </header>
 
           <section className={styles.controls} aria-label="아이템 시세 필터">
-            <div className={styles.categoryTabs} role="tablist" aria-label="카테고리 선택">
-              {CATEGORY_ORDER.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={categoryKey === key}
-                  className={categoryKey === key ? styles.activeTab : styles.tab}
-                  onClick={() => setCategoryKey(key)}
-                >
-                  {CATEGORY_META[key].label}
-                </button>
-              ))}
-            </div>
+            <div className={styles.categoryPill}>각인서 · 유물만 조회</div>
 
             <div className={styles.controlRow}>
               <select className={styles.select} value={sortKey} onChange={(event) => setSortKey(event.target.value)}>
@@ -152,7 +124,7 @@ export default function ItemPricePage({ embedded = false }) {
 
           {isLoading ? (
             <section className={styles.emptyState}>
-              <p>아이템 시세 데이터를 불러오는 중입니다.</p>
+              <p>유물 각인서 시세를 불러오는 중입니다.</p>
             </section>
           ) : null}
 
@@ -170,7 +142,7 @@ export default function ItemPricePage({ embedded = false }) {
 
           {!isLoading && !errorMessage && parsedItems.length > 0 && visibleItems.length === 0 ? (
             <section className={styles.emptyState}>
-              <p>선택한 카테고리의 데이터가 없습니다.</p>
+              <p>유물 등급 각인서 데이터가 없습니다.</p>
             </section>
           ) : null}
 
@@ -186,11 +158,7 @@ export default function ItemPricePage({ embedded = false }) {
                       <th>어제가</th>
                       <th>전일차이</th>
                       <th>전일등락률</th>
-                      <th>주간평균</th>
-                      <th>주간평균차이</th>
-                      <th>주간평균대비율</th>
                       <th>방향</th>
-                      <th>아이콘</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -200,7 +168,7 @@ export default function ItemPricePage({ embedded = false }) {
                           <div className={styles.iconBadge}>{renderIcon(item.icon, item.itemName)}</div>
                           <div className={styles.itemText}>
                             <strong>{item.itemName}</strong>
-                            <small>{item.categoryLabel}</small>
+                            <small>{item.baseDate}</small>
                           </div>
                         </td>
                         <td>
@@ -210,15 +178,11 @@ export default function ItemPricePage({ embedded = false }) {
                         <td className={styles.numberCell}>{formatNullablePrice(item.yesterdayPrice)}</td>
                         <td className={getDeltaClass(item.diff)}>{formatSignedNumber(item.diff)}</td>
                         <td className={getDeltaClass(item.diffRate)}>{formatPercent(item.diffRate)}</td>
-                        <td className={styles.numberCell}>{formatNullablePrice(item.weeklyAverage)}</td>
-                        <td className={getDeltaClass(item.weeklyDiff)}>{formatSignedNumber(item.weeklyDiff)}</td>
-                        <td className={getDeltaClass(item.weeklyRate)}>{formatPercent(item.weeklyRate)}</td>
                         <td>
                           <span className={`${styles.directionBadge} ${getDirectionClass(item.direction)}`}>
                             {directionLabel(item.direction)}
                           </span>
                         </td>
-                        <td className={styles.numberCell}>{renderIcon(item.icon, item.itemName)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -231,9 +195,7 @@ export default function ItemPricePage({ embedded = false }) {
                     <div className={styles.mobileHeader}>
                       <div className={styles.mobileTitle}>
                         <strong>{item.itemName}</strong>
-                        <small>
-                          {item.categoryLabel} · {item.grade || "-"}
-                        </small>
+                        <small>{item.grade || "-"}</small>
                       </div>
                       <span className={`${styles.directionBadge} ${getDirectionClass(item.direction)}`}>
                         {directionLabel(item.direction)}
@@ -257,22 +219,6 @@ export default function ItemPricePage({ embedded = false }) {
                         <span>전일등락률</span>
                         <strong className={getDeltaClass(item.diffRate)}>{formatPercent(item.diffRate)}</strong>
                       </div>
-                      <div className={styles.statBox}>
-                        <span>주간평균</span>
-                        <strong>{formatNullablePrice(item.weeklyAverage)}</strong>
-                      </div>
-                      <div className={styles.statBox}>
-                        <span>주간평균차이</span>
-                        <strong className={getDeltaClass(item.weeklyDiff)}>{formatSignedNumber(item.weeklyDiff)}</strong>
-                      </div>
-                      <div className={styles.statBox}>
-                        <span>주간평균대비율</span>
-                        <strong className={getDeltaClass(item.weeklyRate)}>{formatPercent(item.weeklyRate)}</strong>
-                      </div>
-                      <div className={styles.statBox}>
-                        <span>아이콘</span>
-                        <strong>{renderIcon(item.icon, item.itemName)}</strong>
-                      </div>
                     </div>
                   </article>
                 ))}
@@ -292,60 +238,8 @@ export default function ItemPricePage({ embedded = false }) {
     setIsLoading(true);
     setErrorMessage("");
 
-    {
-      let apiRefreshError = "";
-      let apiRefreshRows = [];
-
-      try {
-        const refreshUrl = force ? `${ITEM_PRICE_REFRESH_API_URL}?force=1` : ITEM_PRICE_REFRESH_API_URL;
-        const response = await fetch(refreshUrl, {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-          },
-          signal,
-        });
-        const payload = await response.json();
-        apiRefreshRows = Array.isArray(payload?.rows) ? payload.rows : [];
-
-        if (!response.ok || payload?.success === false) {
-          throw new Error(payload?.detail || payload?.error || "아이템 시세 갱신에 실패했습니다.");
-        }
-      } catch (error) {
-        if (error?.name !== "AbortError") {
-          apiRefreshError = error instanceof Error ? error.message : "아이템 시세 갱신에 실패했습니다.";
-        } else {
-          return;
-        }
-      }
-
-      try {
-        const payload = await loadSheetRowsByName({
-          sheetUrl: ITEM_PRICE_SHEET_URL,
-          sheetName: ITEM_PRICE_SHEET_NAME,
-          forceRefresh: true,
-          signal,
-        });
-        const sheetRows = Array.isArray(payload?.rows) ? payload.rows : [];
-        setRows(sheetRows.length > 0 ? sheetRows : apiRefreshRows);
-      } catch (error) {
-        if (error?.name === "AbortError") return;
-        const sheetError = error instanceof Error ? error.message : "아이템 시세 시트를 불러오지 못했습니다.";
-        setRows(apiRefreshRows);
-        setErrorMessage(apiRefreshError ? `${apiRefreshError} / ${sheetError}` : sheetError);
-        setIsLoading(false);
-        return;
-      }
-
-      if (apiRefreshError) {
-        setErrorMessage(apiRefreshError);
-      }
-
-      setIsLoading(false);
-      return;
-    }
-
     let refreshError = "";
+    let refreshRows = [];
 
     try {
       const refreshUrl = force ? `${ITEM_PRICE_REFRESH_API_URL}?force=1` : ITEM_PRICE_REFRESH_API_URL;
@@ -357,9 +251,10 @@ export default function ItemPricePage({ embedded = false }) {
         signal,
       });
       const payload = await response.json();
+      refreshRows = Array.isArray(payload?.rows) ? payload.rows : [];
 
       if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.detail || payload?.error || "아이템 시세를 갱신하지 못했습니다.");
+        throw new Error(payload?.detail || payload?.error || "아이템 시세 갱신에 실패했습니다.");
       }
     } catch (error) {
       if (error?.name !== "AbortError") {
@@ -376,10 +271,12 @@ export default function ItemPricePage({ embedded = false }) {
         forceRefresh: true,
         signal,
       });
-      setRows(Array.isArray(payload?.rows) ? payload.rows : []);
+      const sheetRows = Array.isArray(payload?.rows) ? payload.rows : [];
+      setRows(sheetRows.length > 0 ? sheetRows : refreshRows);
     } catch (error) {
       if (error?.name === "AbortError") return;
       const sheetError = error instanceof Error ? error.message : "아이템 시세 시트를 불러오지 못했습니다.";
+      setRows(refreshRows);
       setErrorMessage(refreshError ? `${refreshError} / ${sheetError}` : sheetError);
       setIsLoading(false);
       return;
@@ -417,15 +314,10 @@ function parseItemPriceRows(rows) {
         updatedAt,
         itemName,
         grade,
-        categoryKey: getCategoryKey(itemName),
-        categoryLabel: getCategoryLabel(itemName),
         todayPrice: toNumber(row[COLUMN_INDEX.todayPrice]),
         yesterdayPrice: toNullableNumber(row[COLUMN_INDEX.yesterdayPrice]),
         diff: toNullableNumber(row[COLUMN_INDEX.diff]),
         diffRate: toNullableNumber(row[COLUMN_INDEX.diffRate]),
-        weeklyAverage: toNullableNumber(row[COLUMN_INDEX.weeklyAverage]),
-        weeklyDiff: toNullableNumber(row[COLUMN_INDEX.weeklyDiff]),
-        weeklyRate: toNullableNumber(row[COLUMN_INDEX.weeklyRate]),
         direction: normalizeDirection(row[COLUMN_INDEX.direction]),
         icon: sanitizeText(row[COLUMN_INDEX.icon]),
       };
@@ -436,14 +328,13 @@ function parseItemPriceRows(rows) {
 function buildSummary(items) {
   return items.reduce(
     (acc, item) => {
-      acc.total += 1;
       if (item.direction === "UP") acc.up += 1;
       if (item.direction === "DOWN") acc.down += 1;
       if (item.direction === "SAME") acc.same += 1;
       if (item.direction === "NEW") acc.newCount += 1;
       return acc;
     },
-    { total: 0, up: 0, down: 0, same: 0, newCount: 0 },
+    { up: 0, down: 0, same: 0, newCount: 0 },
   );
 }
 
@@ -464,9 +355,8 @@ function compareItems(left, right, sortKey) {
   return `${left.itemName} ${left.grade}`.localeCompare(`${right.itemName} ${right.grade}`, "ko");
 }
 
-function getLatestBaseDate(items, categoryKey) {
+function getLatestBaseDate(items) {
   const dates = items
-    .filter((item) => item.categoryKey === categoryKey)
     .map((item) => item.baseDate)
     .filter(Boolean)
     .sort((left, right) => left.localeCompare(right));
@@ -478,14 +368,6 @@ function getLatestUpdatedAt(items) {
   return items.reduce((latest, item) => {
     return compareString(item.updatedAt, latest) > 0 ? item.updatedAt : latest;
   }, "") || "-";
-}
-
-function getCategoryKey(itemName) {
-  return sanitizeText(itemName).includes("보석") ? "gem" : "engraving";
-}
-
-function getCategoryLabel(itemName) {
-  return CATEGORY_META[getCategoryKey(itemName)]?.label || "기타";
 }
 
 function getDirectionClass(direction) {
@@ -557,7 +439,7 @@ function formatPercent(value) {
 function renderIcon(icon, itemName) {
   const text = sanitizeText(icon);
   if (!text || text === "-") {
-    return "—";
+    return "∞";
   }
 
   if (/^https?:\/\//i.test(text)) {
@@ -600,7 +482,5 @@ function sanitizeText(value) {
 }
 
 function isDataRow({ baseDate, itemName, grade }) {
-  if (!baseDate || !itemName || !grade) return false;
-  if (baseDate === "기준일" || itemName === "아이템명") return false;
-  return true;
+  return Boolean(baseDate && itemName && grade) && baseDate !== "기준일" && itemName !== "아이템명";
 }

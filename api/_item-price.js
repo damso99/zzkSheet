@@ -1,12 +1,13 @@
 import { getSheetData, sendJson } from "./_shared.js";
-import { getLostarkApiKey } from "./_lostark.js";
+import { getLostarkApiKey, fetchLostarkJson } from "./_lostark.js";
 
 const LOSTARK_MARKET_BASE_URL = "https://developer-lostark.game.onstove.com";
 const ITEM_PRICE_SHEET_NAME = "아이템시세";
-const ITEM_PRICE_TARGET_LABELS = [
-  { key: "engraving", label: "각인서" },
-  { key: "gem", label: "보석" },
-];
+const ITEM_PRICE_CATEGORY = {
+  key: "engraving",
+  label: "각인서",
+  categoryCode: 40000,
+};
 const ITEM_PRICE_REQUEST_DELAY_MS = 180;
 const ITEM_PRICE_SHEET_URL =
   process.env.ITEM_PRICE_SHEET_URL ||
@@ -17,6 +18,7 @@ export async function handleItemPriceRequest(request, response) {
     const url = new URL(request.url, `https://${request.headers.host || "localhost"}`);
     const forceRefresh = ["1", "true", "yes"].includes(String(url.searchParams.get("force") || "").toLowerCase());
     const apiKey = getLostarkApiKey();
+
     if (!apiKey) {
       sendJson(response, 503, {
         success: false,
@@ -56,7 +58,6 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
   const updatedAt = formatKstDateTime(now);
 
   const historyResult = await getSheetData(ITEM_PRICE_SHEET_URL, ITEM_PRICE_SHEET_NAME);
-
   if (historyResult.status !== 200) {
     throw new Error(historyResult.body?.detail || historyResult.body?.error || "Failed to read item price sheet.");
   }
@@ -68,10 +69,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
   if (!forceRefresh && currentSnapshotExists) {
     return {
       baseDate,
-      categories: ITEM_PRICE_TARGET_LABELS.map((item) => ({
-        key: item.key,
-        label: item.label,
-      })),
+      categories: [ITEM_PRICE_CATEGORY],
       marketCount: 0,
       rowCount: historyItems.filter((item) => item.baseDate === baseDate).length,
       skipped: true,
@@ -79,8 +77,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
     };
   }
 
-  const categoryResult = getItemPriceCategories();
-  const marketItems = await fetchMarketItems(apiKey, categoryResult);
+  const marketItems = await fetchMarketItems(apiKey, ITEM_PRICE_CATEGORY);
   const snapshotRows = buildSnapshotRows({
     baseDate,
     updatedAt,
@@ -104,11 +101,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
 
   return {
     baseDate,
-    categories: categoryResult.map((item) => ({
-      key: item.key,
-      label: item.label,
-      categoryCode: item.categoryCode,
-    })),
+    categories: [ITEM_PRICE_CATEGORY],
     insertedCount: saveResult.insertedCount,
     updatedCount: saveResult.updatedCount,
     marketCount: marketItems.length,
@@ -120,33 +113,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
   };
 }
 
-function getItemPriceCategories() {
-  return ITEM_PRICE_TARGET_LABELS.map((target) => ({
-    key: target.key,
-    label: target.label,
-    categoryCode: target.key === "engraving" ? 40000 : 230000,
-  }));
-}
-
-async function fetchMarketItems(apiKey, categories) {
-  const allItems = [];
-
-  for (const category of categories) {
-    const items = await fetchMarketItemsByCategory(apiKey, category);
-    allItems.push(
-      ...items.map((item) => ({
-        ...item,
-        categoryKey: category.key,
-        categoryLabel: category.label,
-      })),
-    );
-    await wait(ITEM_PRICE_REQUEST_DELAY_MS);
-  }
-
-  return dedupeMarketItems(allItems);
-}
-
-async function fetchMarketItemsByCategory(apiKey, category) {
+async function fetchMarketItems(apiKey, category) {
   const items = [];
   const maxPages = 25;
 
@@ -167,22 +134,14 @@ async function fetchMarketItemsByCategory(apiKey, category) {
     const pageSize = toNullableNumber(body?.PageSize ?? body?.pageSize) || pageItems.length;
     const currentCount = pageNo * (pageSize || pageItems.length || 1);
 
-    if (!pageItems.length) {
-      break;
-    }
-
-    if (totalCount !== null && currentCount >= totalCount) {
-      break;
-    }
-
-    if (pageItems.length < (pageSize || pageItems.length)) {
-      break;
-    }
+    if (!pageItems.length) break;
+    if (totalCount !== null && currentCount >= totalCount) break;
+    if (pageItems.length < (pageSize || pageItems.length)) break;
 
     await wait(ITEM_PRICE_REQUEST_DELAY_MS);
   }
 
-  return items;
+  return dedupeMarketItems(items);
 }
 
 function normalizeMarketItems(payload, category) {
@@ -233,65 +192,45 @@ function buildSnapshotRows({ baseDate, updatedAt, historyItems, marketItems }) {
     const weeklyDiff = weeklyAverage === null ? null : item.todayPrice - weeklyAverage;
     const weeklyRate = weeklyAverage && weeklyAverage > 0 && weeklyDiff !== null ? (weeklyDiff / weeklyAverage) * 100 : null;
 
-    return {
-      key,
-      row: [
-        baseDate,
-        updatedAt,
-        item.itemName,
-        item.grade,
-        item.todayPrice,
-        yesterdayPrice,
-        diff,
-        diffRate,
-        weeklyAverage,
-        weeklyDiff,
-        weeklyRate,
-        resolveDirection(yesterdayPrice, diff),
-        item.icon,
-      ],
-      categoryKey: item.categoryKey,
-      itemName: item.itemName,
-      todayPrice: item.todayPrice,
-      grade: item.grade,
-    };
+    return [
+      baseDate,
+      updatedAt,
+      item.itemName,
+      item.grade,
+      item.todayPrice,
+      yesterdayPrice,
+      diff,
+      diffRate,
+      weeklyAverage,
+      weeklyDiff,
+      weeklyRate,
+      resolveDirection(yesterdayPrice, diff),
+      item.icon,
+    ];
   });
 
   rows.sort((left, right) => {
-    if (left.categoryKey !== right.categoryKey) {
-      return left.categoryKey.localeCompare(right.categoryKey, "ko");
-    }
-
-    const priceDiff = right.todayPrice - left.todayPrice;
+    const priceDiff = toNumber(right[4]) - toNumber(left[4]);
     if (priceDiff !== 0) return priceDiff;
-
-    const itemNameDiff = left.itemName.localeCompare(right.itemName, "ko");
-    if (itemNameDiff !== 0) return itemNameDiff;
-
-    return left.grade.localeCompare(right.grade, "ko");
+    return String(left[2]).localeCompare(String(right[2]), "ko");
   });
 
-  return rows.map((entry) => entry.row);
+  return rows;
 }
 
 function parseHistoryRows(rows) {
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return [];
-  }
+  if (!Array.isArray(rows) || rows.length === 0) return [];
 
   return rows
     .map((row) => {
       if (!Array.isArray(row)) return null;
 
       const baseDate = sanitizeText(row[0]);
-      const updatedAt = sanitizeText(row[1]);
       const itemName = sanitizeText(row[2]);
       const grade = sanitizeText(row[3]);
       const todayPrice = toNullableNumber(row[4]);
 
-      if (!baseDate || !itemName || !grade || todayPrice === null) {
-        return null;
-      }
+      if (!baseDate || !itemName || !grade || todayPrice === null) return null;
 
       return {
         baseDate,
@@ -299,7 +238,6 @@ function parseHistoryRows(rows) {
         itemName,
         key: makeItemKey(itemName, grade),
         todayPrice,
-        updatedAt,
       };
     })
     .filter(Boolean);
@@ -307,11 +245,9 @@ function parseHistoryRows(rows) {
 
 function createHistoryIndex(historyItems) {
   const index = new Map();
-
   historyItems.forEach((item) => {
     index.set(makeHistoryKey(item.baseDate, item.key), item);
   });
-
   return index;
 }
 
@@ -390,24 +326,9 @@ async function fetchLostarkJsonWithBody(url, apiKey, body) {
   return { body: safeJsonParse(text) ?? text, response };
 }
 
-async function fetchLostarkJson(url, apiKey) {
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-      authorization: `bearer ${apiKey}`,
-    },
-  });
-  const text = await response.text();
-  return { body: safeJsonParse(text) ?? text, response };
-}
-
 function resolveDirection(yesterdayPrice, diff) {
-  if (yesterdayPrice === null || yesterdayPrice === undefined) {
-    return "NEW";
-  }
-  if (diff === null || diff === undefined) {
-    return "SAME";
-  }
+  if (yesterdayPrice === null || yesterdayPrice === undefined) return "NEW";
+  if (diff === null || diff === undefined) return "SAME";
   if (diff > 0) return "UP";
   if (diff < 0) return "DOWN";
   return "SAME";
@@ -472,10 +393,6 @@ function toNullableNumber(value) {
 
 function sanitizeText(value) {
   return String(value ?? "").replace(/^['"]|['"]$/g, "").trim();
-}
-
-function normalizeText(value) {
-  return sanitizeText(value).toLowerCase();
 }
 
 function safeJsonParse(text) {
