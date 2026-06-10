@@ -1,5 +1,5 @@
 import { getSheetData, sendJson } from "./_shared.js";
-import { getLostarkApiKey, fetchLostarkJson } from "./_lostark.js";
+import { fetchLostarkJson, getLostarkApiKey } from "./_lostark.js";
 
 const LOSTARK_MARKET_BASE_URL = "https://developer-lostark.game.onstove.com";
 const ITEM_PRICE_SHEET_NAME = "아이템시세";

@@ -15,14 +15,17 @@ const ITEM_PRICE_HEADERS = [
 ];
 
 function doGet() {
-  return jsonResponse({ success: true, message: "아이템 시세 스크립트가 준비되었습니다." });
+  return jsonResponse({
+    success: true,
+    message: "아이템 시세 저장 스크립트가 준비되어 있습니다.",
+  });
 }
 
 function doPost(e) {
   try {
     const payload = parsePayload(e);
     const spreadsheetId = getRequiredProperty("ITEM_PRICE_SPREADSHEET_ID");
-    const sheetName = payload.sheetName || getRequiredProperty("ITEM_PRICE_SHEET_NAME") || "아이템시세";
+    const sheetName = String(payload.sheetName || getRequiredProperty("ITEM_PRICE_SHEET_NAME") || "아이템시세").trim();
     const rows = Array.isArray(payload.rows) ? payload.rows : [];
 
     if (!rows.length) {
@@ -30,7 +33,7 @@ function doPost(e) {
         success: true,
         insertedCount: 0,
         updatedCount: 0,
-        message: "저장할 행이 없습니다.",
+        message: "저장할 데이터가 없습니다.",
       });
     }
 

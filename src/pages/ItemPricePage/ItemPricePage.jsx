@@ -62,33 +62,46 @@ export default function ItemPricePage({ embedded = false }) {
       <div className={styles.content}>
         <section className={embedded ? styles.embeddedContent : undefined}>
           <header className={styles.hero}>
-            <div className={styles.heroText}>
+            <div>
               <p className={styles.eyebrow}>LostArk Market Snapshot</p>
-              <h2>유물 각인서 시세</h2>
+              <h1>각인서 시세</h1>
               <p className={styles.description}>
-                유물 등급 각인서만 보여줍니다. 오늘가, 어제가, 전일차이, 전일등락률만 핵심 위주로 확인할 수 있습니다.
+                각인서만 보여줍니다. 오늘가, 어제가, 전일차이, 전일등락률만 핵심 위주로 확인할 수 있습니다.
               </p>
-            </div>
-
-            <div className={styles.heroMeta}>
-              <div className={styles.metaCard}>
-                <span>기준일</span>
-                <strong>{latestBaseDate || "-"}</strong>
-              </div>
-              <div className={styles.metaCard}>
-                <span>갱신시각</span>
-                <strong>{latestUpdatedAt}</strong>
-              </div>
-              <div className={styles.metaCard}>
-                <span>표시 항목</span>
-                <strong>{visibleItems.length}개</strong>
+              <div className={styles.metaLine} aria-label="데이터 정보">
+                <span>기준일 {latestBaseDate || "-"}</span>
+                <span>갱신시각 {latestUpdatedAt}</span>
+                <span>표시 {visibleItems.length}개</span>
               </div>
             </div>
           </header>
 
-          <section className={styles.controls} aria-label="아이템 시세 필터">
-            <div className={styles.categoryPill}>각인서 · 유물만 조회</div>
+          <section className={styles.toolbar} aria-label="아이템 시세 필터">
+            <div className={styles.tabs}>
+              <span className={styles.activeTab}>각인서만 조회</span>
+            </div>
 
+            <div className={styles.summaryChips}>
+              <div className={styles.chip}>
+                <span>상승</span>
+                <strong>{summary.up}</strong>
+              </div>
+              <div className={styles.chip}>
+                <span>하락</span>
+                <strong>{summary.down}</strong>
+              </div>
+              <div className={styles.chip}>
+                <span>유지</span>
+                <strong>{summary.same}</strong>
+              </div>
+              <div className={styles.chip}>
+                <span>신규</span>
+                <strong>{summary.newCount}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.controls}>
             <div className={styles.controlRow}>
               <select className={styles.select} value={sortKey} onChange={(event) => setSortKey(event.target.value)}>
                 {SORT_OPTIONS.map((option) => (
@@ -103,28 +116,9 @@ export default function ItemPricePage({ embedded = false }) {
             </div>
           </section>
 
-          <section className={styles.summaryBar} aria-label="요약">
-            <div className={styles.summaryChip}>
-              <span>상승</span>
-              <strong>{summary.up}</strong>
-            </div>
-            <div className={styles.summaryChip}>
-              <span>하락</span>
-              <strong>{summary.down}</strong>
-            </div>
-            <div className={styles.summaryChip}>
-              <span>유지</span>
-              <strong>{summary.same}</strong>
-            </div>
-            <div className={styles.summaryChip}>
-              <span>신규</span>
-              <strong>{summary.newCount}</strong>
-            </div>
-          </section>
-
           {isLoading ? (
             <section className={styles.emptyState}>
-              <p>유물 각인서 시세를 불러오는 중입니다.</p>
+              <p>각인서 시세를 불러오는 중입니다.</p>
             </section>
           ) : null}
 
@@ -142,7 +136,7 @@ export default function ItemPricePage({ embedded = false }) {
 
           {!isLoading && !errorMessage && parsedItems.length > 0 && visibleItems.length === 0 ? (
             <section className={styles.emptyState}>
-              <p>유물 등급 각인서 데이터가 없습니다.</p>
+              <p>각인서 데이터가 없습니다.</p>
             </section>
           ) : null}
 
@@ -153,7 +147,6 @@ export default function ItemPricePage({ embedded = false }) {
                   <thead>
                     <tr>
                       <th>아이템명</th>
-                      <th>등급</th>
                       <th>오늘가</th>
                       <th>어제가</th>
                       <th>전일차이</th>
@@ -170,9 +163,6 @@ export default function ItemPricePage({ embedded = false }) {
                             <strong>{item.itemName}</strong>
                             <small>{item.baseDate}</small>
                           </div>
-                        </td>
-                        <td>
-                          <span className={styles.gradeBadge}>{item.grade || "-"}</span>
                         </td>
                         <td className={styles.numberCell}>{formatPrice(item.todayPrice)}</td>
                         <td className={styles.numberCell}>{formatNullablePrice(item.yesterdayPrice)}</td>
@@ -195,7 +185,7 @@ export default function ItemPricePage({ embedded = false }) {
                     <div className={styles.mobileHeader}>
                       <div className={styles.mobileTitle}>
                         <strong>{item.itemName}</strong>
-                        <small>{item.grade || "-"}</small>
+                        <small>{item.baseDate}</small>
                       </div>
                       <span className={`${styles.directionBadge} ${getDirectionClass(item.direction)}`}>
                         {directionLabel(item.direction)}
@@ -252,9 +242,14 @@ export default function ItemPricePage({ embedded = false }) {
       });
       const payload = await response.json();
       refreshRows = Array.isArray(payload?.rows) ? payload.rows : [];
+      const saveError = typeof payload?.saveError === "string" ? payload.saveError.trim() : "";
 
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.detail || payload?.error || "아이템 시세 갱신에 실패했습니다.");
+      }
+
+      if (saveError) {
+        refreshError = saveError;
       }
     } catch (error) {
       if (error?.name !== "AbortError") {
@@ -352,7 +347,7 @@ function compareItems(left, right, sortKey) {
     if (rightPrice !== leftPrice) return rightPrice - leftPrice;
   }
 
-  return `${left.itemName} ${left.grade}`.localeCompare(`${right.itemName} ${right.grade}`, "ko");
+  return `${left.itemName}`.localeCompare(`${right.itemName}`, "ko");
 }
 
 function getLatestBaseDate(items) {
