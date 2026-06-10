@@ -3,9 +3,9 @@ import { getLostarkApiKey } from "./_lostark.js";
 
 const LOSTARK_MARKET_BASE_URL = "https://developer-lostark.game.onstove.com";
 const ITEM_PRICE_SHEET_NAME = "아이템시세";
-const ITEM_PRICE_TARGETS = [
-  { key: "engraving", label: "각인서", categoryCode: 40000 },
-  { key: "gem", label: "보석", categoryCode: 230000 },
+const ITEM_PRICE_TARGET_LABELS = [
+  { key: "engraving", label: "각인서" },
+  { key: "gem", label: "보석" },
 ];
 const ITEM_PRICE_REQUEST_DELAY_MS = 180;
 const ITEM_PRICE_SHEET_URL =
@@ -46,7 +46,10 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
   const baseDate = resolveKstBusinessDate(now);
   const updatedAt = formatKstDateTime(now);
 
-  const historyResult = await getSheetData(ITEM_PRICE_SHEET_URL, ITEM_PRICE_SHEET_NAME);
+  const [historyResult, categoryResult] = await Promise.all([
+    getSheetData(ITEM_PRICE_SHEET_URL, ITEM_PRICE_SHEET_NAME),
+    fetchTargetCategories(apiKey),
+  ]);
 
   if (historyResult.status !== 200) {
     throw new Error(historyResult.body?.detail || historyResult.body?.error || "Failed to read item price sheet.");
@@ -70,7 +73,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
     };
   }
 
-  const marketItems = await fetchMarketItems(apiKey, ITEM_PRICE_TARGETS);
+  const marketItems = await fetchMarketItems(apiKey, categoryResult);
   const snapshotRows = buildSnapshotRows({
     baseDate,
     updatedAt,
@@ -86,7 +89,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
 
   return {
     baseDate,
-    categories: ITEM_PRICE_TARGETS.map((item) => ({
+    categories: categoryResult.map((item) => ({
       key: item.key,
       label: item.label,
       categoryCode: item.categoryCode,
@@ -95,11 +98,37 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
     updatedCount: saveResult.updatedCount,
     marketCount: marketItems.length,
     rowCount: snapshotRows.length,
-    rows: snapshotRows,
     skipped: false,
     updatedAt,
-    saveError: saveResult.saveError || "",
   };
+}
+
+async function fetchTargetCategories(apiKey) {
+  const { body, response } = await fetchLostarkJson(`${LOSTARK_MARKET_BASE_URL}/markets/options`, apiKey);
+
+  if (!response.ok) {
+    throw new Error(extractApiError(body) || `markets/options request failed with status ${response.status}.`);
+  }
+
+  const candidates = collectCategoryCandidates(body);
+  const resolved = ITEM_PRICE_TARGET_LABELS.map((target) => {
+    const normalizedLabel = normalizeText(target.label);
+    const match =
+      candidates.find((item) => normalizeText(item.label) === normalizedLabel) ||
+      candidates.find((item) => normalizeText(item.label).includes(normalizedLabel));
+
+    if (!match) {
+      throw new Error(`Could not resolve Lost Ark market category code for "${target.label}".`);
+    }
+
+    return {
+      key: target.key,
+      label: target.label,
+      categoryCode: match.categoryCode,
+    };
+  });
+
+  return resolved;
 }
 
 async function fetchMarketItems(apiKey, categories) {
@@ -304,6 +333,49 @@ function uniqueSortedDates(dates) {
   return [...new Set(dates.filter(Boolean))].sort((left, right) => left.localeCompare(right));
 }
 
+function collectCategoryCandidates(value, results = [], visited = new Set()) {
+  if (value == null) return results;
+
+  if (typeof value !== "object") return results;
+  if (visited.has(value)) return results;
+  visited.add(value);
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectCategoryCandidates(item, results, visited));
+    return results;
+  }
+
+  const label =
+    value.CategoryName ??
+    value.categoryName ??
+    value.Name ??
+    value.name ??
+    value.Label ??
+    value.label ??
+    value.Title ??
+    value.title ??
+    "";
+  const categoryCode =
+    value.CategoryCode ??
+    value.categoryCode ??
+    value.Code ??
+    value.code ??
+    value.Value ??
+    value.value ??
+    value.Id ??
+    value.id ??
+    "";
+
+  const normalizedLabel = sanitizeText(label);
+  const numericCode = toNullableNumber(categoryCode);
+  if (normalizedLabel && numericCode !== null) {
+    results.push({ label: normalizedLabel, categoryCode: numericCode });
+  }
+
+  Object.values(value).forEach((child) => collectCategoryCandidates(child, results, visited));
+  return results;
+}
+
 function dedupeMarketItems(items) {
   const seen = new Map();
 
@@ -320,51 +392,34 @@ function dedupeMarketItems(items) {
 async function saveSnapshotToSheet({ baseDate, rows, updatedAt }) {
   const scriptUrl = cleanEnvValue(process.env.ITEM_PRICE_SCRIPT_URL);
   if (!scriptUrl) {
-    return {
-      insertedCount: 0,
-      updatedCount: 0,
-      saveError: "ITEM_PRICE_SCRIPT_URL is not configured.",
-    };
+    throw new Error("ITEM_PRICE_SCRIPT_URL is not configured. Add a Google Apps Script Web App URL for sheet writes.");
   }
 
-  try {
-    const response = await fetch(scriptUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        accept: "application/json",
-      },
-      body: JSON.stringify({
-        baseDate,
-        sheetName: ITEM_PRICE_SHEET_NAME,
-        updatedAt,
-        rows,
-      }),
-    });
+  const response = await fetch(scriptUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      baseDate,
+      sheetName: ITEM_PRICE_SHEET_NAME,
+      updatedAt,
+      rows,
+    }),
+  });
 
-    const text = await response.text();
-    const payload = safeJsonParse(text);
+  const text = await response.text();
+  const payload = safeJsonParse(text);
 
-    if (!response.ok) {
-      return {
-        insertedCount: 0,
-        updatedCount: 0,
-        saveError: payload?.message || payload?.error || text || "Failed to save item price snapshot.",
-      };
-    }
-
-    return {
-      insertedCount: Number(payload?.insertedCount || 0),
-      updatedCount: Number(payload?.updatedCount || 0),
-      saveError: "",
-    };
-  } catch (error) {
-    return {
-      insertedCount: 0,
-      updatedCount: 0,
-      saveError: error instanceof Error ? error.message : String(error),
-    };
+  if (!response.ok) {
+    throw new Error(payload?.message || payload?.error || text || "Failed to save item price snapshot.");
   }
+
+  return {
+    insertedCount: Number(payload?.insertedCount || 0),
+    updatedCount: Number(payload?.updatedCount || 0),
+  };
 }
 
 async function fetchLostarkJsonWithBody(url, apiKey, body) {

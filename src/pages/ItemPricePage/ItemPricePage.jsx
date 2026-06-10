@@ -308,14 +308,6 @@ export default function ItemPricePage({ embedded = false }) {
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.detail || payload?.error || "아이템 시세를 갱신하지 못했습니다.");
       }
-
-      if (Array.isArray(payload?.rows) && payload.rows.length > 0) {
-        setRows(payload.rows);
-      }
-
-      if (payload?.saveError) {
-        refreshError = payload.saveError;
-      }
     } catch (error) {
       if (error?.name !== "AbortError") {
         refreshError = error instanceof Error ? error.message : "아이템 시세 갱신에 실패했습니다.";
@@ -331,15 +323,11 @@ export default function ItemPricePage({ embedded = false }) {
         forceRefresh: true,
         signal,
       });
-      if (Array.isArray(payload?.rows) && payload.rows.length > 0) {
-        setRows(payload.rows);
-      }
+      setRows(Array.isArray(payload?.rows) ? payload.rows : []);
     } catch (error) {
       if (error?.name === "AbortError") return;
-      if (!refreshError) {
-        const sheetError = error instanceof Error ? error.message : "아이템 시세 시트를 불러오지 못했습니다.";
-        setErrorMessage(sheetError);
-      }
+      const sheetError = error instanceof Error ? error.message : "아이템 시세 시트를 불러오지 못했습니다.";
+      setErrorMessage(refreshError ? `${refreshError} / ${sheetError}` : sheetError);
       setIsLoading(false);
       return;
     }
@@ -440,11 +428,7 @@ function getLatestUpdatedAt(items) {
 }
 
 function getCategoryKey(itemName) {
-  const normalizedName = sanitizeText(itemName);
-  if (normalizedName.includes("젬") || normalizedName.includes("보석")) {
-    return "gem";
-  }
-  return "engraving";
+  return sanitizeText(itemName).includes("보석") ? "gem" : "engraving";
 }
 
 function getCategoryLabel(itemName) {
