@@ -4,6 +4,7 @@ import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import RaidCard from "./components/RaidCard.jsx";
 import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
 import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
+import ItemPricePage from "../ItemPricePage/ItemPricePage.jsx";
 import {
   formatDateLabel,
   formatLocalDate,
@@ -16,11 +17,12 @@ import {
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
 
-const TAB_ORDER = ["today", "week", "personalRaid", "personal"];
+const TAB_ORDER = ["today", "week", "itemPrice", "personalRaid", "personal"];
 
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
+  itemPrice: "아이템 시세",
   personal: "개인 일정",
   personalRaid: "레이드 참여 현황",
 };
@@ -475,6 +477,11 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         {activeTab === "personal" ? (
           <section className={`${styles.section} ${styles.pageSection}`}>
             <PersonalSchedulePage embedded />
+          </section>
+        ) : null}
+        {activeTab === "itemPrice" ? (
+          <section className={`${styles.section} ${styles.pageSection}`}>
+            <ItemPricePage embedded />
           </section>
         ) : null}
         {activeTab === "personalRaid" ? (
