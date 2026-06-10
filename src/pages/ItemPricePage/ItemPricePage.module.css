@@ -165,10 +165,10 @@
 
 .tableWrap {
   overflow: auto;
-  border: 1px solid rgba(124, 184, 255, 0.12);
-  border-radius: 18px;
-  background: rgba(8, 12, 21, 0.48);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.14);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .table {
@@ -180,15 +180,15 @@
 .table th,
 .table td {
   padding: 13px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  text-align: right;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  text-align: center;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .table th:first-child,
 .table td:first-child {
-  text-align: left;
+  text-align: center;
 }
 
 .table th {
@@ -196,16 +196,17 @@
   top: 0;
   z-index: 1;
   color: #d8ebff;
-  background: rgba(10, 16, 28, 0.94);
+  background: transparent;
 }
 
 .row:hover {
-  background: rgba(124, 184, 255, 0.03);
+  background: transparent;
 }
 
 .itemCell {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -216,8 +217,8 @@
   place-items: center;
   border-radius: 11px;
   color: var(--primary);
-  border: 1px solid rgba(124, 184, 255, 0.12);
-  background: rgba(124, 184, 255, 0.08);
+  border: 0;
+  background: transparent;
   font-weight: 900;
   flex: none;
 }
@@ -241,7 +242,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 58px;
+  min-width: 52px;
   padding: 6px 10px;
   border-radius: 999px;
   font-weight: 800;
@@ -253,22 +254,22 @@
 
 .directionUp {
   color: #ff8b99;
-  background: rgba(255, 95, 109, 0.12);
+  background: transparent;
 }
 
 .directionDown {
   color: #84c5ff;
-  background: rgba(78, 161, 255, 0.12);
+  background: transparent;
 }
 
 .directionSame {
   color: #b1bfd6;
-  background: rgba(147, 164, 190, 0.1);
+  background: transparent;
 }
 
 .directionNew {
   color: #1d1600;
-  background: rgba(255, 216, 77, 0.92);
+  background: transparent;
 }
 
 .deltaUp {
@@ -294,9 +295,9 @@
 
 .mobileCard {
   padding: 15px;
-  border-radius: 18px;
-  border: 1px solid rgba(124, 184, 255, 0.12);
-  background: rgba(8, 12, 21, 0.48);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
 }
 
 .mobileHeader {
@@ -329,9 +330,9 @@
 
 .statBox {
   padding: 10px 11px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0;
+  background: transparent;
+  border: 0;
 }
 
 .statBox span {
