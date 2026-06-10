@@ -292,6 +292,59 @@ export default function ItemPricePage({ embedded = false }) {
     setIsLoading(true);
     setErrorMessage("");
 
+    {
+      let apiRefreshError = "";
+      let apiRefreshRows = [];
+
+      try {
+        const refreshUrl = force ? `${ITEM_PRICE_REFRESH_API_URL}?force=1` : ITEM_PRICE_REFRESH_API_URL;
+        const response = await fetch(refreshUrl, {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+          },
+          signal,
+        });
+        const payload = await response.json();
+        apiRefreshRows = Array.isArray(payload?.rows) ? payload.rows : [];
+
+        if (!response.ok || payload?.success === false) {
+          throw new Error(payload?.detail || payload?.error || "아이템 시세 갱신에 실패했습니다.");
+        }
+      } catch (error) {
+        if (error?.name !== "AbortError") {
+          apiRefreshError = error instanceof Error ? error.message : "아이템 시세 갱신에 실패했습니다.";
+        } else {
+          return;
+        }
+      }
+
+      try {
+        const payload = await loadSheetRowsByName({
+          sheetUrl: ITEM_PRICE_SHEET_URL,
+          sheetName: ITEM_PRICE_SHEET_NAME,
+          forceRefresh: true,
+          signal,
+        });
+        const sheetRows = Array.isArray(payload?.rows) ? payload.rows : [];
+        setRows(sheetRows.length > 0 ? sheetRows : apiRefreshRows);
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        const sheetError = error instanceof Error ? error.message : "아이템 시세 시트를 불러오지 못했습니다.";
+        setRows(apiRefreshRows);
+        setErrorMessage(apiRefreshError ? `${apiRefreshError} / ${sheetError}` : sheetError);
+        setIsLoading(false);
+        return;
+      }
+
+      if (apiRefreshError) {
+        setErrorMessage(apiRefreshError);
+      }
+
+      setIsLoading(false);
+      return;
+    }
+
     let refreshError = "";
 
     try {

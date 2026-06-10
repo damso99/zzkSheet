@@ -25,6 +25,15 @@ export async function handleItemPriceRequest(request, response) {
       return;
     }
 
+    if (/[^\x20-\x7E]/.test(apiKey)) {
+      sendJson(response, 503, {
+        success: false,
+        error: "LOSTARK_API_KEY contains invalid characters.",
+        detail: "JWT 값만 그대로 넣어주세요. 한글 설명, 따옴표, 공백, 줄바꿈이 섞이면 안 됩니다.",
+      });
+      return;
+    }
+
     const refreshResult = await refreshItemPriceSnapshot({ apiKey, forceRefresh });
 
     sendJson(response, 200, {
@@ -46,10 +55,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
   const baseDate = resolveKstBusinessDate(now);
   const updatedAt = formatKstDateTime(now);
 
-  const [historyResult, categoryResult] = await Promise.all([
-    getSheetData(ITEM_PRICE_SHEET_URL, ITEM_PRICE_SHEET_NAME),
-    fetchTargetCategories(apiKey),
-  ]);
+  const historyResult = await getSheetData(ITEM_PRICE_SHEET_URL, ITEM_PRICE_SHEET_NAME);
 
   if (historyResult.status !== 200) {
     throw new Error(historyResult.body?.detail || historyResult.body?.error || "Failed to read item price sheet.");
@@ -73,6 +79,7 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
     };
   }
 
+  const categoryResult = getItemPriceCategories();
   const marketItems = await fetchMarketItems(apiKey, categoryResult);
   const snapshotRows = buildSnapshotRows({
     baseDate,
@@ -81,11 +88,19 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
     marketItems,
   });
 
-  const saveResult = await saveSnapshotToSheet({
-    baseDate,
-    rows: snapshotRows,
-    updatedAt,
-  });
+  let saveResult = { insertedCount: 0, updatedCount: 0 };
+  let saveError = "";
+
+  try {
+    saveResult = await saveSnapshotToSheet({
+      baseDate,
+      rows: snapshotRows,
+      updatedAt,
+    });
+  } catch (error) {
+    saveError = error instanceof Error ? error.message : String(error);
+    console.warn("[item-price] snapshot save skipped:", saveError);
+  }
 
   return {
     baseDate,
@@ -100,35 +115,17 @@ async function refreshItemPriceSnapshot({ apiKey, forceRefresh = false }) {
     rowCount: snapshotRows.length,
     skipped: false,
     updatedAt,
+    rows: snapshotRows,
+    saveError: saveError || undefined,
   };
 }
 
-async function fetchTargetCategories(apiKey) {
-  const { body, response } = await fetchLostarkJson(`${LOSTARK_MARKET_BASE_URL}/markets/options`, apiKey);
-
-  if (!response.ok) {
-    throw new Error(extractApiError(body) || `markets/options request failed with status ${response.status}.`);
-  }
-
-  const candidates = collectCategoryCandidates(body);
-  const resolved = ITEM_PRICE_TARGET_LABELS.map((target) => {
-    const normalizedLabel = normalizeText(target.label);
-    const match =
-      candidates.find((item) => normalizeText(item.label) === normalizedLabel) ||
-      candidates.find((item) => normalizeText(item.label).includes(normalizedLabel));
-
-    if (!match) {
-      throw new Error(`Could not resolve Lost Ark market category code for "${target.label}".`);
-    }
-
-    return {
-      key: target.key,
-      label: target.label,
-      categoryCode: match.categoryCode,
-    };
-  });
-
-  return resolved;
+function getItemPriceCategories() {
+  return ITEM_PRICE_TARGET_LABELS.map((target) => ({
+    key: target.key,
+    label: target.label,
+    categoryCode: target.key === "engraving" ? 40000 : 230000,
+  }));
 }
 
 async function fetchMarketItems(apiKey, categories) {
@@ -331,49 +328,6 @@ function getPreviousBaseDates(historyItems, currentBaseDate, count) {
 
 function uniqueSortedDates(dates) {
   return [...new Set(dates.filter(Boolean))].sort((left, right) => left.localeCompare(right));
-}
-
-function collectCategoryCandidates(value, results = [], visited = new Set()) {
-  if (value == null) return results;
-
-  if (typeof value !== "object") return results;
-  if (visited.has(value)) return results;
-  visited.add(value);
-
-  if (Array.isArray(value)) {
-    value.forEach((item) => collectCategoryCandidates(item, results, visited));
-    return results;
-  }
-
-  const label =
-    value.CategoryName ??
-    value.categoryName ??
-    value.Name ??
-    value.name ??
-    value.Label ??
-    value.label ??
-    value.Title ??
-    value.title ??
-    "";
-  const categoryCode =
-    value.CategoryCode ??
-    value.categoryCode ??
-    value.Code ??
-    value.code ??
-    value.Value ??
-    value.value ??
-    value.Id ??
-    value.id ??
-    "";
-
-  const normalizedLabel = sanitizeText(label);
-  const numericCode = toNullableNumber(categoryCode);
-  if (normalizedLabel && numericCode !== null) {
-    results.push({ label: normalizedLabel, categoryCode: numericCode });
-  }
-
-  Object.values(value).forEach((child) => collectCategoryCandidates(child, results, visited));
-  return results;
 }
 
 function dedupeMarketItems(items) {
