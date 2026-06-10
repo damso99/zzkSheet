@@ -126,7 +126,10 @@ npm install
 
 ```bash
 LOSTARK_API_KEY=your_lostark_openapi_jwt_here
+ITEM_PRICE_SHEET_URL=https://docs.google.com/spreadsheets/d/your_spreadsheet_id/edit?gid=1973331080#gid=1973331080
+ITEM_PRICE_SCRIPT_URL=https://script.google.com/macros/s/your_item_price_deployment_id/exec
 PERSONAL_SCHEDULE_SCRIPT_URL=https://script.google.com/macros/s/your_deployment_id/exec
+VITE_ITEM_PRICE_SHEET_URL=https://docs.google.com/spreadsheets/d/your_spreadsheet_id/edit?gid=1973331080#gid=1973331080
 PORT=5178
 ```
 
@@ -151,7 +154,10 @@ npm run preview
 | 변수명 | 설명 |
 | --- | --- |
 | `LOSTARK_API_KEY` | Lost Ark OpenAPI 호출용 서버 전용 키 |
+| `ITEM_PRICE_SHEET_URL` | 아이템 시세 데이터를 읽고 쓰는 Google Sheets URL |
+| `ITEM_PRICE_SCRIPT_URL` | 아이템 시세 스냅샷을 저장하는 Google Apps Script Web App URL |
 | `PERSONAL_SCHEDULE_SCRIPT_URL` | 개인 일정 등록/조회용 Google Apps Script Web App URL |
+| `VITE_ITEM_PRICE_SHEET_URL` | 프론트에서 아이템 시세 시트 URL을 덮어쓸 때 사용하는 값 |
 | `PORT` | 로컬 API 서버 포트 |
 
 ## 포트폴리오 설명용 문구
