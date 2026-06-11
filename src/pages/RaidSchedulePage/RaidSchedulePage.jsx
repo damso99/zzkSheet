@@ -484,9 +484,11 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           ) : null}
         </main>
 
-        <aside className={styles.auctionFloatingSidebar} aria-label="쌀산기">
-          <AuctionBidSidebar />
-        </aside>
+        {activeTab === "today" || activeTab === "week" ? (
+          <aside className={styles.auctionFloatingSidebar} aria-label="쌀산기">
+            <AuctionBidSidebar />
+          </aside>
+        ) : null}
       </div>
 
       {selectedCharacterName ? (
