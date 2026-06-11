@@ -17,18 +17,18 @@ import {
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
 
-const TAB_ORDER = ["today", "week", "auction", "personalRaid", "personal"];
+const TAB_ORDER = ["today", "week", "personalRaid", "personal"];
 
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
-  auction: "쌀산기",
   personal: "개인 일정",
   personalRaid: "레이드 참여 현황",
 };
 
-export default function RaidSchedulePage({ initialTab = "today" }) {
+export default function RaidSchedulePage({ initialTab = "today", initialAuctionOpen = false }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [isAuctionPanelOpen, setIsAuctionPanelOpen] = useState(initialAuctionOpen);
   const [weeklyViewMode, setWeeklyViewMode] = useState("list");
   const [raids, setRaids] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +48,10 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  useEffect(() => {
+    setIsAuctionPanelOpen(initialAuctionOpen);
+  }, [initialAuctionOpen]);
 
   useEffect(() => {
     let ignore = false;
@@ -234,6 +238,16 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             ))}
           </div>
 
+          <button
+            type="button"
+            className={styles.auctionMenuButton}
+            aria-expanded={isAuctionPanelOpen}
+            aria-controls="auction-sidebar"
+            onClick={() => setIsAuctionPanelOpen((value) => !value)}
+          >
+            {isAuctionPanelOpen ? "메뉴 닫기" : "메뉴"}
+          </button>
+
           <div
             className={`${styles.summaryChips} ${showOverviewStats ? "" : styles.summaryChipsPlaceholder}`}
             aria-hidden={!showOverviewStats}
@@ -257,93 +271,190 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           </div>
         </section>
 
-        {isLoading && (activeTab === "today" || activeTab === "week") ? (
-          <StatePanel styles={styles} message="레이드 일정을 불러오는 중입니다." />
-        ) : null}
+        <div className={styles.pageBody}>
+          <main className={styles.pageMain}>
+            {!isLoading && activeTab === "today" ? (
+              <section className={`${styles.section} ${styles.pageSection} ${styles.todaySchedule}`}>
+                <SectionHeading
+                  styles={styles}
+                  title={TAB_LABELS.today}
+                  subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
+                  meta={<TimeMetaBadge styles={styles} value={todayStartTime} />}
+                />
+                
+                <TodayParticipantList
+                  ownerNames={todayOwnerNames}
+                  selectedOwnerName={selectedOwnerName}
+                  onSelectOwnerName={setSelectedOwnerName}
+                  styles={styles}
+                />
+                {sortedTodayRaids.length === 0 ? (
+                  <StatePanel styles={styles} message="금일 일정이 없습니다." />
+                ) : (
+                  <div className={styles.cardGrid}>
+                    {sortedTodayRaids.map((raid) => {
+                      const isHighlighted =
+                        Boolean(selectedOwnerName) &&
+                        raid.participants.some((participant) => participant.ownerName === selectedOwnerName);
 
-        {!isLoading && errorMessage && (activeTab === "today" || activeTab === "week") ? (
-          <div className={styles.errorBanner} role="alert">
-            {errorMessage}
-          </div>
-        ) : null}
+                      return (
+                        <RaidCard
+                          key={raid.id}
+                          raid={raid}
+                          styles={styles}
+                          onCharacterClick={setSelectedCharacterName}
+                          collapsible
+                          isHighlighted={isHighlighted}
+                          selectedOwnerName={selectedOwnerName}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            ) : null}
 
-        {!isLoading && activeTab === "today" ? (
-          <section className={`${styles.section} ${styles.pageSection} ${styles.todaySchedule}`}>
-            <SectionHeading
-              styles={styles}
-              title={TAB_LABELS.today}
-              subtitle={`${formatDateLabel(todayIsoDate)} 기준 일정`}
-              meta={<TimeMetaBadge styles={styles} value={todayStartTime} />}
-            />
-            
-            <TodayParticipantList
-              ownerNames={todayOwnerNames}
-              selectedOwnerName={selectedOwnerName}
-              onSelectOwnerName={setSelectedOwnerName}
-              styles={styles}
-            />
-            {sortedTodayRaids.length === 0 ? (
-              <StatePanel styles={styles} message="금일 일정이 없습니다." />
-            ) : (
-              <div className={styles.cardGrid}>
-                {sortedTodayRaids.map((raid) => {
-                  const isHighlighted =
-                    Boolean(selectedOwnerName) &&
-                    raid.participants.some((participant) => participant.ownerName === selectedOwnerName);
+            {!isLoading && activeTab === "week" ? (
+              <section className={`${styles.section} ${styles.pageSection}`}>
+                <SectionHeading
+                  styles={styles}
+                  title={TAB_LABELS.week}
+                  subtitle="요일별 레이드 일정"
+                  meta={
+                    <WeekViewToggle styles={styles} value={weeklyViewMode} onChange={setWeeklyViewMode} />
+                  }
+                />
+                <WeeklyParticipantList
+                  ownerNames={weeklyParticipantNames}
+                  selectedOwnerName={selectedWeeklyParticipant}
+                  onSelectOwnerName={setSelectedWeeklyParticipant}
+                  styles={styles}
+                />
 
-                  return (
-                    <RaidCard
-                      key={raid.id}
-                      raid={raid}
-                      styles={styles}
-                      onCharacterClick={setSelectedCharacterName}
-                      collapsible
-                      isHighlighted={isHighlighted}
-                      selectedOwnerName={selectedOwnerName}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        ) : null}
+                {weeklyViewMode === "calendar" ? (
+                  weeklyCalendarDays.some((day) => day.items.length > 0) ? (
+                    <div className={styles.weekCalendarGrid}>
+                      {weeklyCalendarDays.map((day) => (
+                        <section key={day.dateKey} className={styles.weekCalendarDay}>
+                          <header className={styles.weekCalendarDayHeader}>
+                            <div className={styles.weekCalendarDayHeaderMain}>
+                              <span className={styles.weekCalendarDayLabel}>{day.label}</span>
+                              <strong className={styles.weekCalendarDayDate}>{day.dateLabel}</strong>
+                            </div>
+                            {day.startTime ? (
+                              <span className={styles.weekCalendarDayStartTime}>{day.startTime}</span>
+                            ) : (
+                              <span className={styles.weekCalendarDayStartTime}>시간 미정</span>
+                            )}
+                          </header>
+                          {day.items.length ? (
+                            <div className={styles.weekCalendarDayList}>
+                              {day.items.map((raid) => {
+                                const isHighlighted =
+                                  Boolean(selectedWeeklyParticipant) &&
+                                  raid.participants.some(
+                                    (participant) => participant.ownerName === selectedWeeklyParticipant,
+                                  );
 
-        {!isLoading && activeTab === "week" ? (
-          <section className={`${styles.section} ${styles.pageSection}`}>
-            <SectionHeading
-              styles={styles}
-              title={TAB_LABELS.week}
-              subtitle="요일별 레이드 일정"
-              meta={
-                <WeekViewToggle styles={styles} value={weeklyViewMode} onChange={setWeeklyViewMode} />
-              }
-            />
-            <WeeklyParticipantList
-              ownerNames={weeklyParticipantNames}
-              selectedOwnerName={selectedWeeklyParticipant}
-              onSelectOwnerName={setSelectedWeeklyParticipant}
-              styles={styles}
-            />
-
-            {weeklyViewMode === "calendar" ? (
-              weeklyCalendarDays.some((day) => day.items.length > 0) ? (
-                <div className={styles.weekCalendarGrid}>
-                  {weeklyCalendarDays.map((day) => (
-                    <section key={day.dateKey} className={styles.weekCalendarDay}>
-                      <header className={styles.weekCalendarDayHeader}>
-                        <div className={styles.weekCalendarDayHeaderMain}>
-                          <span className={styles.weekCalendarDayLabel}>{day.label}</span>
-                          <strong className={styles.weekCalendarDayDate}>{day.dateLabel}</strong>
-                        </div>
-                        {day.startTime ? (
-                          <span className={styles.weekCalendarDayStartTime}>{day.startTime}</span>
-                        ) : (
-                          <span className={styles.weekCalendarDayStartTime}>시간 미정</span>
-                        )}
-                      </header>
-                      {day.items.length ? (
-                        <div className={styles.weekCalendarDayList}>
-                          {day.items.map((raid) => {
+                                return (
+                                  <article
+                                    key={raid.id}
+                                    className={`${styles.weekCalendarDayCard} ${
+                                      isHighlighted ? styles.weekCalendarDayCardHighlighted : ""
+                                    }`}
+                                  >
+                                    <div className={styles.weekCalendarDayCardTop}>
+                                      <strong className={styles.weekCalendarDayCardTitle}>{raid.raidName}</strong>
+                                    </div>
+                                  </article>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className={styles.weekCalendarDayEmpty}>일정 없음</p>
+                          )}
+                        </section>
+                      ))}
+                    </div>
+                  ) : (
+                    <StatePanel styles={styles} message="이번 주 일정이 없습니다." />
+                  )
+                ) : deferredSearchQuery ? (
+                  searchGroups.length === 0 ? (
+                    <StatePanel styles={styles} message="검색 결과가 없습니다." />
+                  ) : (
+                    <div className={styles.weekStack}>
+                      {searchGroups.map((group) => (
+                        <details key={group.id} className={styles.dayGroup}>
+                          <summary className={styles.dayHeader}>
+                            <span className={styles.dayTitle}>{group.label}</span>
+                            <span className={styles.dayHeaderMeta}>
+                              <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
+                              <span>{group.items.length}개 결과</span>
+                            </span>
+                          </summary>
+                          <div className={`${styles.searchResults} ${styles.weeklySearchResult}`}>
+                            {group.items.map((item) => (
+                              <article key={item.id} className={styles.searchResultCard}>
+                                <div className={styles.searchInlineMeta}>
+                                  <div className={`${styles.searchInlineField} ${styles.searchCharacterField}`}>
+                                    <span>참여 캐릭터</span>
+                                    <button
+                                      type="button"
+                                      className={styles.searchCharacterButton}
+                                      onClick={() => setSelectedCharacterName(item.characterName)}
+                                    >
+                                      {item.characterName}
+                                    </button>
+                                  </div>
+                                  <div className={`${styles.searchInlineField} ${styles.searchOwnerField}`}>
+                                    <span>이름</span>
+                                    <strong>{item.ownerName}</strong>
+                                  </div>
+                                </div>
+                                <div className={styles.searchRaidList}>
+                                  {item.raids?.map((raidName) => (
+                                    <span key={`${item.id}-${raidName}`} className={styles.searchRaidPill}>
+                                      {raidName}
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className={styles.searchMobileRaidRows}>
+                                  {item.raids?.map((raidName) => (
+                                    <div key={`${item.id}-mobile-${raidName}`} className={styles.searchMobileRaidRow}>
+                                      <button
+                                        type="button"
+                                        className={`${styles.searchCharacterButton} ${styles.searchMobileCharacterButton}`}
+                                        onClick={() => setSelectedCharacterName(item.characterName)}
+                                      >
+                                        {item.characterName}
+                                      </button>
+                                      <span className={styles.searchMobileRaidName}>{raidName}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  )
+                ) : groupedRaids.length === 0 ? (
+                  <StatePanel styles={styles} message="일정이 없습니다." />
+                ) : (
+                  <div className={styles.weekStack}>
+                    {groupedRaids.map((group) => (
+                      <details key={group.id} className={styles.dayGroup}>
+                        <summary className={styles.dayHeader}>
+                          <span className={styles.dayTitle}>{group.label}</span>
+                          <span className={styles.dayHeaderMeta}>
+                            <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
+                            <span>{group.items.length}개 일정</span>
+                          </span>
+                        </summary>
+                        <div className={styles.cardGrid}>
+                          {group.items.map((raid) => {
                             const isHighlighted =
                               Boolean(selectedWeeklyParticipant) &&
                               raid.participants.some(
@@ -351,144 +462,44 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                               );
 
                             return (
-                              <article
+                              <RaidCard
                                 key={raid.id}
-                                className={`${styles.weekCalendarDayCard} ${
-                                  isHighlighted ? styles.weekCalendarDayCardHighlighted : ""
-                                }`}
-                              >
-                                <div className={styles.weekCalendarDayCardTop}>
-                                  <strong className={styles.weekCalendarDayCardTitle}>{raid.raidName}</strong>
-                                </div>
-                              </article>
+                                raid={raid}
+                                styles={styles}
+                                onCharacterClick={setSelectedCharacterName}
+                                isHighlighted={isHighlighted}
+                                selectedOwnerName={selectedWeeklyParticipant}
+                              />
                             );
                           })}
                         </div>
-                      ) : (
-                        <p className={styles.weekCalendarDayEmpty}>일정 없음</p>
-                      )}
-                    </section>
-                  ))}
-                </div>
-              ) : (
-                <StatePanel styles={styles} message="이번 주 일정이 없습니다." />
-              )
-            ) : deferredSearchQuery ? (
-              searchGroups.length === 0 ? (
-                <StatePanel styles={styles} message="검색 결과가 없습니다." />
-              ) : (
-                <div className={styles.weekStack}>
-                  {searchGroups.map((group) => (
-                    <details key={group.id} className={styles.dayGroup}>
-                      <summary className={styles.dayHeader}>
-                        <span className={styles.dayTitle}>{group.label}</span>
-                        <span className={styles.dayHeaderMeta}>
-                          <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
-                          <span>{group.items.length}개 결과</span>
-                        </span>
-                      </summary>
-                      <div className={`${styles.searchResults} ${styles.weeklySearchResult}`}>
-                        {group.items.map((item) => (
-                          <article key={item.id} className={styles.searchResultCard}>
-                            <div className={styles.searchInlineMeta}>
-                              <div className={`${styles.searchInlineField} ${styles.searchCharacterField}`}>
-                                <span>참여 캐릭터</span>
-                                <button
-                                  type="button"
-                                  className={styles.searchCharacterButton}
-                                  onClick={() => setSelectedCharacterName(item.characterName)}
-                                >
-                                  {item.characterName}
-                                </button>
-                              </div>
-                              <div className={`${styles.searchInlineField} ${styles.searchOwnerField}`}>
-                                <span>이름</span>
-                                <strong>{item.ownerName}</strong>
-                              </div>
-                            </div>
-                            <div className={styles.searchRaidList}>
-                              {item.raids?.map((raidName) => (
-                                <span key={`${item.id}-${raidName}`} className={styles.searchRaidPill}>
-                                  {raidName}
-                                </span>
-                              ))}
-                            </div>
-                            <div className={styles.searchMobileRaidRows}>
-                              {item.raids?.map((raidName) => (
-                                <div key={`${item.id}-mobile-${raidName}`} className={styles.searchMobileRaidRow}>
-                                  <button
-                                    type="button"
-                                    className={`${styles.searchCharacterButton} ${styles.searchMobileCharacterButton}`}
-                                    onClick={() => setSelectedCharacterName(item.characterName)}
-                                  >
-                                    {item.characterName}
-                                  </button>
-                                  <span className={styles.searchMobileRaidName}>{raidName}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    </details>
-                  ))}
-                </div>
-              )
-            ) : groupedRaids.length === 0 ? (
-              <StatePanel styles={styles} message="일정이 없습니다." />
-            ) : (
-              <div className={styles.weekStack}>
-                {groupedRaids.map((group) => (
-                  <details key={group.id} className={styles.dayGroup}>
-                    <summary className={styles.dayHeader}>
-                      <span className={styles.dayTitle}>{group.label}</span>
-                      <span className={styles.dayHeaderMeta}>
-                        <TimeMetaBadge styles={styles} value={formatGroupTime(group)} className={styles.dayTimeBadge} />
-                        <span>{group.items.length}개 일정</span>
-                      </span>
-                    </summary>
-                    <div className={styles.cardGrid}>
-                      {group.items.map((raid) => {
-                        const isHighlighted =
-                          Boolean(selectedWeeklyParticipant) &&
-                          raid.participants.some(
-                            (participant) => participant.ownerName === selectedWeeklyParticipant,
-                          );
+                      </details>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : null}
 
-                        return (
-                          <RaidCard
-                            key={raid.id}
-                            raid={raid}
-                            styles={styles}
-                            onCharacterClick={setSelectedCharacterName}
-                            isHighlighted={isHighlighted}
-                            selectedOwnerName={selectedWeeklyParticipant}
-                          />
-                        );
-                      })}
-                    </div>
-                  </details>
-                ))}
-              </div>
-            )}
-          </section>
-        ) : null}
+            {activeTab === "personal" ? (
+              <section className={`${styles.section} ${styles.pageSection}`}>
+                <PersonalSchedulePage embedded />
+              </section>
+            ) : null}
+            {activeTab === "personalRaid" ? (
+              <section className={`${styles.section} ${styles.pageSection}`}>
+                <PersonalRaidPage embedded />
+              </section>
+            ) : null}
+          </main>
 
-        {activeTab === "personal" ? (
-          <section className={`${styles.section} ${styles.pageSection}`}>
-            <PersonalSchedulePage embedded />
-          </section>
-        ) : null}
-        {activeTab === "auction" ? (
-          <section className={`${styles.section} ${styles.pageSection}`}>
+          <aside
+            id="auction-sidebar"
+            className={`${styles.auctionSidebar} ${isAuctionPanelOpen ? styles.auctionSidebarOpen : ""}`}
+            aria-label="쌀산기"
+          >
             <AuctionBidCalculator />
-          </section>
-        ) : null}
-        {activeTab === "personalRaid" ? (
-          <section className={`${styles.section} ${styles.pageSection}`}>
-            <PersonalRaidPage embedded />
-          </section>
-        ) : null}
+          </aside>
+        </div>
       </div>
 
       {selectedCharacterName ? (
