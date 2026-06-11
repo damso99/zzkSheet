@@ -9,7 +9,10 @@ export default function AuctionBidSidebar() {
   const [participantCount, setParticipantCount] = useState(8);
 
   const itemPrice = useMemo(() => parsePrice(itemPriceText), [itemPriceText]);
-  const optimalBid = useMemo(() => calculateOptimalBid(itemPrice, participantCount), [itemPrice, participantCount]);
+  const optimalBid = useMemo(
+    () => calculateOptimalBid(itemPrice, participantCount),
+    [itemPrice, participantCount],
+  );
 
   const handlePriceChange = (event) => {
     const nextValue = event.target.value.replace(/[^\d]/g, "");
@@ -21,8 +24,6 @@ export default function AuctionBidSidebar() {
       <div className={styles.header}>
         <div>
           <p className={styles.eyebrow}>쌀산기</p>
-          <h2 id="auction-sidebar-title">적정입찰가</h2>
-          <p className={styles.description}>입력값만 받아 적정 입찰가를 빠르게 보여줍니다.</p>
         </div>
       </div>
 
@@ -44,7 +45,11 @@ export default function AuctionBidSidebar() {
 
       <div className={styles.field}>
         <span className={styles.fieldLabel}>입찰 인원</span>
-        <div className={styles.optionGroup} role="radiogroup" aria-label="입찰 인원 선택">
+        <div
+          className={styles.optionGroup}
+          role="radiogroup"
+          aria-label="입찰 인원 선택"
+        >
           {PARTICIPANT_OPTIONS.map((option) => (
             <label key={option} className={styles.optionCard}>
               <input
