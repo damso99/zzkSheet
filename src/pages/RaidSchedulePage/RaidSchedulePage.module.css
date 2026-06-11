@@ -56,6 +56,28 @@
   min-height: 680px;
 }
 
+.auctionFloatingSidebar {
+  position: fixed;
+  top: 252px;
+  right: 24px;
+  width: 272px;
+  z-index: 4;
+}
+
+@media (max-width: 1320px) {
+  .auctionFloatingSidebar {
+    top: 232px;
+    right: 18px;
+    width: 252px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .auctionFloatingSidebar {
+    display: none;
+  }
+}
+
 /* Header */
 .hero {
   display: block;

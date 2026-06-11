@@ -2,6 +2,7 @@
 import styles from "./RaidSchedulePage.module.css";
 import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
 import AuctionBidCalculator from "./components/AuctionBidCalculator.jsx";
+import AuctionBidSidebar from "./components/AuctionBidSidebar.jsx";
 import RaidCard from "./components/RaidCard.jsx";
 import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
 import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
@@ -482,6 +483,10 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             </section>
           ) : null}
         </main>
+
+        <aside className={styles.auctionFloatingSidebar} aria-label="쌀산기">
+          <AuctionBidSidebar />
+        </aside>
       </div>
 
       {selectedCharacterName ? (
