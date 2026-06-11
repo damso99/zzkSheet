@@ -22,7 +22,7 @@ const TAB_ORDER = ["today", "week", "auction", "personalRaid", "personal"];
 const TAB_LABELS = {
   today: "금일 일정",
   week: "주간 일정",
-  auction: "경매 계산기",
+  auction: "쌀산기",
   personal: "개인 일정",
   personalRaid: "레이드 참여 현황",
 };

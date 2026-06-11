@@ -25,8 +25,8 @@ export default function AuctionBidCalculator() {
     <section className={styles.calculatorShell} aria-labelledby="auction-calculator-title">
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Auction Calculator</p>
-          <h2 id="auction-calculator-title">경매 입찰 계산기</h2>
+          <p className={styles.eyebrow}>쌀산기</p>
+          <h2 id="auction-calculator-title">쌀산기</h2>
           <p className={styles.description}>
             직접사용과 판매 상황을 나눠서, 입찰 적정가와 분배금을 함께 계산합니다.
           </p>
@@ -74,11 +74,6 @@ export default function AuctionBidCalculator() {
             </div>
           </div>
 
-          <div className={styles.summaryCard}>
-            <span>입력 템 가격</span>
-            <strong>{formatGold(itemPrice)}</strong>
-            <small>계산 기준값으로 사용됩니다.</small>
-          </div>
         </form>
 
         <section className={styles.resultPanel} aria-label="계산 결과">
