@@ -380,7 +380,7 @@
   display: grid;
   grid-template-columns: minmax(150px, 0.7fr) minmax(160px, 0.8fr) minmax(220px, 1.4fr) auto;
   gap: 12px;
-  align-items: end;
+  align-items: start;
 }
 
 .form label,
@@ -433,7 +433,6 @@
   gap: 7px;
   width: 100%;
   min-width: 0;
-  min-height: 72px;
   overflow: visible;
   isolation: isolate;
   align-content: start;
@@ -510,8 +509,8 @@
 .datePickerControl {
   display: block;
   width: 100%;
-  height: 44px;
-  min-height: 44px;
+  height: var(--input-height);
+  min-height: var(--input-height);
   position: relative;
   line-height: 1;
 }
@@ -530,6 +529,7 @@
   border-radius: var(--input-radius);
   color: var(--input-text);
   background: var(--input-bg);
+  box-sizing: border-box;
   cursor: pointer;
   touch-action: manipulation;
   text-align: left;
@@ -633,7 +633,7 @@
 }
 
 .form > button {
-  height: 44px;
+  height: var(--input-height);
   padding: 0 18px;
   border-radius: 14px;
   color: var(--bg);

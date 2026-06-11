@@ -54,24 +54,6 @@
         }
       ]
     },
-    {
-      "source": "/item-price",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/item-price/",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    }
   ],
   "rewrites": [
     {
@@ -90,13 +72,5 @@
       "source": "/personal-raid/",
       "destination": "/index.html"
     },
-    {
-      "source": "/item-price",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/item-price/",
-      "destination": "/index.html"
-    }
   ]
 }

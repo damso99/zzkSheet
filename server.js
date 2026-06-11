@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getLostarkCharacterBundle } from "./api/_lostark.js";
-import { handleItemPriceRequest } from "./api/_item-price.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const distDir = join(__dirname, "dist");
@@ -33,11 +32,6 @@ createServer(async (request, response) => {
 
   if (url.pathname === "/api/personal-schedule") {
     await handlePersonalScheduleRequest(request, response, url);
-    return;
-  }
-
-  if (url.pathname === "/api/item-price") {
-    await handleItemPriceRequest(request, response, url);
     return;
   }
 
