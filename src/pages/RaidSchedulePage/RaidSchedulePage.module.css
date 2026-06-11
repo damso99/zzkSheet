@@ -60,7 +60,7 @@
   position: fixed;
   top: 252px;
   right: 24px;
-  width: 272px;
+  width: min(240px, calc((100vw - 1200px) / 2 - 24px));
   z-index: 4;
 }
 
@@ -68,11 +68,10 @@
   .auctionFloatingSidebar {
     top: 232px;
     right: 18px;
-    width: 252px;
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1688px) {
   .auctionFloatingSidebar {
     display: none;
   }
