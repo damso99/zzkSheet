@@ -45,7 +45,7 @@ export default function AuctionBidCalculator() {
               <input
                 id="auction-item-price"
                 inputMode="numeric"
-                placeholder="가격을 입력해 주세요"
+                placeholder="가격을 입력해주세요"
                 value={itemPriceText}
                 onChange={handlePriceChange}
               />
@@ -73,7 +73,6 @@ export default function AuctionBidCalculator() {
               ))}
             </div>
           </div>
-
         </form>
 
         <section className={styles.resultPanel} aria-label="계산 결과">
@@ -94,7 +93,7 @@ export default function AuctionBidCalculator() {
               { label: "수수료", value: formatGold(result.sale.fee) },
               { label: "손익분기점", value: formatGold(result.sale.breakEvenBid) },
               { label: "분배금", value: formatGold(result.sale.breakEvenDistribution) },
-              { label: "판매차익", value: formatGold(result.sale.breakEvenProfit) },
+              { label: "판매차익", value: formatGold(result.sale.saleProfit) },
             ]}
           />
 
@@ -106,6 +105,7 @@ export default function AuctionBidCalculator() {
               </div>
               <span className={styles.recommendBadge}>95%</span>
             </div>
+
             <div className={styles.recommendGrid}>
               <div>
                 <span>분배금</span>
@@ -150,30 +150,30 @@ function calculateAuctionBid(itemPrice, participantCount) {
   const safeParticipantCount = participantCount === 4 ? 4 : 8;
   const fee = Math.floor(safePrice * 0.05);
   const netSettlement = Math.max(0, safePrice - fee);
-  const distribution = calculateDistributionFromItemPrice(safePrice, safeParticipantCount);
 
-  const directOptimalBid = Math.max(0, safePrice - distribution);
+  const directOptimalBid = findMaxAffordableBid(safePrice, safeParticipantCount);
+  const directDistribution = calculateDistribution(directOptimalBid, safeParticipantCount);
 
-  const breakEvenBid = Math.max(0, netSettlement - distribution);
-  const breakEvenDistribution = distribution;
-  const breakEvenProfit = Math.max(0, netSettlement - breakEvenBid - breakEvenDistribution);
+  const breakEvenBid = findMaxAffordableBid(netSettlement, safeParticipantCount);
+  const breakEvenDistribution = calculateDistribution(breakEvenBid, safeParticipantCount);
+  const saleProfit = Math.max(0, safePrice - breakEvenBid);
 
-  const recommendedBid = Math.max(0, Math.floor(breakEvenBid * 0.95));
-  const recommendedDistribution = distribution;
-  const recommendedProfit = Math.max(0, netSettlement - recommendedBid - recommendedDistribution);
+  const recommendedBid = Math.max(0, breakEvenBid - Math.floor(breakEvenBid / 11));
+  const recommendedDistribution = calculateDistribution(recommendedBid, safeParticipantCount);
+  const recommendedProfit = Math.max(0, safePrice - recommendedBid);
 
   return {
     direct: {
       actualValue: safePrice,
       optimalBid: directOptimalBid,
-      distribution,
+      distribution: directDistribution,
     },
     sale: {
       fee,
       netSettlement,
       breakEvenBid,
       breakEvenDistribution,
-      breakEvenProfit,
+      saleProfit,
       recommendedBid,
       recommendedDistribution,
       recommendedProfit,
@@ -181,9 +181,30 @@ function calculateAuctionBid(itemPrice, participantCount) {
   };
 }
 
-function calculateDistributionFromItemPrice(itemPrice, participantCount) {
+function findMaxAffordableBid(limit, participantCount) {
+  const safeLimit = Math.max(0, Math.floor(limit));
   const divisor = Math.max(1, participantCount - 1);
-  return Math.floor(Math.max(0, Math.floor(itemPrice)) / divisor);
+  let low = 0;
+  let high = safeLimit;
+
+  while (low < high) {
+    const mid = Math.floor((low + high + 1) / 2);
+    const totalCost = mid + Math.floor(mid / divisor);
+
+    if (totalCost <= safeLimit) {
+      low = mid;
+      continue;
+    }
+
+    high = mid - 1;
+  }
+
+  return low;
+}
+
+function calculateDistribution(bid, participantCount) {
+  const divisor = Math.max(1, participantCount - 1);
+  return Math.floor(Math.max(0, Math.floor(bid)) / divisor);
 }
 
 function parsePrice(text) {
