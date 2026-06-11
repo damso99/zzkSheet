@@ -150,23 +150,23 @@ function calculateAuctionBid(itemPrice, participantCount) {
   const safeParticipantCount = participantCount === 4 ? 4 : 8;
   const fee = Math.floor(safePrice * 0.05);
   const netSettlement = Math.max(0, safePrice - fee);
+  const distribution = calculateDistributionFromItemPrice(safePrice, safeParticipantCount);
 
-  const directOptimalBid = findMaxAffordableBid(safePrice, safeParticipantCount);
-  const directDistribution = calculateDistribution(directOptimalBid, safeParticipantCount);
+  const directOptimalBid = Math.max(0, safePrice - distribution);
 
-  const breakEvenBid = findMaxAffordableBid(netSettlement, safeParticipantCount);
-  const breakEvenDistribution = calculateDistribution(breakEvenBid, safeParticipantCount);
+  const breakEvenBid = Math.max(0, netSettlement - distribution);
+  const breakEvenDistribution = distribution;
   const breakEvenProfit = Math.max(0, netSettlement - breakEvenBid - breakEvenDistribution);
 
   const recommendedBid = Math.max(0, Math.floor(breakEvenBid * 0.95));
-  const recommendedDistribution = calculateDistribution(recommendedBid, safeParticipantCount);
+  const recommendedDistribution = distribution;
   const recommendedProfit = Math.max(0, netSettlement - recommendedBid - recommendedDistribution);
 
   return {
     direct: {
       actualValue: safePrice,
       optimalBid: directOptimalBid,
-      distribution: directDistribution,
+      distribution,
     },
     sale: {
       fee,
@@ -181,30 +181,9 @@ function calculateAuctionBid(itemPrice, participantCount) {
   };
 }
 
-function findMaxAffordableBid(limit, participantCount) {
-  const safeLimit = Math.max(0, Math.floor(limit));
+function calculateDistributionFromItemPrice(itemPrice, participantCount) {
   const divisor = Math.max(1, participantCount - 1);
-  let low = 0;
-  let high = safeLimit;
-
-  while (low < high) {
-    const mid = Math.floor((low + high + 1) / 2);
-    const totalCost = mid + Math.floor(mid / divisor);
-
-    if (totalCost <= safeLimit) {
-      low = mid;
-      continue;
-    }
-
-    high = mid - 1;
-  }
-
-  return low;
-}
-
-function calculateDistribution(bid, participantCount) {
-  const divisor = Math.max(1, participantCount - 1);
-  return Math.floor(Math.max(0, Math.floor(bid)) / divisor);
+  return Math.floor(Math.max(0, Math.floor(itemPrice)) / divisor);
 }
 
 function parsePrice(text) {
