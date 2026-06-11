@@ -156,11 +156,11 @@ function calculateAuctionBid(itemPrice, participantCount) {
 
   const breakEvenBid = findMaxAffordableBid(netSettlement, safeParticipantCount);
   const breakEvenDistribution = calculateDistribution(breakEvenBid, safeParticipantCount);
-  const breakEvenProfit = safePrice - breakEvenBid;
+  const breakEvenProfit = Math.max(0, netSettlement - breakEvenBid - breakEvenDistribution);
 
-  const recommendedBid = Math.max(0, breakEvenBid - Math.floor(breakEvenBid / 11));
+  const recommendedBid = Math.max(0, Math.floor(breakEvenBid * 0.95));
   const recommendedDistribution = calculateDistribution(recommendedBid, safeParticipantCount);
-  const recommendedProfit = safePrice - recommendedBid;
+  const recommendedProfit = Math.max(0, netSettlement - recommendedBid - recommendedDistribution);
 
   return {
     direct: {
