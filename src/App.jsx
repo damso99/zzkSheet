@@ -7,8 +7,9 @@ export default function App() {
       ? "personal"
       : currentPath === "/personal-raid"
         ? "personalRaid"
-        : "today";
-  const initialAuctionOpen = currentPath === "/auction";
+        : currentPath === "/auction"
+          ? "auction"
+          : "today";
 
-  return <RaidSchedulePage initialTab={initialTab} initialAuctionOpen={initialAuctionOpen} />;
+  return <RaidSchedulePage initialTab={initialTab} />;
 }
