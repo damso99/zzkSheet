@@ -57,8 +57,11 @@
 }
 
 .pageBody {
-  position: relative;
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1120px) 240px;
+  justify-content: center;
+  gap: 24px;
+  align-items: start;
   margin-top: 24px;
 }
 
@@ -67,15 +70,16 @@
 }
 
 .auctionSidebar {
-  position: absolute;
-  top: 0;
-  right: 20px;
-  width: 320px;
   min-width: 0;
-  z-index: 2;
+  position: sticky;
+  top: 24px;
 }
 
 @media (max-width: 1200px) {
+  .pageBody {
+    grid-template-columns: 1fr;
+  }
+
   .auctionSidebar {
     position: static;
     width: auto;
