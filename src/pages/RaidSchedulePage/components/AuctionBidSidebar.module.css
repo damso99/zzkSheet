@@ -1,0 +1,151 @@
+.sidebar {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(124, 184, 255, 0.22);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(33, 44, 66, 0.92), rgba(16, 21, 34, 0.96)),
+    rgba(26, 34, 51, 0.88);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.header {
+  display: grid;
+  gap: 4px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label,
+.fieldLabel {
+  color: #dbe7ff;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.inputWrap {
+  position: relative;
+}
+
+.inputWrap input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 44px 0 14px;
+  border: 1px solid rgba(124, 184, 255, 0.26);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  background: rgba(10, 16, 28, 0.96);
+  outline: none;
+}
+
+.inputWrap input::placeholder {
+  color: rgba(216, 231, 255, 0.42);
+  font-weight: 700;
+}
+
+.inputWrap input:focus {
+  border-color: rgba(124, 184, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(124, 184, 255, 0.12);
+}
+
+.goldUnit {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  color: #101522;
+  font-size: 0.78rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd970, #f7b733);
+  transform: translateY(-50%);
+}
+
+.optionGroup {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.optionCard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(124, 184, 255, 0.22);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  background: rgba(10, 16, 28, 0.7);
+}
+
+.optionCard input {
+  margin-right: 8px;
+}
+
+.resultCard {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  border-radius: 18px;
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.resultLabel {
+  color: #dbe7ff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.resultValue {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.resultHelp {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}

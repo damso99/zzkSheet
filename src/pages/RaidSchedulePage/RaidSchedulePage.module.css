@@ -43,7 +43,7 @@
 .content {
   position: relative;
   z-index: 1;
-  width: min(100%, 1200px);
+  width: min(100%, 1600px);
   margin: 0 auto;
   padding: 48px 20px 72px;
 }
@@ -54,6 +54,34 @@
   margin-left: auto;
   margin-right: auto;
   min-height: 680px;
+}
+
+.pageBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+  margin-top: 24px;
+}
+
+.pageMain {
+  min-width: 0;
+}
+
+.auctionSidebar {
+  position: sticky;
+  top: 24px;
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  .pageBody {
+    grid-template-columns: 1fr;
+  }
+
+  .auctionSidebar {
+    position: static;
+  }
 }
 
 /* Header */
