@@ -89,10 +89,9 @@ export default function AuctionBidCalculator() {
 
           <ResultSection
             title="판매"
-            subtitle="판매 정산금을 기준으로 계산한 결과"
+            subtitle="템 가격 기준 차익을 함께 보여줍니다."
             rows={[
               { label: "수수료", value: formatGold(result.sale.fee) },
-              { label: "판매 정산금", value: formatGold(result.sale.netSettlement) },
               { label: "손익분기점", value: formatGold(result.sale.breakEvenBid) },
               { label: "분배금", value: formatGold(result.sale.breakEvenDistribution) },
               { label: "판매차익", value: formatGold(result.sale.breakEvenProfit) },
@@ -157,11 +156,11 @@ function calculateAuctionBid(itemPrice, participantCount) {
 
   const breakEvenBid = findMaxAffordableBid(netSettlement, safeParticipantCount);
   const breakEvenDistribution = calculateDistribution(breakEvenBid, safeParticipantCount);
-  const breakEvenProfit = netSettlement - breakEvenBid - breakEvenDistribution;
+  const breakEvenProfit = safePrice - breakEvenBid;
 
-  const recommendedBid = Math.floor(breakEvenBid * 0.95);
+  const recommendedBid = Math.max(0, breakEvenBid - Math.floor(breakEvenBid / 11));
   const recommendedDistribution = calculateDistribution(recommendedBid, safeParticipantCount);
-  const recommendedProfit = netSettlement - recommendedBid - recommendedDistribution;
+  const recommendedProfit = safePrice - recommendedBid;
 
   return {
     direct: {
