@@ -53,7 +53,7 @@
           "value": "no-cache, no-store, must-revalidate"
         }
       ]
-    },
+    }
   ],
   "rewrites": [
     {
@@ -71,6 +71,6 @@
     {
       "source": "/personal-raid/",
       "destination": "/index.html"
-    },
+    }
   ]
 }
