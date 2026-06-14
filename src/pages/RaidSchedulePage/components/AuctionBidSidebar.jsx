@@ -62,9 +62,7 @@ export default function AuctionBidSidebar() {
       </div>
 
       <section className={styles.resultCard} aria-label="추천 입찰가 결과">
-        <span className={styles.resultLabel}>추천 입찰가</span>
         <strong className={styles.resultValue}>{formatGold(recommendedBid)}</strong>
-        <p className={styles.resultHelp}>판매와 수수료를 반영한 추천 값입니다.</p>
       </section>
     </aside>
   );
