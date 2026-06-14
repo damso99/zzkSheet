@@ -9,8 +9,8 @@ export default function AuctionBidSidebar() {
   const [participantCount, setParticipantCount] = useState(8);
 
   const itemPrice = useMemo(() => parsePrice(itemPriceText), [itemPriceText]);
-  const optimalBid = useMemo(
-    () => calculateOptimalBid(itemPrice, participantCount),
+  const saleOptimalBid = useMemo(
+    () => calculateSaleOptimalBid(itemPrice, participantCount),
     [itemPrice, participantCount],
   );
 
@@ -44,12 +44,8 @@ export default function AuctionBidSidebar() {
       </div>
 
       <div className={styles.field}>
-        <span className={styles.fieldLabel}>입찰 인원</span>
-        <div
-          className={styles.optionGroup}
-          role="radiogroup"
-          aria-label="입찰 인원 선택"
-        >
+        <span className={styles.fieldLabel}>참여 인원</span>
+        <div className={styles.optionGroup} role="radiogroup" aria-label="참여 인원 선택">
           {PARTICIPANT_OPTIONS.map((option) => (
             <label key={option} className={styles.optionCard}>
               <input
@@ -65,19 +61,21 @@ export default function AuctionBidSidebar() {
         </div>
       </div>
 
-      <section className={styles.resultCard} aria-label="적정입찰가 결과">
-        <span className={styles.resultLabel}>입찰적정가</span>
-        <strong className={styles.resultValue}>{formatGold(optimalBid)}</strong>
-        <p className={styles.resultHelp}>직접사용 기준으로 계산한 값입니다.</p>
+      <section className={styles.resultCard} aria-label="판매가 기준 입찰가 결과">
+        <span className={styles.resultLabel}>판매가 기준 입찰가</span>
+        <strong className={styles.resultValue}>{formatGold(saleOptimalBid)}</strong>
+        <p className={styles.resultHelp}>판매가에서 수수료를 뺀 기준으로 계산한 값입니다.</p>
       </section>
     </aside>
   );
 }
 
-function calculateOptimalBid(itemPrice, participantCount) {
+function calculateSaleOptimalBid(itemPrice, participantCount) {
   const safePrice = Math.max(0, Math.floor(itemPrice));
   const safeParticipantCount = participantCount === 4 ? 4 : 8;
-  return findMaxAffordableBid(safePrice, safeParticipantCount);
+  const saleFee = Math.floor(safePrice * 0.05);
+  const netSettlement = Math.max(0, safePrice - saleFee);
+  return findMaxAffordableBid(netSettlement, safeParticipantCount);
 }
 
 function findMaxAffordableBid(limit, participantCount) {
