@@ -9,8 +9,8 @@ export default function AuctionBidSidebar() {
   const [participantCount, setParticipantCount] = useState(8);
 
   const itemPrice = useMemo(() => parsePrice(itemPriceText), [itemPriceText]);
-  const saleOptimalBid = useMemo(
-    () => calculateSaleOptimalBid(itemPrice, participantCount),
+  const recommendedBid = useMemo(
+    () => calculateRecommendedBid(itemPrice, participantCount),
     [itemPrice, participantCount],
   );
 
@@ -61,21 +61,23 @@ export default function AuctionBidSidebar() {
         </div>
       </div>
 
-      <section className={styles.resultCard} aria-label="판매가 기준 입찰가 결과">
-        <span className={styles.resultLabel}>판매가 기준 입찰가</span>
-        <strong className={styles.resultValue}>{formatGold(saleOptimalBid)}</strong>
-        <p className={styles.resultHelp}>판매가에서 수수료를 뺀 기준으로 계산한 값입니다.</p>
+      <section className={styles.resultCard} aria-label="추천 입찰가 결과">
+        <span className={styles.resultLabel}>추천 입찰가</span>
+        <strong className={styles.resultValue}>{formatGold(recommendedBid)}</strong>
+        <p className={styles.resultHelp}>판매와 수수료를 반영한 추천 값입니다.</p>
       </section>
     </aside>
   );
 }
 
-function calculateSaleOptimalBid(itemPrice, participantCount) {
+function calculateRecommendedBid(itemPrice, participantCount) {
   const safePrice = Math.max(0, Math.floor(itemPrice));
   const safeParticipantCount = participantCount === 4 ? 4 : 8;
-  const saleFee = Math.floor(safePrice * 0.05);
-  const netSettlement = Math.max(0, safePrice - saleFee);
-  return findMaxAffordableBid(netSettlement, safeParticipantCount);
+  const fee = Math.floor(safePrice * 0.05);
+  const netSettlement = Math.max(0, safePrice - fee);
+  const breakEvenBid = findMaxAffordableBid(netSettlement, safeParticipantCount);
+
+  return Math.max(0, breakEvenBid - Math.floor(breakEvenBid / 11));
 }
 
 function findMaxAffordableBid(limit, participantCount) {
