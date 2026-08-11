@@ -44,6 +44,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const [selectedOwnerName, setSelectedOwnerName] = useState("");
   const [selectedWeeklyParticipant, setSelectedWeeklyParticipant] = useState("");
   const [discordTestStatus, setDiscordTestStatus] = useState("idle");
+  const [discordNoticeTestStatus, setDiscordNoticeTestStatus] = useState("idle");
   const raidSignatureRef = useRef("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
@@ -265,6 +266,25 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
     }
   }
 
+  async function sendDiscordNoticeTestMessage() {
+    if (discordNoticeTestStatus === "sending") return;
+
+    setDiscordNoticeTestStatus("sending");
+
+    try {
+      const response = await fetch("/api/cron/discord-weekly", { method: "POST" });
+      const payload = await response.json();
+
+      if (!response.ok || !payload?.sent) {
+        throw new Error(payload?.error || payload?.reason || "공지 전송에 실패했습니다.");
+      }
+
+      setDiscordNoticeTestStatus("success");
+    } catch {
+      setDiscordNoticeTestStatus("error");
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.backdrop} />
@@ -291,6 +311,15 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                 aria-live="polite"
               >
                 {getDiscordTestButtonLabel(discordTestStatus)}
+              </button>
+              <button
+                type="button"
+                className={styles.discordTestButton}
+                disabled={discordNoticeTestStatus === "sending"}
+                onClick={sendDiscordNoticeTestMessage}
+                aria-live="polite"
+              >
+                {getDiscordTestButtonLabel(discordNoticeTestStatus, "공지 테스트")}
               </button>
             </div>
           </div>
@@ -972,9 +1001,9 @@ function parseIsoDateToLocalDate(dateValue) {
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
-function getDiscordTestButtonLabel(status) {
+function getDiscordTestButtonLabel(status, idleLabel = "디코 테스트") {
   if (status === "sending") return "전송 중";
   if (status === "success") return "전송 완료";
   if (status === "error") return "전송 실패";
-  return "디코 테스트";
+  return idleLabel;
 }
