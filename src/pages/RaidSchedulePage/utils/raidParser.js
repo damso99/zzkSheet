@@ -10,6 +10,7 @@ const DEFAULT_FALLBACK_TIME = "";
 const DEFAULT_OWNER_NAME = "미지정";
 const DATE_RE = /^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/;
 const KNOWN_RAID_TITLES = [
+  "\ubca8\uac00\ub974\ub518",
   "\uce74\uc81c\ub85c\uc2a4",
   "\uc138\ub974\uce74",
   "\uc9c0\ud3c9",
