@@ -6,6 +6,13 @@ export default async function handler(request, response) {
 
   try {
     const result = await getLostarkCharacterBundle(characterName);
+    if (result.status === 200) {
+      response.setHeader(
+        "Vercel-CDN-Cache-Control",
+        "public, s-maxage=300, stale-while-revalidate=300",
+      );
+      response.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+    }
     sendJson(response, result.status, result.body);
   } catch (error) {
     sendJson(response, 502, {

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import RaidParticipantTable from "./RaidParticipantTable.jsx";
 
-export default function RaidCard({
+function RaidCard({
   raid,
   styles,
   onCharacterClick,
@@ -67,3 +67,5 @@ export default function RaidCard({
     </article>
   );
 }
+
+export default memo(RaidCard);

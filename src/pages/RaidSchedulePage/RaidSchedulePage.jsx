@@ -1,11 +1,7 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./RaidSchedulePage.module.css";
-import CharacterDetailModal from "./components/CharacterDetailModal.jsx";
-import AuctionBidCalculator from "./components/AuctionBidCalculator.jsx";
 import AuctionBidSidebar from "./components/AuctionBidSidebar.jsx";
 import RaidCard from "./components/RaidCard.jsx";
-import PersonalRaidPage from "../PersonalRaidPage/PersonalRaidPage.jsx";
-import PersonalSchedulePage from "../PersonalSchedulePage/PersonalSchedulePage.jsx";
 import {
   formatDateLabel,
   formatLocalDate,
@@ -17,6 +13,16 @@ import {
 } from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
+
+const loadAuctionBidCalculator = () => import("./components/AuctionBidCalculator.jsx");
+const loadCharacterDetailModal = () => import("./components/CharacterDetailModal.jsx");
+const loadPersonalRaidPage = () => import("../PersonalRaidPage/PersonalRaidPage.jsx");
+const loadPersonalSchedulePage = () => import("../PersonalSchedulePage/PersonalSchedulePage.jsx");
+
+const AuctionBidCalculator = lazy(loadAuctionBidCalculator);
+const CharacterDetailModal = lazy(loadCharacterDetailModal);
+const PersonalRaidPage = lazy(loadPersonalRaidPage);
+const PersonalSchedulePage = lazy(loadPersonalSchedulePage);
 
 const TAB_ORDER = ["today", "week", "auction", "personalRaid", "personal"];
 
@@ -37,6 +43,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const [selectedCharacterName, setSelectedCharacterName] = useState("");
   const [selectedOwnerName, setSelectedOwnerName] = useState("");
   const [selectedWeeklyParticipant, setSelectedWeeklyParticipant] = useState("");
+  const raidSignatureRef = useRef("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
     fetchedAt: "",
@@ -49,6 +56,22 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  useEffect(() => {
+    const preloadDeferredViews = () => {
+      loadAuctionBidCalculator();
+      loadCharacterDetailModal();
+      loadPersonalRaidPage();
+      loadPersonalSchedulePage();
+    };
+    const idleId = window.requestIdleCallback?.(preloadDeferredViews, { timeout: 3000 });
+    const timerId = idleId == null ? window.setTimeout(preloadDeferredViews, 1500) : null;
+
+    return () => {
+      if (idleId != null) window.cancelIdleCallback?.(idleId);
+      if (timerId != null) window.clearTimeout(timerId);
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -72,9 +95,13 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           targetGid: DEFAULT_TARGET_GID,
         });
         const normalizedRaids = buildRaidSchedule(bundle);
+        const nextRaidSignature = JSON.stringify(normalizedRaids);
 
         if (!ignore) {
-          setRaids(normalizedRaids);
+          if (raidSignatureRef.current !== nextRaidSignature) {
+            raidSignatureRef.current = nextRaidSignature;
+            setRaids(normalizedRaids);
+          }
           setSourceMeta({
             fetchedAt: bundle.fetchedAt,
             isFallback: false,
@@ -489,18 +516,24 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
           {activeTab === "auction" ? (
             <section className={`${styles.section} ${styles.pageSection}`}>
-              <AuctionBidCalculator />
+              <Suspense fallback={<StatePanel styles={styles} message="쌀산기를 불러오는 중입니다." />}>
+                <AuctionBidCalculator />
+              </Suspense>
             </section>
           ) : null}
 
           {activeTab === "personal" ? (
             <section className={`${styles.section} ${styles.pageSection}`}>
-              <PersonalSchedulePage embedded />
+              <Suspense fallback={<StatePanel styles={styles} message="개인 일정을 불러오는 중입니다." />}>
+                <PersonalSchedulePage embedded />
+              </Suspense>
             </section>
           ) : null}
           {activeTab === "personalRaid" ? (
             <section className={`${styles.section} ${styles.pageSection}`}>
-              <PersonalRaidPage embedded />
+              <Suspense fallback={<StatePanel styles={styles} message="레이드 참여 현황을 불러오는 중입니다." />}>
+                <PersonalRaidPage embedded />
+              </Suspense>
             </section>
           ) : null}
         </main>
@@ -513,11 +546,13 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
       </div>
 
       {selectedCharacterName ? (
-        <CharacterDetailModal
-          characterName={selectedCharacterName}
-          onClose={() => setSelectedCharacterName("")}
-          styles={styles}
-        />
+        <Suspense fallback={null}>
+          <CharacterDetailModal
+            characterName={selectedCharacterName}
+            onClose={() => setSelectedCharacterName("")}
+            styles={styles}
+          />
+        </Suspense>
       ) : null}
     </div>
   );
