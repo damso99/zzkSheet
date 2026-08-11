@@ -36,6 +36,7 @@ export default async function handler(request, response) {
       body: JSON.stringify({
         allowed_mentions: { parse: [] },
         content: TEST_MESSAGE,
+        thread_name: TEST_MESSAGE,
         username: "Stick Over Flow",
       }),
     });
