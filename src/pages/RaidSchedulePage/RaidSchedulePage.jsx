@@ -52,14 +52,21 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
 
   useEffect(() => {
     let ignore = false;
+    let refreshInFlight = false;
     const controller = new AbortController();
 
-    async function loadSchedule() {
-      setIsLoading(true);
-      setErrorMessage("");
+    async function loadSchedule({ background = false } = {}) {
+      if (refreshInFlight) return;
+
+      refreshInFlight = true;
+      if (!background) {
+        setIsLoading(true);
+        setErrorMessage("");
+      }
 
       try {
         const bundle = await loadRaidSheetBundle({
+          forceRefresh: background,
           signal: controller.signal,
           sheetUrl: DEFAULT_SHEET_URL,
           targetGid: DEFAULT_TARGET_GID,
@@ -73,9 +80,12 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             isFallback: false,
             sourceUrl: bundle.sourceUrl,
           });
+          setErrorMessage("");
         }
       } catch (error) {
         if (ignore) return;
+
+        if (background) return;
 
         setRaids(buildFallbackRaidSchedule(todayIsoDate));
         setSourceMeta({
@@ -89,13 +99,24 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             : "시트 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.",
         );
       } finally {
-        if (!ignore) setIsLoading(false);
+        refreshInFlight = false;
+        if (!ignore && !background) setIsLoading(false);
       }
     }
 
     loadSchedule();
 
+    const refreshSchedule = () => {
+      if (document.visibilityState === "visible") {
+        loadSchedule({ background: true });
+      }
+    };
+    const refreshTimer = window.setInterval(refreshSchedule, 30 * 1000);
+    document.addEventListener("visibilitychange", refreshSchedule);
+
     return () => {
+      window.clearInterval(refreshTimer);
+      document.removeEventListener("visibilitychange", refreshSchedule);
       controller.abort();
       ignore = true;
     };
@@ -886,4 +907,3 @@ function parseIsoDateToLocalDate(dateValue) {
 }
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
-

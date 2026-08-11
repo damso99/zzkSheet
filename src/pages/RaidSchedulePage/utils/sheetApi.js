@@ -41,11 +41,13 @@ export async function loadRaidSheetBundle({
   const promise = (async () => {
     const [raidCalendarSheet, settingSheet] = await Promise.all([
       fetchSheetRows({
+        forceRefresh,
         sheetUrl: targetSheetUrl,
         gid: SHEET_GIDS.raidCalendar,
         sheetName: SHEET_NAMES.raidCalendar,
       }),
       fetchSheetRows({
+        forceRefresh,
         sheetUrl: targetSheetUrl,
         gid: SHEET_GIDS.setting,
         sheetName: SHEET_NAMES.setting,

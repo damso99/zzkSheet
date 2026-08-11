@@ -31,6 +31,12 @@ export default async function handler(request, response) {
     const payload = parseGvizPayload(text);
     const rows = toRowArrays(payload.table);
 
+    response.setHeader(
+      "Vercel-CDN-Cache-Control",
+      "public, s-maxage=30, stale-while-revalidate=30",
+    );
+    response.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+
     sendJson(response, 200, {
       cols: payload.table?.cols || [],
       fetchedAt: new Date().toISOString(),
