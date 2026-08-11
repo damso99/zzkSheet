@@ -43,8 +43,6 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const [selectedCharacterName, setSelectedCharacterName] = useState("");
   const [selectedOwnerName, setSelectedOwnerName] = useState("");
   const [selectedWeeklyParticipant, setSelectedWeeklyParticipant] = useState("");
-  const [discordTestStatus, setDiscordTestStatus] = useState("idle");
-  const [discordNoticeTestStatus, setDiscordNoticeTestStatus] = useState("idle");
   const raidSignatureRef = useRef("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
@@ -247,44 +245,6 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const searchGroups = weeklySelectedGroups;
   const sortedTodayRaids = useMemo(() => [...todayRaids].sort(compareRaidOrder), [todayRaids]);
 
-  async function sendDiscordTestMessage() {
-    if (discordTestStatus === "sending") return;
-
-    setDiscordTestStatus("sending");
-
-    try {
-      const response = await fetch("/api/discord-test", { method: "POST" });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload?.error || "메시지 전송에 실패했습니다.");
-      }
-
-      setDiscordTestStatus("success");
-    } catch {
-      setDiscordTestStatus("error");
-    }
-  }
-
-  async function sendDiscordNoticeTestMessage() {
-    if (discordNoticeTestStatus === "sending") return;
-
-    setDiscordNoticeTestStatus("sending");
-
-    try {
-      const response = await fetch("/api/cron/discord-weekly", { method: "POST" });
-      const payload = await response.json();
-
-      if (!response.ok || !payload?.sent) {
-        throw new Error(payload?.error || payload?.reason || "공지 전송에 실패했습니다.");
-      }
-
-      setDiscordNoticeTestStatus("success");
-    } catch {
-      setDiscordNoticeTestStatus("error");
-    }
-  }
-
   return (
     <div className={styles.page}>
       <div className={styles.backdrop} />
@@ -293,7 +253,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           <div>
             <p className={styles.eyebrow}>LostArk Weekly Planner</p>
             <h1>Stick Over Flow</h1>
-            <div className={styles.metaLine} aria-label="데이터 갱신 및 디스코드 테스트">
+            <div className={styles.metaLine} aria-label="데이터 갱신 상태">
               <span>갱신 {formatFetchedAt(sourceMeta.fetchedAt)}</span>
               <span
                 className={`${styles.connectionStatus} ${
@@ -303,24 +263,6 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                 <span className={styles.connectionStatusDot} aria-hidden="true" />
                 {sourceMeta.isFallback ? "Disconnected" : "Connected"}
               </span>
-              <button
-                type="button"
-                className={styles.discordTestButton}
-                disabled={discordTestStatus === "sending"}
-                onClick={sendDiscordTestMessage}
-                aria-live="polite"
-              >
-                {getDiscordTestButtonLabel(discordTestStatus)}
-              </button>
-              <button
-                type="button"
-                className={styles.discordTestButton}
-                disabled={discordNoticeTestStatus === "sending"}
-                onClick={sendDiscordNoticeTestMessage}
-                aria-live="polite"
-              >
-                {getDiscordTestButtonLabel(discordNoticeTestStatus, "공지 테스트")}
-              </button>
             </div>
           </div>
         </header>
@@ -1000,10 +942,3 @@ function parseIsoDateToLocalDate(dateValue) {
 }
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
-
-function getDiscordTestButtonLabel(status, idleLabel = "디코 테스트") {
-  if (status === "sending") return "전송 중";
-  if (status === "success") return "전송 완료";
-  if (status === "error") return "전송 실패";
-  return idleLabel;
-}

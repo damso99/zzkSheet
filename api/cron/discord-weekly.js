@@ -2,37 +2,18 @@ const SPREADSHEET_ID = "1pn-86CBr_9TzKI1zncCXpo3Ge0rKjg8zA99v6twX_gA";
 const SHEET_NAME = "디코공지";
 const KOREA_TIME_ZONE = "Asia/Seoul";
 const ENABLED_VALUES = new Set(["1", "TRUE", "Y", "YES", "사용", "전송"]);
-const MANUAL_COOLDOWN_MS = 30 * 1000;
-
-let lastManualSentAt = 0;
 
 export default async function handler(request, response) {
-  const isManualTest = request.method === "POST";
-
-  if (request.method !== "GET" && !isManualTest) {
-    response.setHeader("Allow", "GET, POST");
-    sendJson(response, 405, { error: "GET 또는 POST 요청만 허용됩니다." });
+  if (request.method !== "GET") {
+    response.setHeader("Allow", "GET");
+    sendJson(response, 405, { error: "GET 요청만 허용됩니다." });
     return;
   }
 
-  if (isManualTest) {
-    if (!isSameOriginRequest(request)) {
-      sendJson(response, 403, { error: "허용되지 않은 요청입니다." });
-      return;
-    }
-
-    const remainingCooldown = MANUAL_COOLDOWN_MS - (Date.now() - lastManualSentAt);
-    if (remainingCooldown > 0) {
-      response.setHeader("Retry-After", String(Math.ceil(remainingCooldown / 1000)));
-      sendJson(response, 429, { error: "잠시 후 다시 시도해주세요." });
-      return;
-    }
-  } else {
-    const cronSecret = String(process.env.CRON_SECRET || "").trim();
-    if (!cronSecret || request.headers.authorization !== `Bearer ${cronSecret}`) {
-      sendJson(response, 401, { error: "인증되지 않은 Cron 요청입니다." });
-      return;
-    }
+  const cronSecret = String(process.env.CRON_SECRET || "").trim();
+  if (!cronSecret || request.headers.authorization !== `Bearer ${cronSecret}`) {
+    sendJson(response, 401, { error: "인증되지 않은 Cron 요청입니다." });
+    return;
   }
 
   const webhookUrl = String(process.env.DISCORD_WEBHOOK_URL || "").trim();
@@ -54,7 +35,7 @@ export default async function handler(request, response) {
     }
 
     const today = getKoreanDate();
-    if (!isManualTest && notice.sendDate !== today) {
+    if (notice.sendDate !== today) {
       sendJson(response, 200, {
         sent: false,
         reason: "전송일이 오늘과 일치하지 않습니다.",
@@ -96,10 +77,7 @@ export default async function handler(request, response) {
       return;
     }
 
-    if (isManualTest) lastManualSentAt = Date.now();
-
     sendJson(response, 200, {
-      manualTest: isManualTest,
       sent: true,
       sendDate: notice.sendDate,
       title: notice.title,
@@ -109,18 +87,6 @@ export default async function handler(request, response) {
       error: "주간 디스코드 공지를 처리하지 못했습니다.",
       detail: error instanceof Error ? error.message : String(error),
     });
-  }
-}
-
-function isSameOriginRequest(request) {
-  const origin = String(request.headers.origin || "").trim();
-  const host = String(request.headers.host || "").trim();
-  if (!origin || !host) return false;
-
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
   }
 }
 

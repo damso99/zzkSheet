@@ -414,28 +414,6 @@
     0 0 18px rgba(255, 98, 117, 0.42);
 }
 
-.discordTestButton {
-  min-height: 30px;
-  padding: 6px 12px;
-  border: 1px solid rgba(124, 184, 255, 0.36);
-  border-radius: 999px;
-  color: #e8f5ff;
-  font: inherit;
-  font-weight: 900;
-  cursor: pointer;
-  background: rgba(76, 141, 255, 0.16);
-}
-
-.discordTestButton:hover:not(:disabled) {
-  border-color: rgba(124, 184, 255, 0.64);
-  background: rgba(76, 141, 255, 0.28);
-}
-
-.discordTestButton:disabled {
-  cursor: wait;
-  opacity: 0.68;
-}
-
 /* Tabs and controls */
 .toolbar {
   display: flex;
