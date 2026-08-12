@@ -12,6 +12,11 @@ import {
   isInScheduleRange,
 } from "./utils/dateUtils.js";
 import { buildFallbackRaidSchedule, buildRaidSchedule } from "./utils/raidParser.js";
+import {
+  findUpdatedRaidKeys,
+  getRaidTrackingKey,
+  markRaidAsSeen,
+} from "./utils/raidUpdateTracker.js";
 import { DEFAULT_SHEET_URL, DEFAULT_TARGET_GID, loadRaidSheetBundle } from "./utils/sheetApi.js";
 
 const loadAuctionBidCalculator = () => import("./components/AuctionBidCalculator.jsx");
@@ -43,6 +48,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const [selectedCharacterName, setSelectedCharacterName] = useState("");
   const [selectedOwnerName, setSelectedOwnerName] = useState("");
   const [selectedWeeklyParticipant, setSelectedWeeklyParticipant] = useState("");
+  const [updatedRaidKeys, setUpdatedRaidKeys] = useState(() => new Set());
   const raidSignatureRef = useRef("");
   const [sourceMeta, setSourceMeta] = useState({
     isFallback: false,
@@ -100,6 +106,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
         if (!ignore) {
           if (raidSignatureRef.current !== nextRaidSignature) {
             raidSignatureRef.current = nextRaidSignature;
+            setUpdatedRaidKeys(findUpdatedRaidKeys(normalizedRaids));
             setRaids(normalizedRaids);
           }
           setSourceMeta({
@@ -148,6 +155,16 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
       ignore = true;
     };
   }, [todayIsoDate]);
+
+  function handleRaidOpen(raid) {
+    const seenKey = markRaidAsSeen(raid);
+    setUpdatedRaidKeys((current) => {
+      if (!current.has(seenKey)) return current;
+      const next = new Set(current);
+      next.delete(seenKey);
+      return next;
+    });
+  }
 
   const todayRaids = useMemo(
     () =>
@@ -340,6 +357,8 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                         collapsible
                         isHighlighted={isHighlighted}
                         selectedOwnerName={selectedOwnerName}
+                        isUpdated={updatedRaidKeys.has(getRaidTrackingKey(raid))}
+                        onOpen={handleRaidOpen}
                       />
                     );
                   })}

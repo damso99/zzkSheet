@@ -7,12 +7,15 @@ function RaidCard({
   onCharacterClick,
   collapsible = false,
   isHighlighted = false,
+  isUpdated = false,
+  onOpen,
   selectedOwnerName = "",
 }) {
   const [isOpen, setIsOpen] = useState(!collapsible);
 
   function toggleOpen() {
     if (!collapsible) return;
+    if (!isOpen) onOpen?.(raid);
     setIsOpen((current) => !current);
   }
 
@@ -38,6 +41,7 @@ function RaidCard({
           <h3>{raid.raidName}</h3>
         </div>
         <div className={styles.cardHeaderActions}>
+          {isUpdated ? <span className={styles.raidUpdateDot} aria-label="갱신된 일정" /> : null}
           {collapsible ? (
             <button
               type="button"
