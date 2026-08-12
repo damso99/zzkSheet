@@ -8,7 +8,7 @@ const CHARACTER_COLUMN_INDEX = 3;
 const LEVEL_COLUMN_INDEX = 4;
 const POWER_COLUMN_INDEX = 5;
 const CLASS_COLUMN_INDEX = 6;
-const JOINED_COLUMN_INDEX = 8;
+const JOINED_COLUMN_INDICES = [2, 8];
 const RAID_START_COLUMN_INDEX = 9;
 
 export default function PersonalRaidPage({ embedded = false }) {
@@ -192,7 +192,7 @@ function parsePersonalRaidRows(rows) {
         return null;
       }
 
-      const joined = parseJoinedValue(row?.[JOINED_COLUMN_INDEX]);
+      const joined = JOINED_COLUMN_INDICES.some((columnIndex) => parseJoinedValue(row?.[columnIndex]));
       if (!joined) {
         return null;
       }
