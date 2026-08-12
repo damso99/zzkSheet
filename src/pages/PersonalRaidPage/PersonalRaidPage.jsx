@@ -8,7 +8,6 @@ const CHARACTER_COLUMN_INDEX = 3;
 const LEVEL_COLUMN_INDEX = 4;
 const POWER_COLUMN_INDEX = 5;
 const CLASS_COLUMN_INDEX = 6;
-const JOINED_COLUMN_INDICES = [2, 8];
 const RAID_START_COLUMN_INDEX = 9;
 
 export default function PersonalRaidPage({ embedded = false }) {
@@ -80,7 +79,7 @@ export default function PersonalRaidPage({ embedded = false }) {
           />
         </label>
         <p className={styles.sectionControlHint}>
-          이름을 검색하면 참여 체크된 캐릭터와 참여 레이드만 보여줍니다.
+          이름을 검색하면 해당 캐릭터 전체와 참여 레이드를 보여줍니다.
         </p>
       </section>
 
@@ -192,11 +191,6 @@ function parsePersonalRaidRows(rows) {
         return null;
       }
 
-      const joined = JOINED_COLUMN_INDICES.some((columnIndex) => parseJoinedValue(row?.[columnIndex]));
-      if (!joined) {
-        return null;
-      }
-
       const raids = (row || []).slice(RAID_START_COLUMN_INDEX).map(cleanText).filter(isRaidEntry);
 
       const level = cleanText(row?.[LEVEL_COLUMN_INDEX]);
@@ -210,20 +204,11 @@ function parsePersonalRaidRows(rows) {
         level,
         power,
         className,
-        joined,
         raids,
         levelValue: parseLevelValue(level),
       };
     })
     .filter(Boolean);
-}
-
-function parseJoinedValue(value) {
-  if (value === true) return true;
-  if (value === false) return false;
-
-  const text = cleanText(value).toLowerCase();
-  return ["1", "true", "checked", "참여", "✓", "✔", "☑"].includes(text);
 }
 
 function parseLevelValue(value) {
