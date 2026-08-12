@@ -96,7 +96,7 @@ export default function PersonalRaidPage({ embedded = false }) {
         </section>
       ) : null}
 
-      {!isLoading && !errorMessage && parsedCharacters.length === 0 ? (
+      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length === 0 ? (
         <section className={styles.emptyState}>
           <p>참여 중인 캐릭터가 없습니다.</p>
         </section>
