@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+﻿import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import styles from "./RaidSchedulePage.module.css";
 import AuctionBidSidebar from "./components/AuctionBidSidebar.jsx";
 import RaidCard from "./components/RaidCard.jsx";
@@ -600,7 +600,7 @@ function CalendarRaidModal({ raid, onCharacterClick, onClose, styles }) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const scrollY = window.scrollY;
     const previousBodyStyles = {
       overflow: document.body.style.overflow,

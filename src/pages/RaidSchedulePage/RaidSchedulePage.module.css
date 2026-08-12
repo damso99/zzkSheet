@@ -3811,12 +3811,14 @@
   .calendarRaidModalOverlay {
     align-items: center;
     padding: 16px;
+    backdrop-filter: none;
   }
 
   .calendarRaidModalShell {
     width: 100%;
     max-height: calc(100dvh - 32px);
     border-radius: 24px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.58);
   }
 
   .calendarRaidModalHeader {
@@ -3826,6 +3828,17 @@
   .calendarRaidModalBody {
     max-height: calc(100dvh - 104px);
     padding: 14px;
+  }
+
+  .calendarRaidModalBody .raidCard {
+    backdrop-filter: none;
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .calendarRaidModalBody .raidCard::after {
+    display: none;
   }
 
   .modalShell {
