@@ -48,6 +48,7 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
   const [selectedCharacterName, setSelectedCharacterName] = useState("");
   const [selectedOwnerName, setSelectedOwnerName] = useState("");
   const [selectedWeeklyParticipant, setSelectedWeeklyParticipant] = useState("");
+  const [selectedCalendarRaid, setSelectedCalendarRaid] = useState(null);
   const [updatedRaidKeys, setUpdatedRaidKeys] = useState(() => new Set());
   const raidSignatureRef = useRef("");
   const [sourceMeta, setSourceMeta] = useState({
@@ -415,6 +416,15 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
                                   className={`${styles.weekCalendarDayCard} ${
                                     isHighlighted ? styles.weekCalendarDayCardHighlighted : ""
                                   }`}
+                                  onClick={() => setSelectedCalendarRaid(raid)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault();
+                                      setSelectedCalendarRaid(raid);
+                                    }
+                                  }}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   <div className={styles.weekCalendarDayCardTop}>
                                     <strong className={styles.weekCalendarDayCardTitle}>{raid.raidName}</strong>
@@ -573,6 +583,57 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
           />
         </Suspense>
       ) : null}
+
+      {selectedCalendarRaid ? (
+        <CalendarRaidModal
+          raid={selectedCalendarRaid}
+          onCharacterClick={setSelectedCharacterName}
+          onClose={() => setSelectedCalendarRaid(null)}
+          styles={styles}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CalendarRaidModal({ raid, onCharacterClick, onClose, styles }) {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className={styles.calendarRaidModalOverlay} onClick={onClose}>
+      <section
+        className={styles.calendarRaidModalShell}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${raid.raidName} 상세 일정`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className={styles.calendarRaidModalHeader}>
+          <div>
+            <span>{raid.date ? formatDateLabel(raid.date) : "날짜 미정"}</span>
+            <strong>{raid.time || raid.blockTime || "시간 미정"}</strong>
+          </div>
+          <button type="button" className={styles.detailToggleButton} onClick={onClose}>
+            닫기
+          </button>
+        </header>
+        <div className={styles.calendarRaidModalBody}>
+          <RaidCard raid={raid} styles={styles} onCharacterClick={onCharacterClick} />
+        </div>
+      </section>
     </div>
   );
 }

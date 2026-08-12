@@ -1655,6 +1655,22 @@
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.weekCalendarDayCard:hover,
+.weekCalendarDayCard:focus-visible {
+  border-color: rgba(105, 230, 255, 0.38);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.24),
+    0 0 18px rgba(85, 167, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .weekCalendarDayCardHighlighted {
@@ -1674,6 +1690,66 @@
   font-size: 0.92rem;
   font-weight: 950;
   line-height: 1.35;
+}
+
+.calendarRaidModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 6, 14, 0.84);
+  backdrop-filter: blur(8px);
+}
+
+.calendarRaidModalShell {
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(33, 44, 66, 0.98), rgba(16, 21, 34, 0.98));
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.72),
+    0 0 42px rgba(76, 141, 255, 0.12);
+}
+
+.calendarRaidModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(124, 184, 255, 0.16);
+}
+
+.calendarRaidModalHeader > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendarRaidModalHeader span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.calendarRaidModalHeader strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.calendarRaidModalBody {
+  max-height: calc(100dvh - 130px);
+  overflow: auto;
+  padding: 20px;
+}
+
+.calendarRaidModalBody .raidCard::before {
+  display: none;
 }
 
 /* Search */
@@ -3727,6 +3803,26 @@
 
   .modalOverlay {
     padding: 0;
+  }
+
+  .calendarRaidModalOverlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .calendarRaidModalShell {
+    width: 100%;
+    max-height: 90dvh;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .calendarRaidModalHeader {
+    padding: 16px;
+  }
+
+  .calendarRaidModalBody {
+    max-height: calc(90dvh - 70px);
+    padding: 14px;
   }
 
   .modalShell {
