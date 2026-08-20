@@ -118,6 +118,10 @@
   outline-offset: 3px;
 }
 
+.sheetLinkIcon {
+  display: none;
+}
+
 .pageTabs {
   display: none;
   flex-wrap: wrap;
@@ -3757,6 +3761,22 @@
 }
 
 @media (max-width: 720px) {
+  .sheetLinkButton {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 1rem;
+  }
+
+  .sheetLinkLabel {
+    display: none;
+  }
+
+  .sheetLinkIcon {
+    display: inline;
+  }
+
   .content {
     padding: 32px 14px 52px;
   }

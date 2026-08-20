@@ -290,7 +290,8 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
             rel="noreferrer"
             aria-label="Google 시트 새 창에서 열기"
           >
-            시트 열기
+            <span className={styles.sheetLinkLabel}>시트 열기</span>
+            <span className={styles.sheetLinkIcon} aria-hidden="true">↗</span>
           </a>
         </header>
 
