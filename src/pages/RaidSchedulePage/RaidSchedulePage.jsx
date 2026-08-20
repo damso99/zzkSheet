@@ -283,6 +283,15 @@ export default function RaidSchedulePage({ initialTab = "today" }) {
               </span>
             </div>
           </div>
+          <a
+            className={styles.sheetLinkButton}
+            href={sourceMeta.sourceUrl || DEFAULT_SHEET_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Google 시트 새 창에서 열기"
+          >
+            시트 열기
+          </a>
         </header>
 
         <section className={styles.toolbar}>

@@ -79,8 +79,43 @@
 
 /* Header */
 .hero {
+  position: relative;
   display: block;
   padding-bottom: 26px;
+}
+
+.sheetLinkButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-decoration: none;
+  background: rgba(33, 44, 66, 0.9);
+  box-shadow: var(--shadow);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.sheetLinkButton:hover {
+  border-color: rgba(124, 184, 255, 0.58);
+  background: var(--hover);
+  transform: translateY(-1px);
+}
+
+.sheetLinkButton:focus-visible {
+  outline: 3px solid rgba(124, 184, 255, 0.28);
+  outline-offset: 3px;
 }
 
 .pageTabs {
