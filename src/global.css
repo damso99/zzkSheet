@@ -62,10 +62,6 @@ input { border: 0; }
 .appSidebarToggle, .appSidebarBackdrop { display: none; }
 [role="tablist"][aria-label="일정 보기 선택"] { display: none !important; }
 
-/* 공통 사이드바를 사용하므로 각 페이지의 중복 사이트 헤더는 숨깁니다. */
-.appMain > div > div:nth-child(2) > header:first-child,
-.appMain > main > div:nth-child(2) > header:first-child { display: none !important; }
-
 ::selection { color: #12121a; background: rgba(233,204,251,.92); }
 html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar { width: 10px; height: 10px; }
 html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, #root::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: linear-gradient(180deg,rgba(124,184,255,.92),rgba(76,141,255,.84)); background-clip: padding-box; }
