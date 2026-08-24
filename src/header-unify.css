@@ -1,11 +1,77 @@
-.appMain [class*="_hero_"] h1 {
+.appMain > div > div > [class*="_content_"],
+.appMain > div > main > [class*="_content_"] {
+  width: min(100%, 1200px) !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+
+.appMain [class*="_hero_"],
+.appMain [class*="_topHeader_"] {
+  display: block !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 4px !important;
+  border: 0 !important;
+}
+
+.appMain [class*="_hero_"] [class*="_eyebrow_"],
+.appMain [class*="_topHeader_"] [class*="_eyebrow_"] {
+  margin: 0 !important;
+  color: var(--primary) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+  letter-spacing: .11em !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 16px rgba(124,184,255,.28) !important;
+}
+
+.appMain [class*="_hero_"] h1,
+.appMain [class*="_topHeader_"] h1 {
+  margin: 0 !important;
+  color: #fff !important;
   font-size: clamp(22px, 3vw, 30px) !important;
   line-height: 1.05 !important;
-  letter-spacing: -0.04em !important;
+  letter-spacing: -.04em !important;
+  text-shadow: 0 0 12px rgba(124,184,255,.22), 0 0 28px rgba(76,141,255,.12) !important;
+}
+
+.appMain [class*="_hero_"] [class*="_metaLine_"],
+.appMain [class*="_topHeader_"] [class*="_metaLine_"] {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 6px 10px !important;
+  margin-top: 6px !important;
+  color: var(--text-muted) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.5 !important;
+}
+
+.appMain [class*="_hero_"] [class*="_connectionStatus_"],
+.appMain [class*="_topHeader_"] [class*="_connectionStatus_"] {
+  min-height: 24px !important;
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+}
+
+.appMain [class*="_hero_"] [class*="_connectionStatusDot_"],
+.appMain [class*="_topHeader_"] [class*="_connectionStatusDot_"] {
+  width: 7px !important;
+  height: 7px !important;
 }
 
 @media (max-width: 640px) {
-  .appMain [class*="_hero_"] h1 {
+  .appMain > div > div > [class*="_content_"],
+  .appMain > div > main > [class*="_content_"] {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .appMain [class*="_hero_"] h1,
+  .appMain [class*="_topHeader_"] h1 {
     font-size: 22px !important;
   }
 }
