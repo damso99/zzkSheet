@@ -80,6 +80,46 @@ input {
   min-height: 100vh;
 }
 
+.weeklyGoldQuickLink {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 15px 0 10px;
+  border: 1px solid rgba(124, 184, 255, 0.42);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(26, 34, 51, 0.94);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34), var(--shadow-glow);
+  backdrop-filter: blur(14px);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.weeklyGoldQuickLink:hover {
+  border-color: rgba(124, 184, 255, 0.72);
+  background: rgba(33, 44, 66, 0.98);
+  transform: translateY(-1px);
+}
+
+.weeklyGoldQuickLinkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: #171722;
+  background: linear-gradient(135deg, #ffe08a, #f5b942);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 0 16px rgba(245, 185, 66, 0.24);
+}
+
 ::selection {
   color: #12121a;
   background: rgba(233, 204, 251, 0.92);
@@ -105,4 +145,13 @@ html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track,
 #root::-webkit-scrollbar-track {
   background: rgba(34, 26, 54, 0.44);
+}
+
+@media (max-width: 720px) {
+  .weeklyGoldQuickLink {
+    right: 12px;
+    bottom: 12px;
+    min-height: 42px;
+    padding-right: 13px;
+  }
 }
