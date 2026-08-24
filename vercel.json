@@ -25,6 +25,42 @@
       ]
     },
     {
+      "source": "/week",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/week/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/auction",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/auction/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/personal",
       "headers": [
         {
@@ -80,6 +116,22 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/week",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/week/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auction",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auction/",
+      "destination": "/index.html"
+    },
     {
       "source": "/personal",
       "destination": "/index.html"
