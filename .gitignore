@@ -4,5 +4,7 @@
 node_modules/
 dist/
 .vercel/
+.idea/
+*.iml
 .DS_Store
 Thumbs.db
