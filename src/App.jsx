@@ -12,6 +12,14 @@ const NAV_ITEMS = [
   { path: "/weekly-gold", label: "주간 골드" },
 ];
 
+const EXTERNAL_SITES = [
+  { label: "로펙", href: "https://lopec.kr/" },
+  { label: "로아랩", href: "https://lo4.app/" },
+  { label: "로아와", href: "https://loawa.com/" },
+  { label: "로아업", href: "https://loaup.com/" },
+  { label: "로아베스팅", href: "https://www.loavesting.com/" },
+];
+
 function normalizePath(pathname) {
   return pathname.replace(/\/$/, "") || "/";
 }
@@ -108,10 +116,27 @@ export default function App() {
           })}
         </nav>
 
-        <a className="appSidebarSheetLink" href={DEFAULT_SHEET_URL} target="_blank" rel="noreferrer">
-          <span>Google 시트 열기</span>
-          <span aria-hidden="true">↗</span>
-        </a>
+        <div className="appSidebarUtilities">
+          <details className="appSidebarSites">
+            <summary>
+              <span>사이트 모음집</span>
+              <span className="appSidebarSitesChevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div className="appSidebarSitesList">
+              {EXTERNAL_SITES.map((site) => (
+                <a key={site.href} href={site.href} target="_blank" rel="noreferrer">
+                  <span>{site.label}</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </div>
+          </details>
+
+          <a className="appSidebarSheetLink" href={DEFAULT_SHEET_URL} target="_blank" rel="noreferrer">
+            <span>Google 시트 열기</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
       </aside>
 
       <div className="appMain">
