@@ -74,9 +74,31 @@ input { border: 0; }
   margin-bottom: 2px !important;
   font-size: 10px !important;
 }
-/* 시트 이동은 사이드바 하단만 사용 */
 .appMain > div > div:nth-child(2) > header:first-child > a,
 .appMain > main > div:nth-child(2) > header:first-child a { display: none !important; }
+
+/* 주간 골드 외 기존 페이지 공백 축소: 모듈 CSS의 구조는 유지하고 여백만 덮어쓴다. */
+.appMain > div:not([class*="WeeklyGoldPage"]) [class*="_content_"] { padding-top: 28px !important; padding-bottom: 48px !important; }
+.appMain [class*="_hero_"] { padding-bottom: 4px !important; }
+.appMain [class*="_sectionHeader_"] { min-height: 0 !important; margin-bottom: 12px !important; gap: 3px !important; }
+.appMain [class*="_sectionControl_"] { min-height: 0 !important; margin-bottom: 14px !important; padding: 12px 14px !important; gap: 6px !important; }
+.appMain [class*="_sectionSearchInput_"] { margin-top: 5px !important; }
+.appMain [class*="_panel_"] { margin-top: 12px !important; padding: 15px !important; }
+.appMain [class*="_panelHeader_"] { margin-bottom: 11px !important; gap: 10px !important; }
+.appMain [class*="_panelHeader_"] p { margin-top: 3px !important; }
+.appMain [class*="_panelControls_"] { gap: 8px !important; }
+.appMain [class*="_form_"] { gap: 8px !important; }
+.appMain [class*="_notice_"] { margin-bottom: 10px !important; padding: 11px 14px !important; }
+.appMain [class*="_cardList_"] { gap: 10px !important; }
+.appMain [class*="_characterCard_"] { padding: 18px 20px !important; min-height: 0 !important; }
+.appMain [class*="_cardInner_"] { gap: 14px 0 !important; }
+.appMain [class*="_characterName_"]::before,
+.appMain [class*="_classBadge_"]::before,
+.appMain [class*="_statItem_"] span { margin-bottom: 5px !important; }
+.appMain [class*="_raidSection_"] { padding-top: 12px !important; }
+.appMain [class*="_raidPills_"] { gap: 7px !important; }
+.appMain [class*="_raidPill_"] { min-height: 40px !important; padding-left: 12px !important; padding-right: 12px !important; }
+.appMain [class*="_emptyState_"], .appMain [class*="_errorState_"] { padding: 20px 16px !important; }
 
 ::selection { color: #12121a; background: rgba(233,204,251,.92); }
 html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -93,4 +115,10 @@ html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, #root::-webkit-scr
   .appMain > main > div:nth-child(2) > header:first-child { padding-bottom: 10px !important; }
   .appMain > div > div:nth-child(2) > header:first-child h1,
   .appMain > main > div:nth-child(2) > header:first-child h1 { font-size: 22px !important; }
+  .appMain [class*="_content_"] { padding-top: 18px !important; padding-bottom: 40px !important; }
+  .appMain [class*="_sectionHeader_"] { margin-bottom: 9px !important; }
+  .appMain [class*="_sectionControl_"] { margin-bottom: 10px !important; padding: 10px 11px !important; }
+  .appMain [class*="_panel_"] { margin-top: 9px !important; padding: 11px !important; }
+  .appMain [class*="_characterCard_"] { padding: 13px 14px !important; }
+  .appMain [class*="_raidSection_"] { padding-top: 9px !important; }
 }
