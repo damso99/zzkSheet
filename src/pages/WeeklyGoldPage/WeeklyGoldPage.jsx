@@ -16,41 +16,60 @@ export default function WeeklyGoldPage() {
   const [goldRows, setGoldRows] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selections, setSelections] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isPersonalLoading, setIsPersonalLoading] = useState(true);
+  const [isGoldLoading, setIsGoldLoading] = useState(true);
+  const [personalError, setPersonalError] = useState("");
+  const [goldError, setGoldError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadData() {
+    async function loadPersonalRows() {
       try {
-        setIsLoading(true);
-        setErrorMessage("");
-
-        const [personalPayload, goldPayload] = await Promise.all([
-          loadSheetRowsByName({
-            sheetUrl: DEFAULT_SHEET_URL,
-            sheetName: PERSONAL_RAID_SHEET_NAME,
-            signal: controller.signal,
-          }),
-          loadSheetRowsByName({
-            sheetUrl: DEFAULT_SHEET_URL,
-            sheetName: RAID_GOLD_SHEET_NAME,
-            signal: controller.signal,
-          }),
-        ]);
-
-        setPersonalRows(Array.isArray(personalPayload?.rows) ? personalPayload.rows : []);
-        setGoldRows(Array.isArray(goldPayload?.rows) ? goldPayload.rows : []);
+        setIsPersonalLoading(true);
+        setPersonalError("");
+        const payload = await loadSheetRowsByName({
+          sheetUrl: DEFAULT_SHEET_URL,
+          sheetName: PERSONAL_RAID_SHEET_NAME,
+          signal: controller.signal,
+        });
+        setPersonalRows(Array.isArray(payload?.rows) ? payload.rows : []);
       } catch (error) {
         if (error?.name === "AbortError") return;
-        setErrorMessage(error?.message || "주간 골드 데이터를 불러오지 못했습니다.");
+        setPersonalRows([]);
+        setPersonalError(error?.message || "개인레이드 시트를 불러오지 못했습니다.");
       } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
+        if (!controller.signal.aborted) setIsPersonalLoading(false);
       }
     }
 
-    loadData();
+    loadPersonalRows();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadGoldRows() {
+      try {
+        setIsGoldLoading(true);
+        setGoldError("");
+        const payload = await loadSheetRowsByName({
+          sheetUrl: DEFAULT_SHEET_URL,
+          sheetName: RAID_GOLD_SHEET_NAME,
+          signal: controller.signal,
+        });
+        setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []);
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        setGoldRows([]);
+        setGoldError(error?.message || "레이드골드 시트를 불러오지 못했습니다.");
+      } finally {
+        if (!controller.signal.aborted) setIsGoldLoading(false);
+      }
+    }
+
+    loadGoldRows();
     return () => controller.abort();
   }, []);
 
@@ -106,6 +125,8 @@ export default function WeeklyGoldPage() {
     setSelections({});
   }
 
+  const canUseGoldOptions = !isGoldLoading && !goldError && raidGoldOptions.length > 0;
+
   return (
     <main className={styles.page}>
       <div className={styles.backdrop} />
@@ -139,6 +160,7 @@ export default function WeeklyGoldPage() {
               onChange={(event) => setSearchKeyword(event.target.value)}
               placeholder="개인레이드 시트의 이름을 입력하세요"
               list="weekly-gold-owner-list"
+              disabled={isPersonalLoading}
             />
           </label>
           <datalist id="weekly-gold-owner-list">
@@ -148,22 +170,27 @@ export default function WeeklyGoldPage() {
         </section>
 
         <section className={styles.summaryGrid} aria-label="주간 골드 요약">
-          <SummaryCard label="조회 원정대" value={selectedOwnerNames.length ? `${selectedOwnerNames.join(", ")}` : "-"} />
+          <SummaryCard label="조회 원정대" value={selectedOwnerNames.length ? selectedOwnerNames.join(", ") : "-"} />
           <SummaryCard label="캐릭터" value={`${filteredCharacters.length}명`} />
           <SummaryCard label="선택 레이드" value={`${selectedRaidCount}개`} />
           <SummaryCard label="예상 획득 골드" value={`${formatGold(totalGold)} G`} emphasis />
         </section>
 
-        {isLoading ? <StatePanel message="개인레이드 / 레이드골드 시트를 불러오는 중입니다." /> : null}
-        {!isLoading && errorMessage ? <StatePanel message={errorMessage} error /> : null}
-        {!isLoading && !errorMessage && !keyword ? <StatePanel message="이름을 검색하면 원정대 캐릭터가 표시됩니다." /> : null}
-        {!isLoading && !errorMessage && keyword && filteredCharacters.length === 0 ? <StatePanel message="검색 결과가 없습니다." /> : null}
-        {!isLoading && !errorMessage && keyword && filteredCharacters.length > 0 && raidGoldOptions.length === 0 ? (
-          <StatePanel message="레이드골드 시트에서 골드 정보를 찾지 못했습니다. 헤더에 레이드/골드 정보를 확인해주세요." error />
+        {isPersonalLoading ? <StatePanel message="개인레이드 시트를 불러오는 중입니다." /> : null}
+        {!isPersonalLoading && personalError ? <StatePanel message={`개인레이드 조회 실패: ${personalError}`} error /> : null}
+        {!isPersonalLoading && !personalError && !keyword ? <StatePanel message="이름을 검색하면 원정대 캐릭터가 표시됩니다." /> : null}
+        {!isPersonalLoading && !personalError && keyword && filteredCharacters.length === 0 ? (
+          <StatePanel message={`'${cleanText(searchKeyword)}' 이름으로 개인레이드 시트에서 캐릭터를 찾지 못했습니다.`} />
         ) : null}
 
-        {!isLoading && !errorMessage && filteredCharacters.length > 0 && raidGoldOptions.length > 0 ? (
+        {!isPersonalLoading && !personalError && filteredCharacters.length > 0 ? (
           <>
+            {isGoldLoading ? <StatePanel message="캐릭터 조회 완료 · 레이드골드 시트를 불러오는 중입니다." /> : null}
+            {!isGoldLoading && goldError ? <StatePanel message={`캐릭터 조회 완료 · 레이드골드 조회 실패: ${goldError}`} error /> : null}
+            {!isGoldLoading && !goldError && raidGoldOptions.length === 0 ? (
+              <StatePanel message="캐릭터 조회 완료 · 레이드골드 시트에서 사용 가능한 골드 정보를 찾지 못했습니다." error />
+            ) : null}
+
             <section className={styles.characterGrid}>
               {filteredCharacters.map((character) => {
                 const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
@@ -196,8 +223,9 @@ export default function WeeklyGoldPage() {
                             <select
                               value={selected[slotIndex] || ""}
                               onChange={(event) => handleRaidChange(character.id, slotIndex, event.target.value)}
+                              disabled={!canUseGoldOptions}
                             >
-                              <option value="">레이드 선택</option>
+                              <option value="">{canUseGoldOptions ? "레이드 선택" : "골드 데이터 준비 중"}</option>
                               {availableOptions.map((option) => (
                                 <option
                                   key={option.id}
