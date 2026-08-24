@@ -52,10 +52,14 @@
 .characterMeta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; color: var(--text-muted); font-size: 12px; }
 .characterGold { flex: none; color: #ffd25a; font-size: 19px; white-space: nowrap; }
 .raidSlots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
-.raidSlot { min-width: 0; color: var(--text-muted); font-size: 11px; font-weight: 750; }
-.raidSlot span { display: block; margin: 0 0 6px 2px; }
-.raidSlot select { width: 100%; min-width: 0; height: 40px; padding: 0 30px 0 10px; border: 1px solid var(--input-border); border-radius: 11px; outline: none; color: var(--input-text); background: var(--input-bg); font-size: 12px; }
-.raidSlot select:focus { border-color: var(--input-border-focus); box-shadow: 0 0 0 3px var(--input-focus-shadow); }
+.raidSlot { min-width: 0; padding: 10px; border: 1px solid rgba(124,184,255,.12); border-radius: 13px; background: rgba(12,18,31,.26); color: var(--text-muted); font-size: 11px; font-weight: 750; }
+.raidSlotTitle { display: block; margin: 0 0 8px 1px; color: var(--text); font-size: 11px; font-weight: 800; }
+.raidSelectPair { display: grid; gap: 8px; }
+.selectField { min-width: 0; }
+.selectField > span { display: block; margin: 0 0 5px 2px; color: var(--text-muted); font-size: 10px; font-weight: 700; }
+.selectField select { width: 100%; min-width: 0; height: 38px; padding: 0 28px 0 9px; border: 1px solid var(--input-border); border-radius: 10px; outline: none; color: var(--input-text); background: var(--input-bg); font-size: 12px; }
+.selectField select:focus { border-color: var(--input-border-focus); box-shadow: 0 0 0 3px var(--input-focus-shadow); }
+.selectField select:disabled { cursor: not-allowed; opacity: .55; }
 .totalBar { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 16px 18px; border: 1px solid rgba(124,184,255,.36); border-radius: 18px; background: rgba(18,18,26,.92); box-shadow: 0 16px 44px rgba(0,0,0,.38), var(--shadow-glow); backdrop-filter: blur(16px); }
 .totalBar div { display: flex; align-items: baseline; gap: 14px; }
 .totalBar span { color: var(--text-muted); font-size: 13px; font-weight: 800; }
@@ -82,7 +86,8 @@
   .characterHeader { align-items: center; }
   .characterGold { font-size: 16px; }
   .raidSlots { grid-template-columns: 1fr; }
-  .raidSlot select { height: 42px; font-size: 13px; }
+  .raidSelectPair { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 8px; }
+  .selectField select { height: 42px; font-size: 13px; }
   .totalBar { bottom: 8px; padding: 13px; }
   .totalBar strong { font-size: 19px; }
 }
