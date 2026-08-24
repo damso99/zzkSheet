@@ -52,7 +52,6 @@ export default function WeeklyGoldPage() {
 
   const characters = useMemo(() => parsePersonalRaidRows(personalRows), [personalRows]);
   const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows), [goldRows]);
-  const ownerNames = useMemo(() => [...new Set(characters.map((item) => item.owner))].sort((a, b) => a.localeCompare(b, "ko")), [characters]);
   const keyword = normalize(searchKeyword);
   const filteredCharacters = useMemo(() => {
     if (!keyword) return [];
@@ -145,9 +144,8 @@ export default function WeeklyGoldPage() {
 
         <section className={styles.searchPanel}>
           <label className={styles.searchLabel}>이름 검색
-            <input type="search" value={searchKeyword} onChange={(event) => setSearchKeyword(event.target.value)} placeholder="개인레이드 시트의 이름을 입력하세요" list="weekly-gold-owner-list" disabled={isPersonalLoading} />
+            <input type="text" value={searchKeyword} onChange={(event) => setSearchKeyword(event.target.value)} placeholder="이름을 직접 입력하세요" autoComplete="off" disabled={isPersonalLoading} />
           </label>
-          <datalist id="weekly-gold-owner-list">{ownerNames.map((ownerName) => <option key={ownerName} value={ownerName} />)}</datalist>
           <span className={styles.searchHint}>레이드골드(귀속)의 합계 골드를 기준으로 계산합니다.</span>
         </section>
 
@@ -200,7 +198,6 @@ export default function WeeklyGoldPage() {
 
                         return (
                           <div key={`${character.id}-${slotIndex}`} className={styles.raidSlot}>
-                            <span className={styles.raidSlotTitle}>레이드 {slotIndex + 1}</span>
                             <div className={styles.raidSelectPair}>
                               <label className={styles.selectField}>
                                 <span>레이드</span>
