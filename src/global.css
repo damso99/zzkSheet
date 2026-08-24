@@ -80,44 +80,125 @@ input {
   min-height: 100vh;
 }
 
-.weeklyGoldQuickLink {
+.appShell {
+  min-height: 100vh;
+}
+
+.appMain {
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: 196px;
+}
+
+.appSidebar {
   position: fixed;
-  right: 22px;
-  bottom: 22px;
-  z-index: 40;
-  display: inline-flex;
+  inset: 0 auto 0 0;
+  z-index: 80;
+  width: 196px;
+  padding: 18px 12px;
+  border-right: 1px solid rgba(124, 184, 255, 0.16);
+  background: linear-gradient(180deg, rgba(18, 18, 26, 0.98), rgba(22, 22, 34, 0.97));
+  box-shadow: 12px 0 34px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.appSidebarBrand {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 15px 0 10px;
-  border: 1px solid rgba(124, 184, 255, 0.42);
-  border-radius: 999px;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 9px 16px;
   color: var(--text);
-  background: rgba(26, 34, 51, 0.94);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34), var(--shadow-glow);
-  backdrop-filter: blur(14px);
-  font-size: 13px;
-  font-weight: 800;
 }
 
-.weeklyGoldQuickLink:hover {
-  border-color: rgba(124, 184, 255, 0.72);
-  background: rgba(33, 44, 66, 0.98);
-  transform: translateY(-1px);
-}
-
-.weeklyGoldQuickLinkIcon {
+.appSidebarBrandMark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  color: #171722;
-  background: linear-gradient(135deg, #ffe08a, #f5b942);
-  font-size: 12px;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid rgba(124, 184, 255, 0.38);
+  border-radius: 11px;
+  color: var(--primary);
+  background: rgba(76, 141, 255, 0.1);
+  font-size: 10px;
   font-weight: 900;
-  box-shadow: 0 0 16px rgba(245, 185, 66, 0.24);
+  letter-spacing: .05em;
+  box-shadow: var(--shadow-glow);
+}
+
+.appSidebarBrand strong,
+.appSidebarBrand small {
+  display: block;
+}
+
+.appSidebarBrand strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.appSidebarBrand small {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.appSidebarNav {
+  display: grid;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.appSidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 750;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.appSidebarItem:hover {
+  color: var(--text);
+  border-color: rgba(124, 184, 255, 0.18);
+  background: rgba(124, 184, 255, 0.07);
+}
+
+.appSidebarItemActive {
+  color: #fff;
+  border-color: rgba(124, 184, 255, 0.34);
+  background: linear-gradient(135deg, rgba(76, 141, 255, 0.18), rgba(34, 211, 238, 0.08));
+  box-shadow: inset 3px 0 0 rgba(124, 184, 255, 0.9), var(--shadow-glow);
+}
+
+.appSidebarIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 7px;
+  color: var(--primary);
+  background: rgba(124, 184, 255, 0.08);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.appSidebarToggle,
+.appSidebarBackdrop {
+  display: none;
+}
+
+[role="tablist"][aria-label="일정 보기 선택"] {
+  display: none !important;
 }
 
 ::selection {
@@ -147,11 +228,55 @@ body::-webkit-scrollbar-track,
   background: rgba(34, 26, 54, 0.44);
 }
 
-@media (max-width: 720px) {
-  .weeklyGoldQuickLink {
-    right: 12px;
-    bottom: 12px;
-    min-height: 42px;
-    padding-right: 13px;
+@media (max-width: 820px) {
+  .appMain {
+    margin-left: 0;
+    padding-top: 52px;
+  }
+
+  .appSidebar {
+    width: min(78vw, 250px);
+    transform: translateX(-104%);
+    transition: transform .2s ease;
+  }
+
+  .appSidebarOpen {
+    transform: translateX(0);
+  }
+
+  .appSidebarToggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 95;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 38px;
+    height: 38px;
+    padding: 0 9px;
+    border: 1px solid rgba(124, 184, 255, 0.28);
+    border-radius: 10px;
+    background: rgba(18, 18, 26, 0.94);
+    box-shadow: var(--shadow-glow);
+    backdrop-filter: blur(12px);
+  }
+
+  .appSidebarToggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--text);
+  }
+
+  .appSidebarBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: block;
+    background: rgba(2, 6, 23, 0.62);
+    backdrop-filter: blur(2px);
   }
 }
