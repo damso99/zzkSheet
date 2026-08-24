@@ -1,6 +1,7 @@
 import { useState } from "react";
 import RaidSchedulePage from "./pages/RaidSchedulePage/RaidSchedulePage.jsx";
 import WeeklyGoldPage from "./pages/WeeklyGoldPage/WeeklyGoldPage.jsx";
+import { DEFAULT_SHEET_URL } from "./pages/RaidSchedulePage/utils/sheetApi.js";
 
 const NAV_ITEMS = [
   { path: "/", label: "금일 일정" },
@@ -74,6 +75,11 @@ export default function App() {
             );
           })}
         </nav>
+
+        <a className="appSidebarSheetLink" href={DEFAULT_SHEET_URL} target="_blank" rel="noreferrer">
+          <span>Google 시트 열기</span>
+          <span aria-hidden="true">↗</span>
+        </a>
       </aside>
 
       <div className="appMain">
