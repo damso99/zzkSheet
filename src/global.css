@@ -24,21 +24,14 @@
   --input-text: #f8fafc;
   --input-placeholder: rgba(148, 163, 184, 0.82);
   --input-focus-shadow: rgba(96, 165, 250, 0.14);
-  --shadow-glow:
-    0 0 10px rgba(124, 184, 255, 0.18),
-    0 0 24px rgba(76, 141, 255, 0.12);
-
+  --shadow-glow: 0 0 10px rgba(124, 184, 255, 0.18), 0 0 24px rgba(76, 141, 255, 0.12);
   font-family: "SUIT Variable", "Pretendard", "Noto Sans KR", sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(circle at top left, rgba(124, 184, 255, 0.1), transparent 28%),
-    radial-gradient(circle at top right, rgba(76, 141, 255, 0.08), transparent 24%),
-    linear-gradient(180deg, #12121a 0%, #171722 44%, #1d1a2a 100%);
+  background: radial-gradient(circle at top left, rgba(124, 184, 255, 0.1), transparent 28%), radial-gradient(circle at top right, rgba(76, 141, 255, 0.08), transparent 24%), linear-gradient(180deg, #12121a 0%, #171722 44%, #1d1a2a 100%);
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
 }
-
 * { box-sizing: border-box; text-decoration: none; }
 html { min-width: 320px; overflow-y: scroll; scrollbar-gutter: stable; }
 body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--text); background: radial-gradient(circle at 12% 8%, rgba(124,184,255,.1), transparent 24%), radial-gradient(circle at 88% 12%, rgba(76,141,255,.08), transparent 28%), linear-gradient(180deg,var(--bg) 0%,#1a1725 100%); }
@@ -62,11 +55,33 @@ input { border: 0; }
 .appSidebarToggle, .appSidebarBackdrop { display: none; }
 [role="tablist"][aria-label="일정 보기 선택"] { display: none !important; }
 
+/* 기존 네온 헤더는 유지하되 사이드바와 함께 쓰기 좋게 컴팩트하게 조정 */
+.appMain > div > div:nth-child(2) > header:first-child,
+.appMain > main > div:nth-child(2) > header:first-child {
+  min-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 14px !important;
+  margin-bottom: 4px !important;
+}
+.appMain > div > div:nth-child(2) > header:first-child h1,
+.appMain > main > div:nth-child(2) > header:first-child h1 {
+  margin: 0 !important;
+  font-size: clamp(22px, 2.5vw, 30px) !important;
+  line-height: 1.05 !important;
+}
+.appMain > div > div:nth-child(2) > header:first-child p,
+.appMain > main > div:nth-child(2) > header:first-child p {
+  margin-bottom: 2px !important;
+  font-size: 10px !important;
+}
+/* 시트 이동은 사이드바 하단만 사용 */
+.appMain > div > div:nth-child(2) > header:first-child > a,
+.appMain > main > div:nth-child(2) > header:first-child a { display: none !important; }
+
 ::selection { color: #12121a; background: rgba(233,204,251,.92); }
 html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar { width: 10px; height: 10px; }
 html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, #root::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: linear-gradient(180deg,rgba(124,184,255,.92),rgba(76,141,255,.84)); background-clip: padding-box; }
 html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, #root::-webkit-scrollbar-track { background: rgba(34,26,54,.44); }
-
 @media (max-width: 820px) {
   .appMain { margin-left: 0; padding-top: 52px; }
   .appSidebar { width: min(78vw,250px); transform: translateX(-104%); transition: transform .2s ease; }
@@ -74,4 +89,8 @@ html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, #root::-webkit-scr
   .appSidebarToggle { position: fixed; top: 10px; left: 10px; z-index: 95; display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 38px; height: 38px; padding: 0 9px; border: 1px solid rgba(124,184,255,.28); border-radius: 10px; background: rgba(18,18,26,.94); box-shadow: var(--shadow-glow); backdrop-filter: blur(12px); }
   .appSidebarToggle span { display: block; width: 100%; height: 2px; border-radius: 999px; background: var(--text); }
   .appSidebarBackdrop { position: fixed; inset: 0; z-index: 70; display: block; background: rgba(2,6,23,.62); backdrop-filter: blur(2px); }
+  .appMain > div > div:nth-child(2) > header:first-child,
+  .appMain > main > div:nth-child(2) > header:first-child { padding-bottom: 10px !important; }
+  .appMain > div > div:nth-child(2) > header:first-child h1,
+  .appMain > main > div:nth-child(2) > header:first-child h1 { font-size: 22px !important; }
 }
