@@ -9,8 +9,8 @@ const NAV_ITEMS = [
   { path: "/week", label: "주간 일정" },
   { path: "/auction", label: "쌀산기" },
   { path: "/personal-raid", label: "레이드 참여 현황" },
-  { path: "/personal", label: "개인 일정" },
   { path: "/weekly-gold", label: "주간 골드" },
+  { path: "/personal", label: "개인 일정" },
 ];
 
 const EXTERNAL_SITES = [
