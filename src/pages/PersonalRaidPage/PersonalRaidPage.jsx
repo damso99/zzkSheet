@@ -23,26 +23,21 @@ export default function PersonalRaidPage({ embedded = false }) {
       try {
         setIsLoading(true);
         setErrorMessage("");
-
         const payload = await loadSheetRowsByName({
           sheetUrl: DEFAULT_SHEET_URL,
           sheetName: PERSONAL_RAID_SHEET_NAME,
           signal: controller.signal,
         });
-
         setRows(Array.isArray(payload?.rows) ? payload.rows : []);
       } catch (error) {
         if (error?.name === "AbortError") return;
         setErrorMessage(error?.message || "레이드 데이터를 불러오지 못했습니다.");
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     }
 
     loadRows();
-
     return () => controller.abort();
   }, []);
 
@@ -54,7 +49,6 @@ export default function PersonalRaidPage({ embedded = false }) {
     const matchedCharacters = keyword
       ? parsedCharacters.filter((item) => normalize(cleanText(item.owner)).includes(keyword))
       : [];
-
     return [...matchedCharacters].sort((left, right) => right.levelValue - left.levelValue);
   }, [parsedCharacters, searchKeyword]);
 
@@ -78,81 +72,56 @@ export default function PersonalRaidPage({ embedded = false }) {
             placeholder="검색할 이름을 입력하세요"
           />
         </label>
-        <p className={styles.sectionControlHint}>
-          이름을 검색하면 해당 캐릭터 전체와 참여 레이드를 보여줍니다.
-        </p>
+        <p className={styles.sectionControlHint}>이름을 검색하면 해당 캐릭터 전체와 참여 레이드를 보여줍니다.</p>
       </section>
 
-      {isLoading ? (
-        <section className={styles.emptyState}>
-          <p>레이드 데이터를 불러오는 중입니다.</p>
-        </section>
-      ) : null}
-
-      {!isLoading && errorMessage ? (
-        <section className={styles.errorState}>
-          <p>{cleanText(errorMessage)}</p>
-        </section>
-      ) : null}
-
-      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length === 0 ? (
-        <section className={styles.emptyState}>
-          <p>참여 중인 캐릭터가 없습니다.</p>
-        </section>
-      ) : null}
-
-      {!isLoading && !errorMessage && !hasKeyword ? (
-        <section className={styles.emptyState}>
-          <p>이름을 검색하면 참여 캐릭터가 표시됩니다.</p>
-        </section>
-      ) : null}
-
-      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length > 0 && filteredCharacters.length === 0 ? (
-        <section className={styles.emptyState}>
-          <p>검색 결과가 없습니다.</p>
-        </section>
-      ) : null}
+      {isLoading ? <section className={styles.emptyState}><p>레이드 데이터를 불러오는 중입니다.</p></section> : null}
+      {!isLoading && errorMessage ? <section className={styles.errorState}><p>{cleanText(errorMessage)}</p></section> : null}
+      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length === 0 ? <section className={styles.emptyState}><p>참여 중인 캐릭터가 없습니다.</p></section> : null}
+      {!isLoading && !errorMessage && !hasKeyword ? <section className={styles.emptyState}><p>이름을 검색하면 참여 캐릭터가 표시됩니다.</p></section> : null}
+      {!isLoading && !errorMessage && hasKeyword && parsedCharacters.length > 0 && filteredCharacters.length === 0 ? <section className={styles.emptyState}><p>검색 결과가 없습니다.</p></section> : null}
 
       {!isLoading && !errorMessage && hasKeyword && filteredCharacters.length > 0 ? (
         <section className={styles.cardList}>
           {filteredCharacters.map((item) => (
             <article key={item.id} className={styles.characterCard}>
-              <div className={styles.cardGlow} />
-              <div className={styles.cardInner}>
-                <header className={styles.cardHeader}>
-                  <span className={styles.ownerName}>{cleanText(item.owner)}</span>
-                  <span className={styles.classBadge}>{cleanText(item.className || "클래스 없음")}</span>
-                </header>
-
-                <h3 className={styles.characterName}>{cleanText(item.characterName)}</h3>
-
-                <div className={styles.bottomRow}>
-                  <div className={styles.statGrid}>
-                    <div className={styles.statItem}>
-                      <span>레벨</span>
-                      <strong>{item.level || "-"}</strong>
-                    </div>
-                    <div className={styles.statItem}>
-                      <span>전투력</span>
-                      <strong>{item.power || "-"}</strong>
-                    </div>
+              <header className={styles.cardHeader}>
+                <div>
+                  <div className={styles.characterTitleLine}>
+                    <h3>{cleanText(item.characterName)}</h3>
+                    <span className={styles.classBadge}>{cleanText(item.className || "클래스 없음")}</span>
                   </div>
-
-                  <section className={styles.raidSection}>
-                    {item.raids.length ? (
-                      <div className={styles.raidPills}>
-                        {item.raids.map((raid, index) => (
-                          <span key={`${item.id}-${raid}-${index}`} className={styles.raidPill}>
-                            {cleanText(raid)}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className={styles.emptyRaidText}>참여 레이드 없음</p>
-                    )}
-                  </section>
+                  <div className={styles.characterMeta}>
+                    <span>Lv. {item.level || "-"}</span>
+                    <span>전투력 {item.power || "-"}</span>
+                  </div>
                 </div>
-              </div>
+                <span className={styles.ownerName}>{cleanText(item.owner)}</span>
+              </header>
+
+              <section className={styles.raidSection}>
+                {item.raids.length ? (
+                  <div className={styles.raidGrid}>
+                    {item.raids.map((raid, index) => {
+                      const display = parseRaidDisplay(raid);
+                      return (
+                        <div key={`${item.id}-${raid}-${index}`} className={styles.raidItem}>
+                          <div className={styles.raidField}>
+                            <span>레이드</span>
+                            <strong>{display.raid}</strong>
+                          </div>
+                          <div className={styles.raidField}>
+                            <span>난이도</span>
+                            <strong>{display.difficulty}</strong>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className={styles.emptyRaidText}>참여 레이드 없음</p>
+                )}
+              </section>
             </article>
           ))}
         </section>
@@ -160,9 +129,7 @@ export default function PersonalRaidPage({ embedded = false }) {
     </>
   );
 
-  if (embedded) {
-    return <section className={styles.embeddedContent}>{content}</section>;
-  }
+  if (embedded) return <section className={styles.embeddedContent}>{content}</section>;
 
   return (
     <main className={styles.page}>
@@ -173,42 +140,51 @@ export default function PersonalRaidPage({ embedded = false }) {
 }
 
 function parsePersonalRaidRows(rows) {
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return [];
-  }
-
+  if (!Array.isArray(rows) || rows.length === 0) return [];
   let currentOwner = "";
 
-  return rows
-    .map((row, index) => {
-      const ownerCell = cleanText(row?.[OWNER_COLUMN_INDEX]);
-      if (ownerCell) currentOwner = ownerCell;
+  return rows.map((row, index) => {
+    const ownerCell = cleanText(row?.[OWNER_COLUMN_INDEX]);
+    if (ownerCell) currentOwner = ownerCell;
+    const owner = cleanText(currentOwner);
+    const characterName = cleanText(row?.[CHARACTER_COLUMN_INDEX]);
+    if (!owner || !characterName) return null;
 
-      const owner = cleanText(currentOwner);
-      const characterName = cleanText(row?.[CHARACTER_COLUMN_INDEX]);
+    const raids = (row || []).slice(RAID_START_COLUMN_INDEX).map(cleanText).filter(isRaidEntry);
+    const level = cleanText(row?.[LEVEL_COLUMN_INDEX]);
+    const power = cleanText(row?.[POWER_COLUMN_INDEX]);
+    const className = cleanText(row?.[CLASS_COLUMN_INDEX]);
 
-      if (!owner || !characterName) {
-        return null;
-      }
+    return {
+      id: `${owner}-${characterName}-${index}`,
+      owner,
+      characterName,
+      level,
+      power,
+      className,
+      raids,
+      levelValue: parseLevelValue(level),
+    };
+  }).filter(Boolean);
+}
 
-      const raids = (row || []).slice(RAID_START_COLUMN_INDEX).map(cleanText).filter(isRaidEntry);
-
-      const level = cleanText(row?.[LEVEL_COLUMN_INDEX]);
-      const power = cleanText(row?.[POWER_COLUMN_INDEX]);
-      const className = cleanText(row?.[CLASS_COLUMN_INDEX]);
-
-      return {
-        id: `${owner}-${characterName}-${index}`,
-        owner,
-        characterName,
-        level,
-        power,
-        className,
-        raids,
-        levelValue: parseLevelValue(level),
-      };
-    })
-    .filter(Boolean);
+function parseRaidDisplay(value) {
+  const text = cleanText(value).replace(/\s+/g, " ");
+  const difficultyPattern = /(헬|더퍼스트|나이트메어|하드|노말|이지|싱글|극한|Hard|Normal|Easy)$/i;
+  const parenthesized = text.match(/^(.*?)\s*[\[(]([^\])]+)[\])]$/);
+  if (parenthesized) {
+    return { raid: cleanText(parenthesized[1]) || text, difficulty: cleanText(parenthesized[2]) || "-" };
+  }
+  const separated = text.match(/^(.*?)\s*(?:\/|\||·|:)\s*(.+)$/);
+  if (separated) {
+    return { raid: cleanText(separated[1]) || text, difficulty: cleanText(separated[2]) || "-" };
+  }
+  const difficulty = text.match(difficultyPattern)?.[1];
+  if (difficulty) {
+    const raid = cleanText(text.slice(0, text.length - difficulty.length).replace(/[\s\-_/]+$/, ""));
+    return { raid: raid || text, difficulty };
+  }
+  return { raid: text || "-", difficulty: "-" };
 }
 
 function parseLevelValue(value) {
@@ -217,8 +193,7 @@ function parseLevelValue(value) {
 }
 
 function isRaidEntry(value) {
-  if (!value) return false;
-  if (value === "0") return false;
+  if (!value || value === "0") return false;
   if (/^\d+(\.\d+)?$/.test(value)) return false;
   return /[A-Za-z가-힣]/.test(value);
 }
@@ -226,15 +201,9 @@ function isRaidEntry(value) {
 function decodeUnicodeEscapes(value) {
   if (value == null) return "";
   const stringValue = String(value);
-
-  if (!/\\u[0-9a-fA-F]{4}/.test(stringValue)) {
-    return stringValue;
-  }
-
+  if (!/\\u[0-9a-fA-F]{4}/.test(stringValue)) return stringValue;
   try {
-    return stringValue.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
-      String.fromCharCode(parseInt(hex, 16)),
-    );
+    return stringValue.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
   } catch {
     return stringValue;
   }
