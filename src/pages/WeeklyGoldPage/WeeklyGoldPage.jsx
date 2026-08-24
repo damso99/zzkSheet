@@ -159,7 +159,21 @@ export default function WeeklyGoldPage() {
     setSelections(defaults);
   }
 
+  function renderRosterCharacter(character) {
+    const checked = selectedCharacterIds.includes(character.id);
+    const selectionLocked = !checked && selectedCharacterIds.length >= MAX_GOLD_CHARACTERS;
+    return (
+      <label key={character.id} className={`${styles.rosterCharacter} ${checked ? styles.rosterCharacterSelected : ""} ${selectionLocked ? styles.rosterCharacterLocked : ""}`}>
+        <input type="checkbox" checked={checked} onChange={() => toggleGoldCharacter(character.id)} />
+        <span className={styles.rosterCheck}>{checked ? "✓" : ""}</span>
+        <span className={styles.rosterCharacterInfo}><strong>{character.characterName}</strong><small>{character.className || "-"} · Lv. {character.level}</small></span>
+      </label>
+    );
+  }
+
   const canUseGoldOptions = !isGoldLoading && !goldError && raidGoldOptions.length > 0;
+  const primaryRosterCharacters = rosterCharacters.slice(0, MAX_GOLD_CHARACTERS);
+  const extraRosterCharacters = rosterCharacters.slice(MAX_GOLD_CHARACTERS);
 
   return (
     <main className={styles.page}>
@@ -208,19 +222,17 @@ export default function WeeklyGoldPage() {
         {rosterCharacters.length > 0 ? (
           <section className={styles.rosterPanel}>
             <div className={styles.rosterPanelHeader}><div><h3>골드 획득 캐릭터 선택</h3><p>기본값은 아이템 레벨이 높은 6명입니다. 다른 캐릭터로 자유롭게 교체할 수 있습니다.</p></div><strong>{selectedCharacters.length}/{MAX_GOLD_CHARACTERS}</strong></div>
-            <div className={styles.rosterList}>
-              {rosterCharacters.map((character) => {
-                const checked = selectedCharacterIds.includes(character.id);
-                const selectionLocked = !checked && selectedCharacterIds.length >= MAX_GOLD_CHARACTERS;
-                return (
-                  <label key={character.id} className={`${styles.rosterCharacter} ${checked ? styles.rosterCharacterSelected : ""} ${selectionLocked ? styles.rosterCharacterLocked : ""}`}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleGoldCharacter(character.id)} />
-                    <span className={styles.rosterCheck}>{checked ? "✓" : ""}</span>
-                    <span className={styles.rosterCharacterInfo}><strong>{character.characterName}</strong><small>{character.className || "-"} · Lv. {character.level}</small></span>
-                  </label>
-                );
-              })}
-            </div>
+            <div className={styles.rosterList}>{primaryRosterCharacters.map(renderRosterCharacter)}</div>
+            {extraRosterCharacters.length > 0 ? (
+              <details className={styles.rosterMore}>
+                <summary className={styles.rosterMoreButton}>
+                  <span className={styles.rosterMoreClosed}>보유 캐릭터 {extraRosterCharacters.length}명 더 보기</span>
+                  <span className={styles.rosterMoreOpen}>추가 캐릭터 접기</span>
+                  <span className={styles.rosterMoreChevron} aria-hidden="true">⌄</span>
+                </summary>
+                <div className={`${styles.rosterList} ${styles.rosterExtraList}`}>{extraRosterCharacters.map(renderRosterCharacter)}</div>
+              </details>
+            ) : null}
             {selectionMessage ? <p className={styles.selectionMessage}>{selectionMessage}</p> : null}
           </section>
         ) : null}
