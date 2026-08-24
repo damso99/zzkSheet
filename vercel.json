@@ -59,6 +59,24 @@
           "value": "no-cache, no-store, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/weekly-gold",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/weekly-gold/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -76,6 +94,14 @@
     },
     {
       "source": "/personal-raid/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/weekly-gold",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/weekly-gold/",
       "destination": "/index.html"
     }
   ]
