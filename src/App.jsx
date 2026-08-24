@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import RaidSchedulePage from "./pages/RaidSchedulePage/RaidSchedulePage.jsx";
 import WeeklyGoldPage from "./pages/WeeklyGoldPage/WeeklyGoldPage.jsx";
 import { DEFAULT_SHEET_URL } from "./pages/RaidSchedulePage/utils/sheetApi.js";
+import "./sidebar-sites.css";
 
 const NAV_ITEMS = [
   { path: "/", label: "금일 일정" },
