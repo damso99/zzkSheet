@@ -24,12 +24,16 @@ export default function WeeklyGoldPage() {
   const [rosterError, setRosterError] = useState("");
   const [selectionMessage, setSelectionMessage] = useState("");
   const [goldError, setGoldError] = useState("");
+  const [goldFetchedAt, setGoldFetchedAt] = useState("");
   const [searchedName, setSearchedName] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
     loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, forceRefresh: true, signal: controller.signal })
-      .then((payload) => setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []))
+      .then((payload) => {
+        setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []);
+        setGoldFetchedAt(payload?.fetchedAt || new Date().toISOString());
+      })
       .catch((error) => {
         if (error?.name !== "AbortError") setGoldError(error?.message || "레이드골드(귀속) 시트를 불러오지 못했습니다.");
       })
@@ -161,7 +165,17 @@ export default function WeeklyGoldPage() {
       <div className={styles.backdrop} />
       <div className={styles.content}>
         <header className={styles.topHeader}>
-          <div><p className={styles.eyebrow}>LostArk Weekly Planner</p><h1>Stick Over Flow</h1></div>
+          <div>
+            <p className={styles.eyebrow}>LostArk Weekly Planner</p>
+            <h1>Stick Over Flow</h1>
+            <div className={styles.metaLine}>
+              <span>갱신 {formatFetchedAt(goldFetchedAt)}</span>
+              <span className={`${styles.connectionStatus} ${goldError ? styles.connectionOffline : styles.connectionOnline}`}>
+                <span className={styles.connectionStatusDot} />
+                {goldError ? "Disconnected" : "Connected"}
+              </span>
+            </div>
+          </div>
         </header>
 
         <section className={styles.sectionHeader}>
@@ -347,3 +361,4 @@ function parseNumber(value) { const matched = String(value ?? "").replace(/,/g, 
 function formatGold(value) { return Math.trunc(Number(value) || 0).toLocaleString("ko-KR"); }
 function cleanText(value) { return String(value ?? "").replace(/^[\s'\"]+|[\s'\"]+$/g, "").trim(); }
 function normalize(value) { return cleanText(value).toLowerCase().replace(/\s+/g, ""); }
+function formatFetchedAt(value) { if (!value) return "-"; const date = new Date(value); if (Number.isNaN(date.getTime())) return cleanText(value) || "-"; return new Intl.DateTimeFormat("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(date).replace(/\. /g, ".").replace(/\.$/, ""); }
