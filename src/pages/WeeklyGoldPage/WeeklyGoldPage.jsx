@@ -12,7 +12,6 @@ const GOLD_MIN_LEVEL_INDEX = 4;
 const GOLD_TRADABLE_INDEX = 5;
 const GOLD_BOUND_INDEX = 6;
 const GOLD_TOTAL_INDEX = 7;
-const RAID_NAMES = new Set(["모르둠", "아르모체", "카제로스", "세르카", "지평", "벨가르딘"]);
 
 export default function WeeklyGoldPage() {
   const [goldRows, setGoldRows] = useState([]);
@@ -29,7 +28,7 @@ export default function WeeklyGoldPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, signal: controller.signal })
+    loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, forceRefresh: true, signal: controller.signal })
       .then((payload) => setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []))
       .catch((error) => {
         if (error?.name !== "AbortError") setGoldError(error?.message || "레이드골드(귀속) 시트를 불러오지 못했습니다.");
@@ -304,14 +303,13 @@ function parseRaidGoldRows(rows) {
   if (!Array.isArray(rows) || !rows.length) return [];
   return rows.map((row, index) => {
     const raidName = cleanText(row?.[GOLD_CONTENT_INDEX]);
-    if (!RAID_NAMES.has(raidName)) return null;
     const difficulty = cleanText(row?.[GOLD_DIFFICULTY_INDEX]);
-    const parity = cleanText(row?.[GOLD_PARITY_TEXT_INDEX]) || `${raidName}/${difficulty}`;
     const minLevel = parseNumber(row?.[GOLD_MIN_LEVEL_INDEX]);
     const tradableGold = parseNumber(row?.[GOLD_TRADABLE_INDEX]);
     const boundGold = parseNumber(row?.[GOLD_BOUND_INDEX]);
     const totalGold = parseNumber(row?.[GOLD_TOTAL_INDEX]) || tradableGold + boundGold;
-    if (!difficulty || minLevel <= 0 || totalGold <= 0) return null;
+    if (!raidName || !difficulty || minLevel <= 0 || totalGold <= 0) return null;
+    const parity = cleanText(row?.[GOLD_PARITY_TEXT_INDEX]) || `${raidName}/${difficulty}`;
     return { id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`, raidName, difficulty, parity, minLevel, tradableGold, boundGold, totalGold, gold: totalGold };
   }).filter(Boolean);
 }
