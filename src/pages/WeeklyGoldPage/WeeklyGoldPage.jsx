@@ -2,13 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./WeeklyGoldPage.module.css";
 import { DEFAULT_SHEET_URL, loadSheetRowsByName } from "../RaidSchedulePage/utils/sheetApi.js";
 
-const PERSONAL_RAID_SHEET_NAME = "개인레이드";
 const RAID_GOLD_SHEET_NAME = "레이드골드(귀속)";
-const OWNER_COLUMN_INDEX = 1;
-const CHARACTER_COLUMN_INDEX = 3;
-const LEVEL_COLUMN_INDEX = 4;
-const POWER_COLUMN_INDEX = 5;
-const CLASS_COLUMN_INDEX = 6;
+const MAX_GOLD_CHARACTERS = 6;
 const MAX_RAIDS_PER_CHARACTER = 3;
 
 const GOLD_CONTENT_INDEX = 0;
@@ -19,25 +14,17 @@ const GOLD_TOTAL_INDEX = 7;
 const RAID_NAMES = new Set(["모르둠", "아르모체", "카제로스", "세르카", "지평", "벨가르딘"]);
 
 export default function WeeklyGoldPage() {
-  const [personalRows, setPersonalRows] = useState([]);
   const [goldRows, setGoldRows] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [rosterCharacters, setRosterCharacters] = useState([]);
+  const [selectedCharacterIds, setSelectedCharacterIds] = useState([]);
   const [selections, setSelections] = useState({});
-  const [isPersonalLoading, setIsPersonalLoading] = useState(true);
+  const [isRosterLoading, setIsRosterLoading] = useState(false);
   const [isGoldLoading, setIsGoldLoading] = useState(true);
-  const [personalError, setPersonalError] = useState("");
+  const [rosterError, setRosterError] = useState("");
+  const [selectionMessage, setSelectionMessage] = useState("");
   const [goldError, setGoldError] = useState("");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: PERSONAL_RAID_SHEET_NAME, signal: controller.signal })
-      .then((payload) => setPersonalRows(Array.isArray(payload?.rows) ? payload.rows : []))
-      .catch((error) => {
-        if (error?.name !== "AbortError") setPersonalError(error?.message || "개인레이드 시트를 불러오지 못했습니다.");
-      })
-      .finally(() => { if (!controller.signal.aborted) setIsPersonalLoading(false); });
-    return () => controller.abort();
-  }, []);
+  const [searchedName, setSearchedName] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -50,41 +37,95 @@ export default function WeeklyGoldPage() {
     return () => controller.abort();
   }, []);
 
-  const characters = useMemo(() => parsePersonalRaidRows(personalRows), [personalRows]);
   const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows), [goldRows]);
-  const keyword = normalize(searchKeyword);
-  const filteredCharacters = useMemo(() => {
-    if (!keyword) return [];
-    return characters.filter((item) => normalize(item.owner).includes(keyword)).sort((a, b) => b.levelValue - a.levelValue);
-  }, [characters, keyword]);
-  const selectedOwnerNames = useMemo(() => [...new Set(filteredCharacters.map((item) => item.owner))], [filteredCharacters]);
+  const selectedCharacters = useMemo(
+    () => selectedCharacterIds.map((id) => rosterCharacters.find((character) => character.id === id)).filter(Boolean),
+    [rosterCharacters, selectedCharacterIds],
+  );
 
   useEffect(() => {
-    if (!filteredCharacters.length || !raidGoldOptions.length) return;
-    const defaults = {};
-    filteredCharacters.forEach((character) => {
-      defaults[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions);
+    if (!selectedCharacters.length || !raidGoldOptions.length) return;
+    setSelections((current) => {
+      const next = { ...current };
+      selectedCharacters.forEach((character) => {
+        if (!Array.isArray(next[character.id])) {
+          next[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions);
+        }
+      });
+      return next;
     });
-    setSelections(defaults);
-  }, [filteredCharacters, raidGoldOptions]);
+  }, [selectedCharacters, raidGoldOptions]);
 
   const characterTotals = useMemo(() => {
     const totals = {};
-    filteredCharacters.forEach((character) => {
+    selectedCharacters.forEach((character) => {
       totals[character.id] = getSelectedRaidIds(selections[character.id])
         .map((raidId) => raidGoldOptions.find((option) => option.id === raidId)?.gold || 0)
         .reduce((sum, gold) => sum + gold, 0);
     });
     return totals;
-  }, [filteredCharacters, raidGoldOptions, selections]);
+  }, [selectedCharacters, raidGoldOptions, selections]);
 
   const totalGold = useMemo(() => Object.values(characterTotals).reduce((sum, value) => sum + value, 0), [characterTotals]);
-  const selectedRaidCount = useMemo(() => filteredCharacters.reduce((sum, character) => sum + getSelectedRaidIds(selections[character.id]).length, 0), [filteredCharacters, selections]);
+  const selectedRaidCount = useMemo(
+    () => selectedCharacters.reduce((sum, character) => sum + getSelectedRaidIds(selections[character.id]).length, 0),
+    [selectedCharacters, selections],
+  );
+
+  async function handleRosterSearch(event) {
+    event?.preventDefault();
+    const name = cleanText(searchKeyword);
+    if (!name || isRosterLoading) return;
+
+    setIsRosterLoading(true);
+    setRosterError("");
+    setSelectionMessage("");
+
+    try {
+      const response = await fetch(`/api/roster?name=${encodeURIComponent(name)}`);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.detail || "원정대 정보를 불러오지 못했습니다.");
+      }
+
+      const characters = parseRosterCharacters(payload?.characters);
+      if (!characters.length) {
+        throw new Error("원정대 캐릭터를 찾지 못했습니다.");
+      }
+
+      setRosterCharacters(characters);
+      setSearchedName(name);
+      const defaults = characters.slice(0, MAX_GOLD_CHARACTERS).map((character) => character.id);
+      setSelectedCharacterIds(defaults);
+      setSelections({});
+    } catch (error) {
+      setRosterCharacters([]);
+      setSelectedCharacterIds([]);
+      setSelections({});
+      setSearchedName(name);
+      setRosterError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsRosterLoading(false);
+    }
+  }
+
+  function toggleGoldCharacter(characterId) {
+    setSelectionMessage("");
+    setSelectedCharacterIds((current) => {
+      if (current.includes(characterId)) {
+        return current.filter((id) => id !== characterId);
+      }
+      if (current.length >= MAX_GOLD_CHARACTERS) {
+        setSelectionMessage(`골드 획득 캐릭터는 최대 ${MAX_GOLD_CHARACTERS}명까지 선택할 수 있습니다.`);
+        return current;
+      }
+      return [...current, characterId];
+    });
+  }
 
   function handleRaidNameChange(characterId, slotIndex, raidName, characterLevel) {
     setSelections((current) => {
       const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(""))];
-
       if (!raidName) {
         next[slotIndex] = "";
         return { ...current, [characterId]: next };
@@ -115,7 +156,7 @@ export default function WeeklyGoldPage() {
 
   function resetSelections() {
     const defaults = {};
-    filteredCharacters.forEach((character) => {
+    selectedCharacters.forEach((character) => {
       defaults[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions);
     });
     setSelections(defaults);
@@ -138,39 +179,76 @@ export default function WeeklyGoldPage() {
         <section className={styles.sectionHeader}>
           <div>
             <h2>원정대 주간 골드</h2>
-            <p>캐릭터별 최대 3개 레이드, 레이드명별 1개 난이도만 선택합니다. 기본값은 입장 가능한 최대 골드 조합입니다.</p>
+            <p>캐릭터명을 검색해 원정대를 불러오고, 골드 획득 캐릭터를 최대 6명까지 직접 선택할 수 있습니다.</p>
           </div>
         </section>
 
-        <section className={styles.searchPanel}>
-          <label className={styles.searchLabel}>이름 검색
-            <input type="text" value={searchKeyword} onChange={(event) => setSearchKeyword(event.target.value)} placeholder="이름을 직접 입력하세요" autoComplete="off" disabled={isPersonalLoading} />
+        <form className={styles.searchPanel} onSubmit={handleRosterSearch}>
+          <label className={styles.searchLabel}>캐릭터 검색
+            <input
+              type="text"
+              value={searchKeyword}
+              onChange={(event) => setSearchKeyword(event.target.value)}
+              placeholder="캐릭터명을 직접 입력하세요"
+              autoComplete="off"
+              disabled={isRosterLoading}
+            />
           </label>
-          <span className={styles.searchHint}>레이드골드(귀속)의 합계 골드를 기준으로 계산합니다.</span>
-        </section>
+          <button className={styles.searchButton} type="submit" disabled={isRosterLoading || !cleanText(searchKeyword)}>
+            {isRosterLoading ? "조회 중" : "원정대 조회"}
+          </button>
+          <span className={styles.searchHint}>캐릭터/아이템 레벨은 Lost Ark OpenAPI, 골드는 레이드골드(귀속) 시트를 사용합니다.</span>
+        </form>
 
         <section className={styles.summaryGrid} aria-label="주간 골드 요약">
-          <SummaryCard label="조회 원정대" value={selectedOwnerNames.length ? selectedOwnerNames.join(", ") : "-"} />
-          <SummaryCard label="캐릭터" value={`${filteredCharacters.length}명`} />
+          <SummaryCard label="조회 캐릭터" value={searchedName || "-"} />
+          <SummaryCard label="골드 캐릭터" value={`${selectedCharacters.length}/${MAX_GOLD_CHARACTERS}명`} />
           <SummaryCard label="선택 레이드" value={`${selectedRaidCount}개`} />
           <SummaryCard label="예상 획득 골드" value={`${formatGold(totalGold)} G`} emphasis />
         </section>
 
-        {isPersonalLoading ? <StatePanel message="개인레이드 시트를 불러오는 중입니다." /> : null}
-        {!isPersonalLoading && personalError ? <StatePanel message={`개인레이드 조회 실패: ${personalError}`} error /> : null}
-        {!isPersonalLoading && !personalError && !keyword ? <StatePanel message="이름을 검색하면 원정대 캐릭터가 표시됩니다." /> : null}
-        {!isPersonalLoading && !personalError && keyword && filteredCharacters.length === 0 ? <StatePanel message={`'${cleanText(searchKeyword)}' 이름으로 개인레이드 시트에서 캐릭터를 찾지 못했습니다.`} /> : null}
+        {rosterError ? <StatePanel message={rosterError} error /> : null}
+        {!searchedName && !isRosterLoading ? <StatePanel message="캐릭터명을 입력하고 원정대 조회를 눌러주세요." /> : null}
 
-        {!isPersonalLoading && !personalError && filteredCharacters.length > 0 ? (
+        {rosterCharacters.length > 0 ? (
+          <section className={styles.rosterPanel}>
+            <div className={styles.rosterPanelHeader}>
+              <div>
+                <h3>골드 획득 캐릭터 선택</h3>
+                <p>기본값은 아이템 레벨이 높은 6명입니다. 다른 캐릭터로 자유롭게 교체할 수 있습니다.</p>
+              </div>
+              <strong>{selectedCharacters.length}/{MAX_GOLD_CHARACTERS}</strong>
+            </div>
+            <div className={styles.rosterList}>
+              {rosterCharacters.map((character) => {
+                const checked = selectedCharacterIds.includes(character.id);
+                const selectionLocked = !checked && selectedCharacterIds.length >= MAX_GOLD_CHARACTERS;
+                return (
+                  <label key={character.id} className={`${styles.rosterCharacter} ${checked ? styles.rosterCharacterSelected : ""} ${selectionLocked ? styles.rosterCharacterLocked : ""}`}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleGoldCharacter(character.id)} />
+                    <span className={styles.rosterCheck}>{checked ? "✓" : ""}</span>
+                    <span className={styles.rosterCharacterInfo}>
+                      <strong>{character.characterName}</strong>
+                      <small>{character.className || "-"} · Lv. {character.level}</small>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {selectionMessage ? <p className={styles.selectionMessage}>{selectionMessage}</p> : null}
+          </section>
+        ) : null}
+
+        {isGoldLoading && selectedCharacters.length > 0 ? <StatePanel message="레이드골드(귀속) 시트를 불러오는 중입니다." /> : null}
+        {!isGoldLoading && goldError && selectedCharacters.length > 0 ? <StatePanel message={`레이드골드(귀속) 조회 실패: ${goldError}`} error /> : null}
+        {!isGoldLoading && !goldError && selectedCharacters.length > 0 && raidGoldOptions.length === 0 ? (
+          <StatePanel message={`레이드골드(귀속) ${goldRows.length}행을 읽었지만 유효한 레이드 골드를 찾지 못했습니다.`} error />
+        ) : null}
+
+        {selectedCharacters.length > 0 ? (
           <>
-            {isGoldLoading ? <StatePanel message="레이드골드(귀속) 시트를 불러오는 중입니다." /> : null}
-            {!isGoldLoading && goldError ? <StatePanel message={`레이드골드(귀속) 조회 실패: ${goldError}`} error /> : null}
-            {!isGoldLoading && !goldError && raidGoldOptions.length === 0 ? (
-              <StatePanel message={`레이드골드(귀속) ${goldRows.length}행을 읽었지만 A~H 고정 컬럼에서 유효한 레이드 골드를 찾지 못했습니다.`} error />
-            ) : null}
-
             <section className={styles.characterGrid}>
-              {filteredCharacters.map((character) => {
+              {selectedCharacters.map((character) => {
                 const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
                 const availableOptions = raidGoldOptions.filter((option) => character.levelValue >= option.minLevel);
                 const availableRaidNames = getAvailableRaidNames(availableOptions);
@@ -180,7 +258,7 @@ export default function WeeklyGoldPage() {
                     <header className={styles.characterHeader}>
                       <div>
                         <div className={styles.characterTitleLine}><h3>{character.characterName}</h3>{character.className ? <span className={styles.classBadge}>{character.className}</span> : null}</div>
-                        <div className={styles.characterMeta}><span>Lv. {character.level || "-"}</span>{character.power ? <span>전투력 {character.power}</span> : null}</div>
+                        <div className={styles.characterMeta}><span>Lv. {character.level}</span>{character.serverName ? <span>{character.serverName}</span> : null}</div>
                       </div>
                       <strong className={styles.characterGold}>{formatGold(characterTotals[character.id] || 0)} G</strong>
                     </header>
@@ -255,42 +333,36 @@ function StatePanel({ message, error = false }) {
   return <section className={`${styles.statePanel} ${error ? styles.errorState : ""}`}>{cleanText(message)}</section>;
 }
 
-function parsePersonalRaidRows(rows) {
-  if (!Array.isArray(rows)) return [];
-  let currentOwner = "";
-  return rows.map((row, index) => {
-    const ownerCell = cleanText(row?.[OWNER_COLUMN_INDEX]);
-    if (ownerCell) currentOwner = ownerCell;
-    const owner = cleanText(currentOwner);
-    const characterName = cleanText(row?.[CHARACTER_COLUMN_INDEX]);
-    if (!owner || !characterName) return null;
-    const level = cleanText(row?.[LEVEL_COLUMN_INDEX]);
-    return {
-      id: `${owner}-${characterName}-${index}`,
-      owner,
-      characterName,
-      level,
-      levelValue: parseNumber(level),
-      power: cleanText(row?.[POWER_COLUMN_INDEX]),
-      className: cleanText(row?.[CLASS_COLUMN_INDEX]),
-    };
-  }).filter(Boolean);
+function parseRosterCharacters(characters) {
+  if (!Array.isArray(characters)) return [];
+  return characters
+    .map((character, index) => {
+      const characterName = cleanText(character?.CharacterName);
+      const itemLevel = cleanText(character?.ItemAvgLevel || character?.ItemMaxLevel);
+      if (!characterName || !itemLevel) return null;
+      return {
+        id: `${cleanText(character?.ServerName)}-${characterName}-${index}`,
+        characterName,
+        className: cleanText(character?.CharacterClassName),
+        serverName: cleanText(character?.ServerName),
+        level: itemLevel,
+        levelValue: parseNumber(itemLevel),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.levelValue - a.levelValue || a.characterName.localeCompare(b.characterName, "ko"));
 }
 
 function parseRaidGoldRows(rows) {
   if (!Array.isArray(rows) || !rows.length) return [];
-
   return rows.map((row, index) => {
     const raidName = cleanText(row?.[GOLD_CONTENT_INDEX]);
     if (!RAID_NAMES.has(raidName)) return null;
-
     const difficulty = cleanText(row?.[GOLD_DIFFICULTY_INDEX]);
     const parity = cleanText(row?.[GOLD_PARITY_TEXT_INDEX]) || `${raidName}/${difficulty}`;
     const minLevel = parseNumber(row?.[GOLD_MIN_LEVEL_INDEX]);
     const gold = parseNumber(row?.[GOLD_TOTAL_INDEX]);
-
     if (!difficulty || minLevel <= 0 || gold <= 0) return null;
-
     return {
       id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`,
       raidName,
