@@ -14,6 +14,7 @@ const MAX_RAIDS_PER_CHARACTER = 3;
 export default function WeeklyGoldPage() {
   const [personalRows, setPersonalRows] = useState([]);
   const [goldRows, setGoldRows] = useState([]);
+  const [goldCols, setGoldCols] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selections, setSelections] = useState({});
   const [isPersonalLoading, setIsPersonalLoading] = useState(true);
@@ -35,7 +36,10 @@ export default function WeeklyGoldPage() {
   useEffect(() => {
     const controller = new AbortController();
     loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, signal: controller.signal })
-      .then((payload) => setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []))
+      .then((payload) => {
+        setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []);
+        setGoldCols(Array.isArray(payload?.cols) ? payload.cols : []);
+      })
       .catch((error) => {
         if (error?.name !== "AbortError") setGoldError(error?.message || "레이드골드(귀속) 시트를 불러오지 못했습니다.");
       })
@@ -44,7 +48,7 @@ export default function WeeklyGoldPage() {
   }, []);
 
   const characters = useMemo(() => parsePersonalRaidRows(personalRows), [personalRows]);
-  const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows), [goldRows]);
+  const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows, goldCols), [goldRows, goldCols]);
   const ownerNames = useMemo(() => [...new Set(characters.map((item) => item.owner))].sort((a, b) => a.localeCompare(b, "ko")), [characters]);
   const keyword = normalize(searchKeyword);
   const filteredCharacters = useMemo(() => {
@@ -78,6 +82,14 @@ export default function WeeklyGoldPage() {
   function handleRaidChange(characterId, slotIndex, raidId) {
     setSelections((current) => {
       const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(""))];
+      const nextOption = raidGoldOptions.find((option) => option.id === raidId);
+      if (nextOption) {
+        for (let index = 0; index < next.length; index += 1) {
+          if (index === slotIndex) continue;
+          const selectedOption = raidGoldOptions.find((option) => option.id === next[index]);
+          if (selectedOption?.raidName === nextOption.raidName) next[index] = "";
+        }
+      }
       next[slotIndex] = raidId;
       return { ...current, [characterId]: next };
     });
@@ -105,14 +117,19 @@ export default function WeeklyGoldPage() {
           </div>
         </header>
 
-        <section className={styles.sectionHeader}><div><h2>원정대 주간 골드</h2><p>캐릭터별 최대 3개 레이드를 기준으로 가장 높은 골드 조합을 자동 선택합니다. 같은 레이드는 난이도와 관계없이 주 1회만 선택할 수 있습니다.</p></div></section>
+        <section className={styles.sectionHeader}>
+          <div>
+            <h2>원정대 주간 골드</h2>
+            <p>캐릭터별 최대 3개 레이드, 레이드명별 1개 난이도만 선택합니다. 기본값은 입장 가능한 최대 골드 조합입니다.</p>
+          </div>
+        </section>
 
         <section className={styles.searchPanel}>
           <label className={styles.searchLabel}>이름 검색
             <input type="search" value={searchKeyword} onChange={(event) => setSearchKeyword(event.target.value)} placeholder="개인레이드 시트의 이름을 입력하세요" list="weekly-gold-owner-list" disabled={isPersonalLoading} />
           </label>
           <datalist id="weekly-gold-owner-list">{ownerNames.map((ownerName) => <option key={ownerName} value={ownerName} />)}</datalist>
-          <span className={styles.searchHint}>레이드골드(귀속)의 합계 골드를 기준으로 자동 계산합니다.</span>
+          <span className={styles.searchHint}>레이드골드(귀속)의 합계 골드를 기준으로 계산합니다.</span>
         </section>
 
         <section className={styles.summaryGrid} aria-label="주간 골드 요약">
@@ -131,7 +148,9 @@ export default function WeeklyGoldPage() {
           <>
             {isGoldLoading ? <StatePanel message="레이드골드(귀속) 시트를 불러오는 중입니다." /> : null}
             {!isGoldLoading && goldError ? <StatePanel message={`레이드골드(귀속) 조회 실패: ${goldError}`} error /> : null}
-            {!isGoldLoading && !goldError && raidGoldOptions.length === 0 ? <StatePanel message={`레이드골드(귀속) ${goldRows.length}행을 읽었지만 골드 항목을 해석하지 못했습니다.`} error /> : null}
+            {!isGoldLoading && !goldError && raidGoldOptions.length === 0 ? (
+              <StatePanel message={`레이드골드(귀속) ${goldRows.length}행을 읽었지만 골드 항목을 해석하지 못했습니다. 헤더: ${getColumnLabels(goldCols).join(" / ") || "없음"}`} error />
+            ) : null}
 
             <section className={styles.characterGrid}>
               {filteredCharacters.map((character) => {
@@ -174,7 +193,10 @@ export default function WeeklyGoldPage() {
               })}
             </section>
 
-            <footer className={styles.totalBar}><div><span>원정대 합계</span><strong>{formatGold(totalGold)} G</strong></div><button type="button" className={styles.resetButton} onClick={resetSelections}>최대 골드로 초기화</button></footer>
+            <footer className={styles.totalBar}>
+              <div><span>원정대 합계</span><strong>{formatGold(totalGold)} G</strong></div>
+              <button type="button" className={styles.resetButton} onClick={resetSelections}>최대 골드로 초기화</button>
+            </footer>
           </>
         ) : null}
       </div>
@@ -185,7 +207,10 @@ export default function WeeklyGoldPage() {
 function SummaryCard({ label, value, emphasis = false }) {
   return <article className={`${styles.summaryCard} ${emphasis ? styles.summaryCardEmphasis : ""}`}><span>{label}</span><strong>{value}</strong></article>;
 }
-function StatePanel({ message, error = false }) { return <section className={`${styles.statePanel} ${error ? styles.errorState : ""}`}>{cleanText(message)}</section>; }
+
+function StatePanel({ message, error = false }) {
+  return <section className={`${styles.statePanel} ${error ? styles.errorState : ""}`}>{cleanText(message)}</section>;
+}
 
 function parsePersonalRaidRows(rows) {
   if (!Array.isArray(rows)) return [];
@@ -197,27 +222,39 @@ function parsePersonalRaidRows(rows) {
     const characterName = cleanText(row?.[CHARACTER_COLUMN_INDEX]);
     if (!owner || !characterName) return null;
     const level = cleanText(row?.[LEVEL_COLUMN_INDEX]);
-    return { id: `${owner}-${characterName}-${index}`, owner, characterName, level, levelValue: parseNumber(level), power: cleanText(row?.[POWER_COLUMN_INDEX]), className: cleanText(row?.[CLASS_COLUMN_INDEX]) };
+    return {
+      id: `${owner}-${characterName}-${index}`,
+      owner,
+      characterName,
+      level,
+      levelValue: parseNumber(level),
+      power: cleanText(row?.[POWER_COLUMN_INDEX]),
+      className: cleanText(row?.[CLASS_COLUMN_INDEX]),
+    };
   }).filter(Boolean);
 }
 
-function parseRaidGoldRows(rows) {
+function parseRaidGoldRows(rows, cols) {
   if (!Array.isArray(rows) || !rows.length) return [];
 
-  const headerIndex = rows.findIndex((row) => {
-    const cells = (row || []).map(normalize);
-    return cells.includes("컨텐츠") && cells.includes("난이도") && cells.includes("입장레벨") && cells.includes("합계");
-  });
-  if (headerIndex < 0) return [];
+  const columnLabels = getColumnLabels(cols);
+  let dataRows = rows;
+  let header = columnLabels.map(normalize);
 
-  const header = rows[headerIndex].map(normalize);
+  if (!hasRequiredGoldHeaders(header)) {
+    const headerIndex = rows.findIndex((row) => hasRequiredGoldHeaders((row || []).map(normalize)));
+    if (headerIndex < 0) return [];
+    header = rows[headerIndex].map(normalize);
+    dataRows = rows.slice(headerIndex + 1);
+  }
+
   const contentIndex = header.indexOf("컨텐츠");
   const difficultyIndex = header.indexOf("난이도");
   const parityIndex = header.findIndex((value) => value.includes("parity"));
   const minLevelIndex = header.indexOf("입장레벨");
   const totalGoldIndex = header.indexOf("합계");
 
-  return rows.slice(headerIndex + 1).map((row, index) => {
+  return dataRows.map((row, index) => {
     const raidName = cleanText(row?.[contentIndex]);
     const difficulty = cleanText(row?.[difficultyIndex]);
     const parity = parityIndex >= 0 ? cleanText(row?.[parityIndex]) : `${raidName}/${difficulty}`;
@@ -225,8 +262,24 @@ function parseRaidGoldRows(rows) {
     const gold = parseNumber(row?.[totalGoldIndex]);
     if (!raidName || !difficulty || !minLevel || !gold) return null;
     if (normalize(raidName) === "합계") return null;
-    return { id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`, raidName, difficulty, parity: parity || `${raidName}/${difficulty}`, minLevel, gold };
+    return {
+      id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`,
+      raidName,
+      difficulty,
+      parity: parity || `${raidName}/${difficulty}`,
+      minLevel,
+      gold,
+    };
   }).filter(Boolean);
+}
+
+function getColumnLabels(cols) {
+  if (!Array.isArray(cols)) return [];
+  return cols.map((col) => cleanText(col?.label || col?.id || ""));
+}
+
+function hasRequiredGoldHeaders(header) {
+  return header.includes("컨텐츠") && header.includes("난이도") && header.includes("입장레벨") && header.includes("합계");
 }
 
 function getOptimalRaidSelection(levelValue, options) {
@@ -247,12 +300,24 @@ function getOptimalRaidSelection(levelValue, options) {
   return selected;
 }
 
-function getSelectedRaidIds(value) { return Array.isArray(value) ? value.filter(Boolean) : []; }
+function getSelectedRaidIds(value) {
+  return Array.isArray(value) ? value.filter(Boolean) : [];
+}
+
 function parseNumber(value) {
   const matched = String(value ?? "").replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
   const number = matched ? Number(matched[0]) : 0;
   return Number.isFinite(number) ? number : 0;
 }
-function formatGold(value) { return Math.trunc(Number(value) || 0).toLocaleString("ko-KR"); }
-function cleanText(value) { return String(value ?? "").replace(/^[\s'\"]+|[\s'\"]+$/g, "").trim(); }
-function normalize(value) { return cleanText(value).toLowerCase().replace(/\s+/g, ""); }
+
+function formatGold(value) {
+  return Math.trunc(Number(value) || 0).toLocaleString("ko-KR");
+}
+
+function cleanText(value) {
+  return String(value ?? "").replace(/^[\s'\"]+|[\s'\"]+$/g, "").trim();
+}
+
+function normalize(value) {
+  return cleanText(value).toLowerCase().replace(/\s+/g, "");
+}
