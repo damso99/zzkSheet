@@ -82,17 +82,33 @@ export default function WeeklyGoldPage() {
   const totalGold = useMemo(() => Object.values(characterTotals).reduce((sum, value) => sum + value, 0), [characterTotals]);
   const selectedRaidCount = useMemo(() => filteredCharacters.reduce((sum, character) => sum + getSelectedRaidIds(selections[character.id]).length, 0), [filteredCharacters, selections]);
 
-  function handleRaidChange(characterId, slotIndex, raidId) {
+  function handleRaidNameChange(characterId, slotIndex, raidName, characterLevel) {
     setSelections((current) => {
       const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(""))];
-      const nextOption = raidGoldOptions.find((option) => option.id === raidId);
-      if (nextOption) {
-        for (let index = 0; index < next.length; index += 1) {
-          if (index === slotIndex) continue;
-          const selectedOption = raidGoldOptions.find((option) => option.id === next[index]);
-          if (selectedOption?.raidName === nextOption.raidName) next[index] = "";
-        }
+
+      if (!raidName) {
+        next[slotIndex] = "";
+        return { ...current, [characterId]: next };
       }
+
+      for (let index = 0; index < next.length; index += 1) {
+        if (index === slotIndex) continue;
+        const selectedOption = raidGoldOptions.find((option) => option.id === next[index]);
+        if (selectedOption?.raidName === raidName) next[index] = "";
+      }
+
+      const bestDifficulty = raidGoldOptions
+        .filter((option) => option.raidName === raidName && characterLevel >= option.minLevel)
+        .sort((a, b) => b.gold - a.gold || b.minLevel - a.minLevel)[0];
+
+      next[slotIndex] = bestDifficulty?.id || "";
+      return { ...current, [characterId]: next };
+    });
+  }
+
+  function handleDifficultyChange(characterId, slotIndex, raidId) {
+    setSelections((current) => {
+      const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(""))];
       next[slotIndex] = raidId;
       return { ...current, [characterId]: next };
     });
@@ -159,6 +175,8 @@ export default function WeeklyGoldPage() {
               {filteredCharacters.map((character) => {
                 const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
                 const availableOptions = raidGoldOptions.filter((option) => character.levelValue >= option.minLevel);
+                const availableRaidNames = getAvailableRaidNames(availableOptions);
+
                 return (
                   <article key={character.id} className={styles.characterCard}>
                     <header className={styles.characterHeader}>
@@ -172,22 +190,47 @@ export default function WeeklyGoldPage() {
                     <div className={styles.raidSlots}>
                       {Array.from({ length: MAX_RAIDS_PER_CHARACTER }, (_, slotIndex) => {
                         const currentOption = raidGoldOptions.find((option) => option.id === selected[slotIndex]);
-                        const otherSelectedRaidNames = selected
+                        const selectedRaidNames = selected
                           .filter((_, index) => index !== slotIndex)
                           .map((id) => raidGoldOptions.find((option) => option.id === id)?.raidName)
                           .filter(Boolean);
+                        const difficultyOptions = currentOption
+                          ? availableOptions.filter((option) => option.raidName === currentOption.raidName).sort((a, b) => b.minLevel - a.minLevel)
+                          : [];
 
                         return (
-                          <label key={`${character.id}-${slotIndex}`} className={styles.raidSlot}>
-                            <span>레이드 {slotIndex + 1}</span>
-                            <select value={selected[slotIndex] || ""} onChange={(event) => handleRaidChange(character.id, slotIndex, event.target.value)} disabled={!canUseGoldOptions}>
-                              <option value="">선택 안 함</option>
-                              {availableOptions.map((option) => {
-                                const duplicateRaid = otherSelectedRaidNames.includes(option.raidName) && currentOption?.raidName !== option.raidName;
-                                return <option key={option.id} value={option.id} disabled={duplicateRaid}>{option.parity} · {formatGold(option.gold)} G</option>;
-                              })}
-                            </select>
-                          </label>
+                          <div key={`${character.id}-${slotIndex}`} className={styles.raidSlot}>
+                            <span className={styles.raidSlotTitle}>레이드 {slotIndex + 1}</span>
+                            <div className={styles.raidSelectPair}>
+                              <label className={styles.selectField}>
+                                <span>레이드</span>
+                                <select
+                                  value={currentOption?.raidName || ""}
+                                  onChange={(event) => handleRaidNameChange(character.id, slotIndex, event.target.value, character.levelValue)}
+                                  disabled={!canUseGoldOptions}
+                                >
+                                  <option value="">선택 안 함</option>
+                                  {availableRaidNames.map((raidName) => (
+                                    <option key={raidName} value={raidName} disabled={selectedRaidNames.includes(raidName)}>{raidName}</option>
+                                  ))}
+                                </select>
+                              </label>
+
+                              <label className={styles.selectField}>
+                                <span>난이도</span>
+                                <select
+                                  value={selected[slotIndex] || ""}
+                                  onChange={(event) => handleDifficultyChange(character.id, slotIndex, event.target.value)}
+                                  disabled={!canUseGoldOptions || !currentOption}
+                                >
+                                  {!currentOption ? <option value="">레이드 먼저 선택</option> : null}
+                                  {difficultyOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>{option.difficulty} · {formatGold(option.gold)} G</option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -260,6 +303,15 @@ function parseRaidGoldRows(rows) {
       gold,
     };
   }).filter(Boolean);
+}
+
+function getAvailableRaidNames(options) {
+  const bestGoldByRaid = new Map();
+  options.forEach((option) => {
+    const current = bestGoldByRaid.get(option.raidName) || 0;
+    if (option.gold > current) bestGoldByRaid.set(option.raidName, option.gold);
+  });
+  return [...bestGoldByRaid.entries()].sort((a, b) => b[1] - a[1]).map(([raidName]) => raidName);
 }
 
 function getOptimalRaidSelection(levelValue, options) {
