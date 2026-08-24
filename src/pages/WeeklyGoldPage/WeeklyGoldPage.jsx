@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./WeeklyGoldPage.module.css";
+import { formatLocalDateTime } from "../RaidSchedulePage/utils/dateUtils.js";
 import { DEFAULT_SHEET_URL, loadSheetRowsByName } from "../RaidSchedulePage/utils/sheetApi.js";
 
 const RAID_GOLD_SHEET_NAME = "레이드골드(귀속)";
@@ -32,7 +33,7 @@ export default function WeeklyGoldPage() {
     loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, forceRefresh: true, signal: controller.signal })
       .then((payload) => {
         setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []);
-        setGoldFetchedAt(payload?.fetchedAt || new Date().toISOString());
+        setGoldFetchedAt(payload?.fetchedAt || formatLocalDateTime(new Date()));
       })
       .catch((error) => {
         if (error?.name !== "AbortError") setGoldError(error?.message || "레이드골드(귀속) 시트를 불러오지 못했습니다.");
@@ -361,4 +362,4 @@ function parseNumber(value) { const matched = String(value ?? "").replace(/,/g, 
 function formatGold(value) { return Math.trunc(Number(value) || 0).toLocaleString("ko-KR"); }
 function cleanText(value) { return String(value ?? "").replace(/^[\s'\"]+|[\s'\"]+$/g, "").trim(); }
 function normalize(value) { return cleanText(value).toLowerCase().replace(/\s+/g, ""); }
-function formatFetchedAt(value) { if (!value) return "-"; const date = new Date(value); if (Number.isNaN(date.getTime())) return cleanText(value) || "-"; return new Intl.DateTimeFormat("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(date).replace(/\. /g, ".").replace(/\.$/, ""); }
+function formatFetchedAt(value) { if (!value) return "-"; const date = new Date(value); if (Number.isNaN(date.getTime())) return cleanText(value) || "-"; return formatLocalDateTime(date); }
