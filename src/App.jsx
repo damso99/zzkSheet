@@ -3,12 +3,12 @@ import RaidSchedulePage from "./pages/RaidSchedulePage/RaidSchedulePage.jsx";
 import WeeklyGoldPage from "./pages/WeeklyGoldPage/WeeklyGoldPage.jsx";
 
 const NAV_ITEMS = [
-  { path: "/", label: "금일 일정", icon: "오늘" },
-  { path: "/week", label: "주간 일정", icon: "주" },
-  { path: "/auction", label: "쌀산기", icon: "계" },
-  { path: "/personal-raid", label: "레이드 참여 현황", icon: "참" },
-  { path: "/personal", label: "개인 일정", icon: "개" },
-  { path: "/weekly-gold", label: "주간 골드", icon: "G" },
+  { path: "/", label: "금일 일정" },
+  { path: "/week", label: "주간 일정" },
+  { path: "/auction", label: "쌀산기" },
+  { path: "/personal-raid", label: "레이드 참여 현황" },
+  { path: "/personal", label: "개인 일정" },
+  { path: "/weekly-gold", label: "주간 골드" },
 ];
 
 export default function App() {
@@ -51,7 +51,7 @@ export default function App() {
 
       <aside className={`appSidebar ${sidebarOpen ? "appSidebarOpen" : ""}`} aria-label="메인 메뉴">
         <a className="appSidebarBrand" href="/" onClick={() => setSidebarOpen(false)}>
-          <span className="appSidebarBrandMark">SOF</span>
+          <img className="appSidebarBrandLogo" src="/zzk-favicon-02-glow.png?v=2" alt="" aria-hidden="true" />
           <span>
             <strong>Stick Over Flow</strong>
             <small>LostArk Planner</small>
@@ -69,7 +69,6 @@ export default function App() {
                 aria-current={isActive ? "page" : undefined}
                 onClick={() => setSidebarOpen(false)}
               >
-                <span className="appSidebarIcon" aria-hidden="true">{item.icon}</span>
                 <span>{item.label}</span>
               </a>
             );
