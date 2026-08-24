@@ -48,7 +48,7 @@ export default function WeeklyGoldPage() {
     setSelections((current) => {
       const next = { ...current };
       selectedCharacters.forEach((character) => {
-        if (!Array.isArray(next[character.id])) next[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions);
+        if (!Array.isArray(next[character.id])) next[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions, "total");
       });
       return next;
     });
@@ -146,9 +146,11 @@ export default function WeeklyGoldPage() {
     });
   }
 
-  function resetSelections() {
+  function resetSelections(mode = "total") {
     const defaults = {};
-    selectedCharacters.forEach((character) => { defaults[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions); });
+    selectedCharacters.forEach((character) => {
+      defaults[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions, mode);
+    });
     setSelections(defaults);
   }
 
@@ -272,7 +274,10 @@ export default function WeeklyGoldPage() {
                 <span><small>귀속 골드</small><strong>{formatGold(rosterTotals.bound)} G</strong></span>
                 <span className={styles.totalGrand}><small>총합</small><strong>{formatGold(rosterTotals.total)} G</strong></span>
               </div>
-              <button type="button" className={styles.resetButton} onClick={resetSelections}>최대 골드로 초기화</button>
+              <div className={styles.resetButtonGroup}>
+                <button type="button" className={styles.resetButton} onClick={() => resetSelections("total")}>최대 골드 기준</button>
+                <button type="button" className={styles.resetButton} onClick={() => resetSelections("tradable")}>유통 골드 기준</button>
+              </div>
             </footer>
           </>
         ) : null}
@@ -320,13 +325,19 @@ function getAvailableRaidNames(options) {
   return [...bestGoldByRaid.entries()].sort((a, b) => b[1] - a[1]).map(([raidName]) => raidName);
 }
 
-function getOptimalRaidSelection(levelValue, options) {
+function getOptimalRaidSelection(levelValue, options, mode = "total") {
+  const score = (option) => mode === "tradable" ? option.tradableGold : option.totalGold;
   const bestByRaidName = new Map();
   options.filter((option) => levelValue >= option.minLevel).forEach((option) => {
     const current = bestByRaidName.get(option.raidName);
-    if (!current || option.totalGold > current.totalGold) bestByRaidName.set(option.raidName, option);
+    if (!current || score(option) > score(current) || (score(option) === score(current) && option.totalGold > current.totalGold)) {
+      bestByRaidName.set(option.raidName, option);
+    }
   });
-  const selected = [...bestByRaidName.values()].sort((a, b) => b.totalGold - a.totalGold || b.minLevel - a.minLevel).slice(0, MAX_RAIDS_PER_CHARACTER).map((option) => option.id);
+  const selected = [...bestByRaidName.values()]
+    .sort((a, b) => score(b) - score(a) || b.totalGold - a.totalGold || b.minLevel - a.minLevel)
+    .slice(0, MAX_RAIDS_PER_CHARACTER)
+    .map((option) => option.id);
   while (selected.length < MAX_RAIDS_PER_CHARACTER) selected.push("");
   return selected;
 }
