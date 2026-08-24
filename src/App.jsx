@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RaidSchedulePage from "./pages/RaidSchedulePage/RaidSchedulePage.jsx";
 import WeeklyGoldPage from "./pages/WeeklyGoldPage/WeeklyGoldPage.jsx";
 import { DEFAULT_SHEET_URL } from "./pages/RaidSchedulePage/utils/sheetApi.js";
@@ -12,20 +12,52 @@ const NAV_ITEMS = [
   { path: "/weekly-gold", label: "주간 골드" },
 ];
 
-export default function App() {
-  const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+function normalizePath(pathname) {
+  return pathname.replace(/\/$/, "") || "/";
+}
 
-  const initialTab =
-    currentPath === "/week"
-      ? "week"
-      : currentPath === "/personal"
-        ? "personal"
-        : currentPath === "/personal-raid"
-          ? "personalRaid"
-          : currentPath === "/auction"
-            ? "auction"
-            : "today";
+function getTabFromPath(path) {
+  if (path === "/week") return "week";
+  if (path === "/personal") return "personal";
+  if (path === "/personal-raid") return "personalRaid";
+  if (path === "/auction") return "auction";
+  return "today";
+}
+
+export default function App() {
+  const [currentPath, setCurrentPath] = useState(() => normalizePath(window.location.pathname));
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [raidPageVisited, setRaidPageVisited] = useState(() => normalizePath(window.location.pathname) !== "/weekly-gold");
+  const [weeklyGoldVisited, setWeeklyGoldVisited] = useState(() => normalizePath(window.location.pathname) === "/weekly-gold");
+
+  const isWeeklyGold = currentPath === "/weekly-gold";
+  const initialTab = getTabFromPath(currentPath);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextPath = normalizePath(window.location.pathname);
+      setCurrentPath(nextPath);
+      if (nextPath === "/weekly-gold") setWeeklyGoldVisited(true);
+      else setRaidPageVisited(true);
+      setSidebarOpen(false);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  function navigate(event, path) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    const nextPath = normalizePath(path);
+    if (nextPath !== currentPath) {
+      window.history.pushState({}, "", nextPath);
+      setCurrentPath(nextPath);
+      if (nextPath === "/weekly-gold") setWeeklyGoldVisited(true);
+      else setRaidPageVisited(true);
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+    setSidebarOpen(false);
+  }
 
   return (
     <div className="appShell">
@@ -51,7 +83,7 @@ export default function App() {
       ) : null}
 
       <aside className={`appSidebar ${sidebarOpen ? "appSidebarOpen" : ""}`} aria-label="메인 메뉴">
-        <a className="appSidebarBrand" href="/" onClick={() => setSidebarOpen(false)}>
+        <a className="appSidebarBrand" href="/" onClick={(event) => navigate(event, "/")}>
           <img className="appSidebarBrandLogo" src="/zzk-favicon-02-glow.png?v=2" alt="" aria-hidden="true" />
           <span>
             <strong>Stick Over Flow</strong>
@@ -68,7 +100,7 @@ export default function App() {
                 href={item.path}
                 className={`appSidebarItem ${isActive ? "appSidebarItemActive" : ""}`}
                 aria-current={isActive ? "page" : undefined}
-                onClick={() => setSidebarOpen(false)}
+                onClick={(event) => navigate(event, item.path)}
               >
                 <span>{item.label}</span>
               </a>
@@ -83,7 +115,16 @@ export default function App() {
       </aside>
 
       <div className="appMain">
-        {currentPath === "/weekly-gold" ? <WeeklyGoldPage /> : <RaidSchedulePage initialTab={initialTab} />}
+        {raidPageVisited ? (
+          <div style={{ display: isWeeklyGold ? "none" : "block" }} aria-hidden={isWeeklyGold || undefined}>
+            <RaidSchedulePage initialTab={initialTab} />
+          </div>
+        ) : null}
+        {weeklyGoldVisited ? (
+          <div style={{ display: isWeeklyGold ? "block" : "none" }} aria-hidden={!isWeeklyGold || undefined}>
+            <WeeklyGoldPage />
+          </div>
+        ) : null}
       </div>
     </div>
   );
