@@ -11,10 +11,16 @@ const POWER_COLUMN_INDEX = 5;
 const CLASS_COLUMN_INDEX = 6;
 const MAX_RAIDS_PER_CHARACTER = 3;
 
+const GOLD_CONTENT_INDEX = 0;
+const GOLD_DIFFICULTY_INDEX = 1;
+const GOLD_PARITY_TEXT_INDEX = 2;
+const GOLD_MIN_LEVEL_INDEX = 4;
+const GOLD_TOTAL_INDEX = 7;
+const RAID_NAMES = new Set(["모르둠", "아르모체", "카제로스", "세르카", "지평", "벨가르딘"]);
+
 export default function WeeklyGoldPage() {
   const [personalRows, setPersonalRows] = useState([]);
   const [goldRows, setGoldRows] = useState([]);
-  const [goldCols, setGoldCols] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selections, setSelections] = useState({});
   const [isPersonalLoading, setIsPersonalLoading] = useState(true);
@@ -36,10 +42,7 @@ export default function WeeklyGoldPage() {
   useEffect(() => {
     const controller = new AbortController();
     loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, signal: controller.signal })
-      .then((payload) => {
-        setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []);
-        setGoldCols(Array.isArray(payload?.cols) ? payload.cols : []);
-      })
+      .then((payload) => setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []))
       .catch((error) => {
         if (error?.name !== "AbortError") setGoldError(error?.message || "레이드골드(귀속) 시트를 불러오지 못했습니다.");
       })
@@ -48,7 +51,7 @@ export default function WeeklyGoldPage() {
   }, []);
 
   const characters = useMemo(() => parsePersonalRaidRows(personalRows), [personalRows]);
-  const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows, goldCols), [goldRows, goldCols]);
+  const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows), [goldRows]);
   const ownerNames = useMemo(() => [...new Set(characters.map((item) => item.owner))].sort((a, b) => a.localeCompare(b, "ko")), [characters]);
   const keyword = normalize(searchKeyword);
   const filteredCharacters = useMemo(() => {
@@ -149,7 +152,7 @@ export default function WeeklyGoldPage() {
             {isGoldLoading ? <StatePanel message="레이드골드(귀속) 시트를 불러오는 중입니다." /> : null}
             {!isGoldLoading && goldError ? <StatePanel message={`레이드골드(귀속) 조회 실패: ${goldError}`} error /> : null}
             {!isGoldLoading && !goldError && raidGoldOptions.length === 0 ? (
-              <StatePanel message={`레이드골드(귀속) ${goldRows.length}행을 읽었지만 골드 항목을 해석하지 못했습니다. 헤더: ${getColumnLabels(goldCols).join(" / ") || "없음"}`} error />
+              <StatePanel message={`레이드골드(귀속) ${goldRows.length}행을 읽었지만 A~H 고정 컬럼에서 유효한 레이드 골드를 찾지 못했습니다.`} error />
             ) : null}
 
             <section className={styles.characterGrid}>
@@ -234,52 +237,29 @@ function parsePersonalRaidRows(rows) {
   }).filter(Boolean);
 }
 
-function parseRaidGoldRows(rows, cols) {
+function parseRaidGoldRows(rows) {
   if (!Array.isArray(rows) || !rows.length) return [];
 
-  const columnLabels = getColumnLabels(cols);
-  let dataRows = rows;
-  let header = columnLabels.map(normalize);
+  return rows.map((row, index) => {
+    const raidName = cleanText(row?.[GOLD_CONTENT_INDEX]);
+    if (!RAID_NAMES.has(raidName)) return null;
 
-  if (!hasRequiredGoldHeaders(header)) {
-    const headerIndex = rows.findIndex((row) => hasRequiredGoldHeaders((row || []).map(normalize)));
-    if (headerIndex < 0) return [];
-    header = rows[headerIndex].map(normalize);
-    dataRows = rows.slice(headerIndex + 1);
-  }
+    const difficulty = cleanText(row?.[GOLD_DIFFICULTY_INDEX]);
+    const parity = cleanText(row?.[GOLD_PARITY_TEXT_INDEX]) || `${raidName}/${difficulty}`;
+    const minLevel = parseNumber(row?.[GOLD_MIN_LEVEL_INDEX]);
+    const gold = parseNumber(row?.[GOLD_TOTAL_INDEX]);
 
-  const contentIndex = header.indexOf("컨텐츠");
-  const difficultyIndex = header.indexOf("난이도");
-  const parityIndex = header.findIndex((value) => value.includes("parity"));
-  const minLevelIndex = header.indexOf("입장레벨");
-  const totalGoldIndex = header.indexOf("합계");
+    if (!difficulty || minLevel <= 0 || gold <= 0) return null;
 
-  return dataRows.map((row, index) => {
-    const raidName = cleanText(row?.[contentIndex]);
-    const difficulty = cleanText(row?.[difficultyIndex]);
-    const parity = parityIndex >= 0 ? cleanText(row?.[parityIndex]) : `${raidName}/${difficulty}`;
-    const minLevel = parseNumber(row?.[minLevelIndex]);
-    const gold = parseNumber(row?.[totalGoldIndex]);
-    if (!raidName || !difficulty || !minLevel || !gold) return null;
-    if (normalize(raidName) === "합계") return null;
     return {
       id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`,
       raidName,
       difficulty,
-      parity: parity || `${raidName}/${difficulty}`,
+      parity,
       minLevel,
       gold,
     };
   }).filter(Boolean);
-}
-
-function getColumnLabels(cols) {
-  if (!Array.isArray(cols)) return [];
-  return cols.map((col) => cleanText(col?.label || col?.id || ""));
-}
-
-function hasRequiredGoldHeaders(header) {
-  return header.includes("컨텐츠") && header.includes("난이도") && header.includes("입장레벨") && header.includes("합계");
 }
 
 function getOptimalRaidSelection(levelValue, options) {
