@@ -1,0 +1,90 @@
+.appSidebarUtilities {
+  display: grid;
+  gap: 7px;
+  margin-top: auto;
+}
+
+.appSidebarUtilities .appSidebarSheetLink {
+  margin-top: 0;
+}
+
+.appSidebarSites {
+  border: 1px solid rgba(124, 184, 255, 0.18);
+  border-radius: 11px;
+  background: rgba(124, 184, 255, 0.04);
+  overflow: hidden;
+}
+
+.appSidebarSites > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.appSidebarSites > summary::-webkit-details-marker {
+  display: none;
+}
+
+.appSidebarSites > summary:hover,
+.appSidebarSites[open] > summary {
+  color: var(--text);
+  background: rgba(124, 184, 255, 0.07);
+}
+
+.appSidebarSitesChevron {
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 0.16s ease;
+}
+
+.appSidebarSites[open] .appSidebarSitesChevron {
+  transform: rotate(180deg);
+}
+
+.appSidebarSitesList {
+  display: grid;
+  gap: 2px;
+  padding: 4px 5px 6px;
+  border-top: 1px solid rgba(124, 184, 255, 0.1);
+}
+
+.appSidebarSitesList a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.appSidebarSitesList a:hover {
+  color: var(--text);
+  background: rgba(124, 184, 255, 0.08);
+}
+
+@media (max-width: 820px) {
+  .appSidebarUtilities {
+    padding-top: 8px;
+  }
+
+  .appSidebarSites > summary {
+    min-height: 42px;
+  }
+
+  .appSidebarSitesList a {
+    min-height: 36px;
+  }
+}
