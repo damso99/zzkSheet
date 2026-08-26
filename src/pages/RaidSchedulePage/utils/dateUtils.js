@@ -53,6 +53,15 @@ export function getScheduleDateKey(value, timeValue = "") {
 }
 
 export function getScheduleStartAt(dateValue, timeValue = "") {
+  if (dateValue && typeof dateValue === "object" && !(dateValue instanceof Date)) {
+    if (dateValue.startAt instanceof Date && !Number.isNaN(dateValue.startAt.getTime())) {
+      return new Date(dateValue.startAt);
+    }
+
+    timeValue = dateValue.blockTime || dateValue.time || timeValue;
+    dateValue = dateValue.date;
+  }
+
   const parts = parseLocalDateParts(dateValue);
   if (!parts) return null;
 
