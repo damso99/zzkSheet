@@ -92,6 +92,25 @@ export default function WeeklyGoldPage() {
     [characterTotals],
   );
 
+  const bonusSelectionState = useMemo(() => {
+    let eligibleCount = 0;
+    let checkedCount = 0;
+    selectedCharacters.forEach((character) => {
+      const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
+      const checked = bonusSelections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill(false);
+      selected.forEach((raidId, slotIndex) => {
+        const option = raidGoldOptions.find((item) => item.id === raidId);
+        if (!option || option.bonusCost <= 0) return;
+        eligibleCount += 1;
+        if (checked[slotIndex]) checkedCount += 1;
+      });
+    });
+    return {
+      hasEligible: eligibleCount > 0,
+      allChecked: eligibleCount > 0 && checkedCount === eligibleCount,
+    };
+  }, [selectedCharacters, raidGoldOptions, selections, bonusSelections]);
+
   async function handleRosterSearch(event) {
     event?.preventDefault();
     const name = cleanText(searchKeyword);
@@ -148,6 +167,20 @@ export default function WeeklyGoldPage() {
       next[slotIndex] = !next[slotIndex];
       return { ...current, [characterId]: next };
     });
+  }
+
+  function toggleAllBonusSelections() {
+    if (!bonusSelectionState.hasEligible) return;
+    const nextChecked = !bonusSelectionState.allChecked;
+    const next = {};
+    selectedCharacters.forEach((character) => {
+      const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
+      next[character.id] = selected.map((raidId) => {
+        const option = raidGoldOptions.find((item) => item.id === raidId);
+        return Boolean(option && option.bonusCost > 0 && nextChecked);
+      });
+    });
+    setBonusSelections(next);
   }
 
   function handleRaidNameChange(characterId, slotIndex, raidName, characterLevel) {
@@ -343,6 +376,7 @@ export default function WeeklyGoldPage() {
               </div>
               <div className={styles.resetButtonGroup}>
                 <button type="button" className={styles.resetButton} onClick={() => resetSelections("total")}>최대 골드 기준</button>
+                <button type="button" className={styles.resetButton} onClick={toggleAllBonusSelections} disabled={!bonusSelectionState.hasEligible} aria-pressed={bonusSelectionState.allChecked}>{bonusSelectionState.allChecked ? "전부 더보기 끄기" : "전부 더보기"}</button>
                 <button type="button" className={styles.resetButton} onClick={() => resetSelections("tradable")}>유통 골드 기준</button>
               </div>
             </footer>
