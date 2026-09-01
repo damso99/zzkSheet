@@ -13,13 +13,16 @@ const GOLD_MIN_LEVEL_INDEX = 4;
 const GOLD_TRADABLE_INDEX = 5;
 const GOLD_BOUND_INDEX = 6;
 const GOLD_TOTAL_INDEX = 7;
+const GOLD_BONUS_COST_INDEX = 8;
 
 export default function WeeklyGoldPage() {
   const [goldRows, setGoldRows] = useState([]);
+  const [goldCols, setGoldCols] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [rosterCharacters, setRosterCharacters] = useState([]);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState([]);
   const [selections, setSelections] = useState({});
+  const [bonusSelections, setBonusSelections] = useState({});
   const [isRosterLoading, setIsRosterLoading] = useState(false);
   const [isGoldLoading, setIsGoldLoading] = useState(true);
   const [rosterError, setRosterError] = useState("");
@@ -33,6 +36,7 @@ export default function WeeklyGoldPage() {
     loadSheetRowsByName({ sheetUrl: DEFAULT_SHEET_URL, sheetName: RAID_GOLD_SHEET_NAME, forceRefresh: true, signal: controller.signal })
       .then((payload) => {
         setGoldRows(Array.isArray(payload?.rows) ? payload.rows : []);
+        setGoldCols(Array.isArray(payload?.cols) ? payload.cols : []);
         setGoldFetchedAt(payload?.fetchedAt || formatLocalDateTime(new Date()));
       })
       .catch((error) => {
@@ -42,7 +46,7 @@ export default function WeeklyGoldPage() {
     return () => controller.abort();
   }, []);
 
-  const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows), [goldRows]);
+  const raidGoldOptions = useMemo(() => parseRaidGoldRows(goldRows, goldCols), [goldRows, goldCols]);
   const selectedCharacters = useMemo(
     () => selectedCharacterIds.map((id) => rosterCharacters.find((character) => character.id === id)).filter(Boolean),
     [rosterCharacters, selectedCharacterIds],
@@ -62,24 +66,29 @@ export default function WeeklyGoldPage() {
   const characterTotals = useMemo(() => {
     const totals = {};
     selectedCharacters.forEach((character) => {
-      totals[character.id] = getSelectedRaidIds(selections[character.id])
-        .map((raidId) => raidGoldOptions.find((option) => option.id === raidId))
-        .filter(Boolean)
-        .reduce((sum, option) => ({
+      const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
+      const bonusChecked = bonusSelections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill(false);
+      totals[character.id] = selected.reduce((sum, raidId, slotIndex) => {
+        const option = raidGoldOptions.find((item) => item.id === raidId);
+        if (!option) return sum;
+        return {
           tradable: sum.tradable + option.tradableGold,
           bound: sum.bound + option.boundGold,
+          bonusCost: sum.bonusCost + (bonusChecked[slotIndex] ? option.bonusCost : 0),
           total: sum.total + option.totalGold,
-        }), { tradable: 0, bound: 0, total: 0 });
+        };
+      }, { tradable: 0, bound: 0, bonusCost: 0, total: 0 });
     });
     return totals;
-  }, [selectedCharacters, raidGoldOptions, selections]);
+  }, [selectedCharacters, raidGoldOptions, selections, bonusSelections]);
 
   const rosterTotals = useMemo(
     () => Object.values(characterTotals).reduce((sum, value) => ({
       tradable: sum.tradable + value.tradable,
       bound: sum.bound + value.bound,
+      bonusCost: sum.bonusCost + value.bonusCost,
       total: sum.total + value.total,
-    }), { tradable: 0, bound: 0, total: 0 }),
+    }), { tradable: 0, bound: 0, bonusCost: 0, total: 0 }),
     [characterTotals],
   );
 
@@ -100,10 +109,12 @@ export default function WeeklyGoldPage() {
       setSearchedName(name);
       setSelectedCharacterIds(characters.slice(0, MAX_GOLD_CHARACTERS).map((character) => character.id));
       setSelections({});
+      setBonusSelections({});
     } catch (error) {
       setRosterCharacters([]);
       setSelectedCharacterIds([]);
       setSelections({});
+      setBonusSelections({});
       setSearchedName(name);
       setRosterError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -123,7 +134,24 @@ export default function WeeklyGoldPage() {
     });
   }
 
+  function clearBonusSelection(characterId, slotIndex) {
+    setBonusSelections((current) => {
+      const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(false))];
+      next[slotIndex] = false;
+      return { ...current, [characterId]: next };
+    });
+  }
+
+  function toggleBonusSelection(characterId, slotIndex) {
+    setBonusSelections((current) => {
+      const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(false))];
+      next[slotIndex] = !next[slotIndex];
+      return { ...current, [characterId]: next };
+    });
+  }
+
   function handleRaidNameChange(characterId, slotIndex, raidName, characterLevel) {
+    clearBonusSelection(characterId, slotIndex);
     setSelections((current) => {
       const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(""))];
       if (!raidName) {
@@ -144,6 +172,7 @@ export default function WeeklyGoldPage() {
   }
 
   function handleDifficultyChange(characterId, slotIndex, raidId) {
+    clearBonusSelection(characterId, slotIndex);
     setSelections((current) => {
       const next = [...(current[characterId] || Array(MAX_RAIDS_PER_CHARACTER).fill(""))];
       next[slotIndex] = raidId;
@@ -157,6 +186,7 @@ export default function WeeklyGoldPage() {
       defaults[character.id] = getOptimalRaidSelection(character.levelValue, raidGoldOptions, mode);
     });
     setSelections(defaults);
+    setBonusSelections({});
   }
 
   function renderRosterCharacter(character) {
@@ -246,9 +276,10 @@ export default function WeeklyGoldPage() {
             <section className={styles.characterGrid}>
               {selectedCharacters.map((character) => {
                 const selected = selections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill("");
+                const bonusChecked = bonusSelections[character.id] || Array(MAX_RAIDS_PER_CHARACTER).fill(false);
                 const availableOptions = raidGoldOptions.filter((option) => character.levelValue >= option.minLevel);
                 const availableRaidNames = getAvailableRaidNames(availableOptions);
-                const totals = characterTotals[character.id] || { tradable: 0, bound: 0, total: 0 };
+                const totals = characterTotals[character.id] || { tradable: 0, bound: 0, bonusCost: 0, total: 0 };
                 return (
                   <article key={character.id} className={styles.characterCard}>
                     <header className={styles.characterHeader}>
@@ -259,6 +290,7 @@ export default function WeeklyGoldPage() {
                       <div className={styles.characterGoldBreakdown}>
                         <span><small>유통</small><strong>{formatGold(totals.tradable)}</strong></span>
                         <span><small>귀속</small><strong>{formatGold(totals.bound)}</strong></span>
+                        <span className={styles.characterBonusCost}><small>더보기 비용</small><strong>{formatGold(totals.bonusCost)}</strong></span>
                         <span className={styles.characterGoldTotal}><small>총합</small><strong>{formatGold(totals.total)} G</strong></span>
                       </div>
                     </header>
@@ -268,6 +300,7 @@ export default function WeeklyGoldPage() {
                         const currentOption = raidGoldOptions.find((option) => option.id === selected[slotIndex]);
                         const selectedRaidNames = selected.filter((_, index) => index !== slotIndex).map((id) => raidGoldOptions.find((option) => option.id === id)?.raidName).filter(Boolean);
                         const difficultyOptions = currentOption ? availableOptions.filter((option) => option.raidName === currentOption.raidName).sort((a, b) => b.minLevel - a.minLevel) : [];
+                        const canCheckBonus = Boolean(currentOption && currentOption.bonusCost > 0);
                         return (
                           <div key={`${character.id}-${slotIndex}`} className={styles.raidSlot}>
                             <div className={styles.raidSelectPair}>
@@ -286,6 +319,12 @@ export default function WeeklyGoldPage() {
                                 </select>
                               </label>
                             </div>
+                            <label className={`${styles.bonusCheck} ${!canCheckBonus ? styles.bonusCheckDisabled : ""}`}>
+                              <input type="checkbox" checked={Boolean(bonusChecked[slotIndex]) && canCheckBonus} onChange={() => toggleBonusSelection(character.id, slotIndex)} disabled={!canCheckBonus} />
+                              <span className={styles.bonusCheckBox}>{bonusChecked[slotIndex] && canCheckBonus ? "✓" : ""}</span>
+                              <span>더보기</span>
+                              <strong>{canCheckBonus ? `${formatGold(currentOption.bonusCost)} G` : "-"}</strong>
+                            </label>
                           </div>
                         );
                       })}
@@ -299,6 +338,7 @@ export default function WeeklyGoldPage() {
               <div className={styles.totalBreakdown}>
                 <span><small>유통 골드</small><strong>{formatGold(rosterTotals.tradable)} G</strong></span>
                 <span><small>귀속 골드</small><strong>{formatGold(rosterTotals.bound)} G</strong></span>
+                <span className={styles.totalBonusCost}><small>더보기 비용</small><strong>{formatGold(rosterTotals.bonusCost)} G</strong></span>
                 <span className={styles.totalGrand}><small>총합</small><strong>{formatGold(rosterTotals.total)} G</strong></span>
               </div>
               <div className={styles.resetButtonGroup}>
@@ -331,8 +371,9 @@ function parseRosterCharacters(characters) {
   }).filter(Boolean).sort((a, b) => b.levelValue - a.levelValue || a.characterName.localeCompare(b.characterName, "ko"));
 }
 
-function parseRaidGoldRows(rows) {
+function parseRaidGoldRows(rows, cols = []) {
   if (!Array.isArray(rows) || !rows.length) return [];
+  const bonusCostIndex = findBonusCostColumnIndex(cols);
   return rows.map((row, index) => {
     const raidName = cleanText(row?.[GOLD_CONTENT_INDEX]);
     const difficulty = cleanText(row?.[GOLD_DIFFICULTY_INDEX]);
@@ -340,10 +381,20 @@ function parseRaidGoldRows(rows) {
     const tradableGold = parseNumber(row?.[GOLD_TRADABLE_INDEX]);
     const boundGold = parseNumber(row?.[GOLD_BOUND_INDEX]);
     const totalGold = parseNumber(row?.[GOLD_TOTAL_INDEX]) || tradableGold + boundGold;
+    const bonusCost = parseNumber(row?.[bonusCostIndex]);
     if (!raidName || !difficulty || minLevel <= 0 || totalGold <= 0) return null;
     const parity = cleanText(row?.[GOLD_PARITY_TEXT_INDEX]) || `${raidName}/${difficulty}`;
-    return { id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`, raidName, difficulty, parity, minLevel, tradableGold, boundGold, totalGold, gold: totalGold };
+    return { id: `${normalize(raidName)}-${normalize(difficulty)}-${index}`, raidName, difficulty, parity, minLevel, tradableGold, boundGold, totalGold, bonusCost, gold: totalGold };
   }).filter(Boolean);
+}
+
+function findBonusCostColumnIndex(cols) {
+  if (!Array.isArray(cols) || !cols.length) return GOLD_BONUS_COST_INDEX;
+  const index = cols.findIndex((col) => {
+    const label = normalize(col?.label || col?.id || "");
+    return label.includes("더보기") && (label.includes("골드") || label.includes("비용") || label.includes("소모"));
+  });
+  return index >= 0 ? index : GOLD_BONUS_COST_INDEX;
 }
 
 function getAvailableRaidNames(options) {
@@ -369,7 +420,6 @@ function getOptimalRaidSelection(levelValue, options, mode = "total") {
   return selected;
 }
 
-function getSelectedRaidIds(value) { return Array.isArray(value) ? value.filter(Boolean) : []; }
 function parseNumber(value) { const matched = String(value ?? "").replace(/,/g, "").match(/-?\d+(?:\.\d+)?/); const number = matched ? Number(matched[0]) : 0; return Number.isFinite(number) ? number : 0; }
 function formatGold(value) { return Math.trunc(Number(value) || 0).toLocaleString("ko-KR"); }
 function cleanText(value) { return String(value ?? "").replace(/^[\s'\"]+|[\s'\"]+$/g, "").trim(); }
