@@ -63,6 +63,10 @@
   height: 7px !important;
 }
 
+.appMain [class*="_resetButtonGroup_"] button[aria-pressed] {
+  order: -1;
+}
+
 @media (max-width: 640px) {
   .appMain > div > div > [class*="_content_"],
   .appMain > div > main > [class*="_content_"] {
