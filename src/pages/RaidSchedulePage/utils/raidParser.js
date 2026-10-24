@@ -635,7 +635,7 @@ function parseSettingRows(rows) {
 function isCharacterValue(value, settingLookup) {
   const text = cleanText(value);
   if (!text) return false;
-  return settingLookup.has(normalizeKey(text));
+  return normalizeKey(text) === "모바출" || settingLookup.has(normalizeKey(text));
 }
 
 function decorateParticipant(characterName, settingLookup) {
@@ -644,7 +644,7 @@ function decorateParticipant(characterName, settingLookup) {
   return {
     characterName,
     level: metadata?.level || "-",
-    ownerName: metadata?.ownerName || DEFAULT_OWNER_NAME,
+    ownerName: metadata?.ownerName || (normalizeKey(characterName) === "모바출" ? "모바출" : DEFAULT_OWNER_NAME),
     power: metadata?.power || "-",
   };
 }
