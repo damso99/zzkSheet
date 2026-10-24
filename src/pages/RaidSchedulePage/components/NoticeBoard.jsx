@@ -93,10 +93,27 @@ export default function NoticeBoard({ styles }) {
 
   return (
     <section className={styles.noticeBoard} aria-label="공지사항">
-      <button type="button" className={styles.noticeBoardTrigger} onClick={() => setIsOpen(true)} aria-haspopup="dialog" aria-expanded={isOpen}>
-        <span className={styles.noticeBoardTriggerTitle}>공지사항</span>
-        <span className={styles.noticeBoardTriggerHint}>클릭해서 크게 보기 ↗</span>
-      </button>
+      <div
+        className={styles.noticeBoardPreview}
+        role="button"
+        tabIndex={0}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-label="공지사항 크게 보기"
+        onClick={() => setIsOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setIsOpen(true);
+          }
+        }}
+      >
+        <div className={styles.noticeBoardHeader}>
+          <strong>공지사항</strong>
+          <span className={styles.noticeBoardTriggerHint}>클릭해서 크게 보기 ↗</span>
+        </div>
+        {noticeContents}
+      </div>
       {isOpen && createPortal(
         <div className={styles.noticeModalOverlay} onMouseDown={(event) => {
           if (event.target === event.currentTarget) setIsOpen(false);
