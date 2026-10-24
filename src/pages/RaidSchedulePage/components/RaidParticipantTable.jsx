@@ -81,7 +81,7 @@ export default function RaidParticipantTable({
 
 function isSelectedOwner(participant, selectedOwnerName) {
   return (
-    Boolean(selectedOwnerName) && participant.ownerName === selectedOwnerName
+    Boolean(selectedOwnerName) && (participant.ownerName === selectedOwnerName || participant.characterName === "모바출")
   );
 }
 
@@ -97,6 +97,8 @@ function renderCharacterName({
         {characterName}
       </strong>
     );
+
+  if (characterName === "모바출") return <strong className={styles.mobileCharacterNameText}>모이면 바로 출발</strong>;
 
   return (
     <button
