@@ -57,7 +57,7 @@ function RaidCard({
         </div>
       </header>
 
-      <p className={styles.participantSummary}>참여 인원 {raid.participants.length}명</p>
+      <p className={styles.participantSummary}>{raid.isOpenParty ? "전체 참여 · 모이면 바로 출발" : `참여 인원 ${raid.participants.length}명`}</p>
       {isOpen ? (
         <div onClick={(event) => event.stopPropagation()}>
           <RaidParticipantTable
