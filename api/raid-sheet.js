@@ -2,6 +2,7 @@ export default async function handler(request, response) {
   const url = new URL(request.url, `https://${request.headers.host || "localhost"}`);
   const sheetUrl = url.searchParams.get("url")?.trim();
   const selectedSheet = url.searchParams.get("sheet")?.trim();
+  const selectedRange = url.searchParams.get("range")?.trim() || "";
   const selectedGid = url.searchParams.get("gid")?.trim() || extractSheetGid(sheetUrl);
 
   const spreadsheetId = extractSpreadsheetId(sheetUrl);
@@ -10,7 +11,12 @@ export default async function handler(request, response) {
     return;
   }
 
-  const gvizUrl = buildGvizUrl({ spreadsheetId, sheetName: selectedSheet, gid: selectedGid });
+  if (selectedRange && !/^[A-Z]+[1-9]\d*(?::[A-Z]+[1-9]\d*)?$/i.test(selectedRange)) {
+    sendJson(response, 400, { error: "Invalid sheet cell range." });
+    return;
+  }
+
+  const gvizUrl = buildGvizUrl({ spreadsheetId, sheetName: selectedSheet, gid: selectedGid, range: selectedRange });
 
   try {
     const gvizResponse = await fetch(gvizUrl, {
@@ -71,8 +77,12 @@ function extractSheetGid(sheetUrl) {
   return match?.[1] || "";
 }
 
-function buildGvizUrl({ spreadsheetId, sheetName, gid }) {
+function buildGvizUrl({ spreadsheetId, sheetName, gid, range = "" }) {
   const params = new URLSearchParams({ tqx: "out:json" });
+  if (range) {
+    params.set("range", range);
+    params.set("headers", "0");
+  }
 
   if (sheetName) {
     params.set("sheet", sheetName);
