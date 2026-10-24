@@ -48,6 +48,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(finalRaidName)}-${raidIndex}`,
         participantCount: isOpenParty ? null : participants.length,
         isOpenParty,
+        allOwnerNames: isOpenParty ? [...new Set([...settingLookup.values()].map((item) => item.ownerName).filter((name) => name && name !== DEFAULT_OWNER_NAME))] : [],
         participants,
         raidName: finalRaidName,
         startAt: getScheduleStartAt(raid.date, raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME),
