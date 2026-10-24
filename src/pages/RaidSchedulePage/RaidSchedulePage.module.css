@@ -3965,7 +3965,7 @@
   margin: 0 0 12px;
   padding: 14px 16px;
   border: 1px solid var(--border-color, rgba(155, 169, 200, .24));
-  border-radius: 12px;
+  border-radius: 22px;
   background: rgba(120, 140, 180, .07);
 }
 .noticeBoardHeader {
