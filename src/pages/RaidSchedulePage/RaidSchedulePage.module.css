@@ -3959,3 +3959,46 @@
     grid-template-columns: repeat(7, minmax(150px, 1fr));
   }
 }
+
+/* Sheet-backed notice section, placed immediately above participant selection. */
+.noticeBoard {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, rgba(155, 169, 200, .24));
+  border-radius: 12px;
+  background: rgba(120, 140, 180, .07);
+}
+.noticeBoardHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.noticeBoardList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.noticeBoardItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  padding: 7px 0;
+  border-top: 1px solid rgba(155, 169, 200, .12);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.noticeBoardCell:first-child {
+  font-weight: 600;
+}
+.noticeBoardStatus {
+  margin: 0;
+  font-size: 13px;
+  opacity: .75;
+}
