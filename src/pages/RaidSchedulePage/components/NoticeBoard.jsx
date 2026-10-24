@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { DEFAULT_SHEET_URL, loadSheetRowsByName } from "../utils/sheetApi.js";
+import { DEFAULT_SHEET_URL } from "../utils/sheetApi.js";
 
-const NOTICE_SHEET_NAME = "공지사항";
+const NOTICE_SHEET_NAME = "디코공지";
+const NOTICE_CELL = "C1";
 const REFRESH_MS = 60 * 1000;
 
 function getNoticeRows(rows) {
-  if (!Array.isArray(rows)) return [];
-  return rows
-    .map((row) => (Array.isArray(row) ? row : [])
-      .map((value) => String(value ?? "").trim())
-      .filter(Boolean))
-    .filter((cells) => cells.length > 0);
+  const value = rows?.[0]?.[0];
+  const text = String(value ?? "").trim();
+  return text ? [[text]] : [];
 }
 
 export default function NoticeBoard({ styles }) {
@@ -25,11 +23,16 @@ export default function NoticeBoard({ styles }) {
 
     async function refresh(forceRefresh = false) {
       try {
-        const result = await loadSheetRowsByName({
-          sheetUrl: DEFAULT_SHEET_URL,
-          sheetName: NOTICE_SHEET_NAME,
-          forceRefresh,
+        const params = new URLSearchParams({
+          url: DEFAULT_SHEET_URL,
+          sheet: NOTICE_SHEET_NAME,
+          range: NOTICE_CELL,
         });
+        // The API requests headers=0 so the first row (C1) is returned as data.
+        if (forceRefresh) params.set("_refresh", String(Date.now()));
+        const response = await fetch(`/api/raid-sheet?${params}`);
+        if (!response.ok) throw new Error("공지사항 셀을 불러오지 못했습니다.");
+        const result = await response.json();
         if (cancelled) return;
         setNoticeRows(getNoticeRows(result?.rows));
         setStatus("ready");
