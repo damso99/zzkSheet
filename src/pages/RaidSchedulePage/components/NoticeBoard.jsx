@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { DEFAULT_SHEET_URL } from "../utils/sheetApi.js";
 
 const NOTICE_SHEET_NAME = "디코공지";
-const NOTICE_CELL = "C1";
+const NOTICE_CELL = "C2";
 const REFRESH_MS = 60 * 1000;
 
 function getNoticeRows(rows) {
@@ -28,7 +28,7 @@ export default function NoticeBoard({ styles }) {
           sheet: NOTICE_SHEET_NAME,
           range: NOTICE_CELL,
         });
-        // The API requests headers=0 so the first row (C1) is returned as data.
+        // The API requests headers=0 so the requested cell (C2) is returned as data.
         if (forceRefresh) params.set("_refresh", String(Date.now()));
         const response = await fetch(`/api/raid-sheet?${params}`);
         if (!response.ok) throw new Error("공지사항 셀을 불러오지 못했습니다.");
