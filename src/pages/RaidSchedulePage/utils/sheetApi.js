@@ -117,7 +117,11 @@ async function fetchSheetRows({ sheetUrl, gid, sheetName, forceRefresh = false }
   }
 
   const promise = (async () => {
-    const response = await fetch(`/api/raid-sheet?${cacheKey}`);
+    const requestParams = new URLSearchParams(cacheKey);
+    if (forceRefresh) requestParams.set("_refresh", String(Date.now()));
+    const response = await fetch(`/api/raid-sheet?${requestParams}`, {
+      cache: forceRefresh ? "no-store" : "default",
+    });
     const payload = await response.json();
 
     if (!response.ok) {
