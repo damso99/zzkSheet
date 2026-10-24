@@ -4093,3 +4093,25 @@
   .noticeModalBody { padding: 12px 18px 22px; }
   .noticeModalBody .noticeBoardItem { font-size: 14px; }
 }
+
+/* Notice preview stays visible; clicking anywhere opens the expanded modal. */
+.noticeBoardPreview {
+  display: block;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-radius: inherit;
+}
+.noticeBoardPreview:hover {
+  background: rgba(130, 155, 210, .08);
+}
+.noticeBoardPreview:focus-visible {
+  outline: 2px solid #8bb7ff;
+  outline-offset: -3px;
+}
+.noticeBoardPreview .noticeBoardHeader {
+  justify-content: space-between;
+  gap: 12px;
+}
+.noticeBoardPreview .noticeBoardList {
+  margin: 0;
+}
