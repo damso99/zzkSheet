@@ -98,7 +98,7 @@ function renderCharacterName({
       </strong>
     );
 
-  if (characterName === "모바출") return <strong className={styles.mobileCharacterNameText}>모이면 바로 출발</strong>;
+  if (characterName === "모바출") return <strong className={styles.mobileCharacterNameText}>모바출</strong>;
 
   return (
     <button
