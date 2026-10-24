@@ -37,6 +37,7 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
   const normalizedRaids = parsedRaids
     .map((raid, raidIndex) => {
       const participants = raid.members.map((characterName) => decorateParticipant(characterName, settingLookup));
+      const isOpenParty = participants.some((participant) => normalizeKey(participant.characterName) === "모바출");
       const finalRaidName = normalizeRaidNameToCanonicalRaidName(raid.raidName) || "미지정";
       const item = {
         blockTime: raid.blockTime,
@@ -45,7 +46,8 @@ export function buildRaidSchedule({ settingRows = [], raidCalendarRows = [], rai
         endCol: raid.endCol,
         endRow: raid.endRow,
         id: `${raid.date || "unscheduled"}-${raid.blockTime || raid.time || "time"}-${slugify(finalRaidName)}-${raidIndex}`,
-        participantCount: participants.length,
+        participantCount: isOpenParty ? null : participants.length,
+        isOpenParty,
         participants,
         raidName: finalRaidName,
         startAt: getScheduleStartAt(raid.date, raid.blockTime || raid.time || DEFAULT_FALLBACK_TIME),
@@ -644,7 +646,7 @@ function decorateParticipant(characterName, settingLookup) {
   return {
     characterName,
     level: metadata?.level || "-",
-    ownerName: metadata?.ownerName || (normalizeKey(characterName) === "모바출" ? "모바출" : DEFAULT_OWNER_NAME),
+    ownerName: metadata?.ownerName || (normalizeKey(characterName) === "모바출" ? "전체" : DEFAULT_OWNER_NAME),
     power: metadata?.power || "-",
   };
 }
