@@ -3,6 +3,7 @@ export default async function handler(request, response) {
   const sheetUrl = url.searchParams.get("url")?.trim();
   const selectedSheet = url.searchParams.get("sheet")?.trim();
   const selectedRange = url.searchParams.get("range")?.trim() || "";
+  const forceRefresh = url.searchParams.has("_refresh");
   const selectedGid = url.searchParams.get("gid")?.trim() || extractSheetGid(sheetUrl);
 
   const spreadsheetId = extractSpreadsheetId(sheetUrl);
@@ -17,9 +18,11 @@ export default async function handler(request, response) {
   }
 
   const gvizUrl = buildGvizUrl({ spreadsheetId, sheetName: selectedSheet, gid: selectedGid, range: selectedRange });
+  const requestUrl = forceRefresh ? `${gvizUrl}&_refresh=${Date.now()}` : gvizUrl;
 
   try {
-    const gvizResponse = await fetch(gvizUrl, {
+    const gvizResponse = await fetch(requestUrl, {
+      cache: forceRefresh ? "no-store" : "default",
       headers: {
         accept: "text/plain,application/json,text/javascript,*/*",
       },
@@ -37,11 +40,13 @@ export default async function handler(request, response) {
     const payload = parseGvizPayload(text);
     const rows = toRowArrays(payload.table);
 
-    response.setHeader(
-      "Vercel-CDN-Cache-Control",
-      "public, s-maxage=30, stale-while-revalidate=30",
-    );
-    response.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+    if (forceRefresh) {
+      response.setHeader("Vercel-CDN-Cache-Control", "no-store");
+      response.setHeader("Cache-Control", "no-store, max-age=0");
+    } else {
+      response.setHeader("Vercel-CDN-Cache-Control", "public, s-maxage=30, stale-while-revalidate=30");
+      response.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+    }
 
     sendJson(response, 200, {
       cols: payload.table?.cols || [],
