@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import NoticeMarkdown from "./NoticeMarkdown.jsx";
 import { DEFAULT_SHEET_URL } from "../utils/sheetApi.js";
 
 const NOTICE_SHEET_NAME = "디코공지";
@@ -83,15 +84,7 @@ export default function NoticeBoard({ styles }) {
   ) : noticeRows.length === 0 ? (
     <p className={styles.noticeBoardStatus}>등록된 공지사항이 없습니다.</p>
   ) : (
-    <ul className={styles.noticeBoardList}>
-      {noticeRows.map((cells, index) => (
-        <li key={index} className={styles.noticeBoardItem}>
-          {cells.map((cell, columnIndex) => (
-            <span key={columnIndex} className={styles.noticeBoardCell}>{cell}</span>
-          ))}
-        </li>
-      ))}
-    </ul>
+    <NoticeMarkdown text={noticeRows[0][0]} styles={styles} />
   );
 
   return (
